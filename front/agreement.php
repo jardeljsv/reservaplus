@@ -92,75 +92,56 @@ if (!$isRequesterInterface) {
     echo '<details class="rp-subform"><summary>Identificação técnica do arquivo</summary><p class="rp-muted">SHA-256 do original: <code>' . $e((string) $doc['source_sha256']) . '</code></p></details>';
 }
 echo '<h2>' . ($isRequesterInterface ? 'Meu aceite' : 'Signatários e finalidade') . '</h2><ul>';
-$rolesPending = (array) ($doc['pending_roles'] ?? []);
-$rolesAvailable = (array) ($doc['signable_roles'] ?? []);
-if ($isRequesterInterface) {
-    // Presentation only: backend still requires every assigned staff signature.
-    $rolesPending = array_values(array_intersect($rolesPending, ['borrower']));
-    $rolesAvailable = array_values(array_intersect($rolesAvailable, ['borrower']));
-}
+$myId = Access::userId();
+$mySigned = false;
 foreach ($doc['signers'] as $signer) {
-    if ($isRequesterInterface && (int) ($signer['users_id'] ?? 0) !== Access::userId()) {
+    if ($isRequesterInterface && (int) ($signer['users_id'] ?? 0) !== $myId) {
         continue;
     }
-    foreach ((array) ($signer['roles'] ?? []) as $role) {
-        if ($isRequesterInterface && $role !== 'borrower') { continue; }
-        $acceptedRecord = null;
-        foreach ($doc['acceptances'] as $acceptance) {
-            if ((int) ($acceptance['users_id'] ?? 0) !== (int) $signer['users_id']) { continue; }
-            if (DocumentService::roleAcceptedFromRows([$role], [$acceptance], (string) $doc['source_sha256'])) {
-                $acceptedRecord = $acceptance;
-                break;
-            }
+    $acceptedRecord = null;
+    foreach ($doc['acceptances'] as $acceptance) {
+        if ((int) ($acceptance['users_id'] ?? 0) !== (int) $signer['users_id']) { continue; }
+        if (DocumentService::userAcceptedFromRows([$acceptance], (string) $doc['source_sha256'])) {
+            $acceptedRecord = $acceptance;
+            break;
         }
-        echo '<li>' . $e((string) $signer['name']) . ' — ' . $e(DocumentService::roleLabel((string) $role)) . ': '
-            . ($acceptedRecord ? 'aceite em ' . $e((string) $acceptedRecord['event_utc']) : 'aguardando aceite') . '</li>';
     }
+    if ($acceptedRecord !== null && (int) $signer['users_id'] === $myId) { $mySigned = true; }
+    $recordedRoles = $acceptedRecord['roles'] ?? [];
+    $signedAs = $recordedRoles !== []
+        ? implode(', ', array_map(DocumentService::roleLabel(...), (array) $recordedRoles))
+        : 'Signatário';
+    $status = $acceptedRecord !== null
+        ? 'Aceite registrado como ' . $signedAs . ' em ' . (string) $acceptedRecord['event_utc']
+        : 'Aguardando aceite';
+    echo '<li>' . $e((string) $signer['name']) . ': ' . $e($status) . '</li>';
 }
 echo '</ul>';
-if ($isRequesterInterface && $doc['is_current'] && $rolesPending === [] && in_array('borrower', (array) ($doc['roles'] ?? []), true)) {
-    echo '<div class="alert alert-success">Seu aceite foi registrado. A conferência técnica, quando necessária, será concluída pela equipe responsável.</div>';
+if ($isRequesterInterface && $doc['is_current'] && $mySigned) {
+    echo '<div class="alert alert-success">Seu aceite deste documento já foi registrado. Não é necessário assinar novamente em outro perfil.</div>';
 }
-if ($doc['is_current'] && $rolesPending !== []) {
-    foreach ($rolesPending as $role) {
-        echo '<div class="rp-signature-role card my-3 p-3">';
-        if (!$isRequesterInterface) {
-            echo '<h3>' . $e(DocumentService::roleLabel((string) $role)) . '</h3>';
+$chosenRole = (string) ($doc['signing_role'] ?? '');
+if ($doc['is_current'] && !$mySigned && $chosenRole !== '') {
+    echo '<div class="rp-signature-role card my-3 p-3">';
+    try {
+        $challenge = DocumentService::issueChallenge($id, $chosenRole);
+        $consent = DocumentService::consent($doc, $myId, $chosenRole);
+        echo '<form method="post" action="' . $e($base . 'agreement.php') . '">';
+        foreach (['id' => $id, 'action' => 'sign', 'role' => $chosenRole, 'challenge' => $challenge,
+            'consent_sha256' => hash('sha256', $consent), 'operation_key' => bin2hex(random_bytes(24))] as $name => $value) {
+            echo Html::hidden($name, ['value' => $value]);
         }
-        if (!in_array($role, $rolesAvailable, true)) {
-            $reason = match ($role) {
-                'receiver' => 'A assinatura como recebedor exige o perfil com permissão de recebimento.',
-                'inspector' => 'A assinatura como inspetor exige o perfil com permissão de inspeção.',
-                default => 'Este papel não pode ser assinado com o perfil atual.',
-            };
-            echo '<div class="alert alert-warning">' . $e($reason) . '</div>';
-            echo '</div>';
-            continue;
-        }
-        try {
-            $challenge = DocumentService::issueChallenge($id, (string) $role);
-            $consent = DocumentService::consent($doc, Access::userId(), (string) $role);
-            echo '<form method="post" action="' . $e($base . 'agreement.php') . '">';
-            foreach (['id' => $id, 'action' => 'sign', 'role' => $role, 'challenge' => $challenge,
-                'consent_sha256' => hash('sha256', $consent), 'operation_key' => bin2hex(random_bytes(24))] as $name => $value) {
-                echo Html::hidden($name, ['value' => $value]);
-            }
-            if ($returnTicket > 0) { BookingView::hidden('_return_ticket', $returnTicket); }
-            echo $isRequesterInterface
-                ? '<p><strong>Confira o termo de devolução e registre sua ciência.</strong> Abra o PDF original antes de confirmar.</p>'
-                : '<p><strong>Este aceite corresponde somente ao papel: ' . $e(DocumentService::roleLabel((string) $role)) . '.</strong> Abra o PDF original e confira o registro antes de confirmar.</p>';
-            echo '<label class="form-check"><input class="form-check-input" type="checkbox" name="accept_statement" value="1" required><span class="form-check-label">' . $e($consent) . '</span></label>';
-            echo '<button type="submit" class="btn btn-primary mt-3">'
-                . ($isRequesterInterface ? 'Confirmar meu aceite' : 'Assinar como ' . $e(DocumentService::roleLabel((string) $role)))
-                . '</button>';
-            Html::closeForm();
-        } catch (Throwable $failure) {
-            $message = ($failure instanceof DomainException || $failure instanceof InvalidArgumentException)
-                ? $failure->getMessage() : 'A confirmação está indisponível. Tente novamente ou contate a equipe responsável.';
-            echo '<div class="alert alert-warning">' . $e($message) . '</div>';
-        }
-        echo '</div>';
+        if ($returnTicket > 0) { BookingView::hidden('_return_ticket', $returnTicket); }
+        echo '<p><strong>Leia o documento e confirme seu aceite.</strong> O sistema registra a conta GLPI e o perfil autorizado utilizado nesta assinatura.</p>';
+        echo '<label class="form-check"><input class="form-check-input" type="checkbox" name="accept_statement" value="1" required><span class="form-check-label">' . $e($consent) . '</span></label>';
+        echo '<button type="submit" class="btn btn-primary mt-3">Assinar termo</button>';
+        Html::closeForm();
+    } catch (Throwable $failure) {
+        $message = ($failure instanceof DomainException || $failure instanceof InvalidArgumentException)
+            ? $failure->getMessage() : 'A confirmação está indisponível. Tente novamente ou contate a equipe responsável.';
+        echo '<div class="alert alert-warning">' . $e($message) . '</div>';
     }
+    echo '</div>';
 }
 if (in_array($doc['status'], ['accepted', 'artifact_error'], true) || ($doc['status'] === 'complete' && $doc['attachment_status'] !== 'attached')) {
     echo '<div class="alert alert-info">Os aceites já registrados estão preservados. A publicação do arquivo ou anexo precisa ser concluída.</div>';
