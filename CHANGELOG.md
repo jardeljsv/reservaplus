@@ -2,6 +2,12 @@
 
 ## Em desenvolvimento — após 0.7.0-rc3 (sem nova versão instalada)
 
+- Preparação automática pós-transação dos termos aplicáveis na solicitação, após aprovação e na devolução/conferência. Reusa a geração idempotente e o versionamento existentes, sem remover verificações de assinatura.
+- Destaque **Ler e assinar termo** nas reservas do solicitante, na listagem e no detalhe/aba do chamado. Documento manual permanece como contingência para falhas e reservas antigas.
+- PDF inclui **Matrícula** com o login da conta GLPI do beneficiário, congelado na preparação do documento; sem alterar hashes de documentos previamente emitidos.
+- Falha de preparação automática registra pendência, mas não desfaz a operação já confirmada; verificar logs e regularizar antes da entrega.
+
+
 - Controles de aprovação e rejeição nas listas de solicitações, no painel operacional e no detalhe da reserva.
 - Correção da detecção das aprovações pendentes nas consultas de listagem; rechecagem de direitos e alvos elegíveis.
 - Ações rápidas adicionais Alterar período e Cancelar conforme perfil, situação e regras existentes; retorno à lista após operação.
