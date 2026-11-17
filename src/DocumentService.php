@@ -591,40 +591,106 @@ final class DocumentService
         return [];
     }
 
-    private static function assertSignable(array $doc, ?array $booking = null): void
+    private static function resolveRole(array $doc, int $userId, ?string $role): string
+    {
+        $assigned = self::roles($doc, $userId);
+        if ($role === null && count($assigned) === 1) {
+            $role = (string) $assigned[0]; // backward-compatible single-role API
+        }
+        if ($role === null || !in_array($role, $assigned, true)
+            || !in_array($role, ['borrower', 'receiver', 'inspector'], true)) {
+            throw new \\DomainException('Selecione um papel de assinatura autorizado para sua conta.');
+        }
+        return $role;
+    }
+
+    /** Source-verified acceptance per role; historic multi-role rows are retained. */
+    public static function roleAcceptedFromRows(array $roles, array $rows, string $sourceHash): bool
+    {
+        if ($roles === []) { return false; }
+        $covered = [];
+        foreach ($rows as $row) {
+            if (!hash_equals($sourceHash, (string) ($row['source_sha256'] ?? ''))) {
+                continue;
+            }
+            $signed = is_array($row['roles'] ?? null)
+                ? $row['roles']
+                : Store::decode($row['roles_json'] ?? null);
+            foreach ($signed as $role) {
+                if (in_array($role, ['borrower', 'receiver', 'inspector'], true)) {
+                    $covered[$role] = true;
+                }
+            }
+        }
+        foreach ($roles as $role) {
+            if (!isset($covered[$role])) { return false; }
+        }
+        return true;
+    }
+
+    public static function pendingRoles(array $doc, int $userId): array
+    {
+        $assigned = self::roles($doc, $userId);
+        if ($assigned === []) { return []; }
+        $rows = is_array($doc['acceptances'] ?? null)
+            ? $doc['acceptances']
+            : Store::find('acceptances', ['agreements_id' => (int) $doc['id'], 'users_id' => $userId]);
+        return array_values(array_filter($assigned, static fn(string $role): bool =>
+            !self::roleAcceptedFromRows([$role], $rows, (string) $doc['source_sha256'])
+        ));
+    }
+
+    private static function rolePermitted(array $booking, string $role): bool
+    {
+        return match ($role) {
+            'borrower' => true, // identity verified via signed roster and account
+            'receiver' => Access::booking($booking, 'receive') || Access::right('admin'),
+            'inspector' => Access::booking($booking, 'inspect') || Access::right('admin'),
+            default => false,
+        };
+    }
+
+    private static function signableRoles(array $doc, array $booking, int $userId): array
+    {
+        if ($userId !== Access::userId() || !self::current($doc, $booking)
+            || in_array((string) $booking['status'], ['cancelled', 'rejected'], true)) {
+            return [];
+        }
+        return array_values(array_filter(
+            self::pendingRoles($doc, $userId),
+            static fn(string $role): bool => self::rolePermitted($booking, $role)
+        ));
+    }
+
+    private static function assertSignable(array $doc, ?array $booking = null, ?string $role = null): void
     {
         self::assertActiveUser();
         $booking ??= Store::row('bookings', (int) $doc['bookings_id']);
         Access::assertBooking($booking, 'read');
         self::assertHold($booking);
-        if (self::roles($doc, Access::userId()) === [] || !self::current($doc, $booking)
-            || in_array((string) $booking['status'], ['cancelled', 'rejected'], true)) {
-            throw new \DomainException('O documento não está vigente ou este usuário não é um signatário autorizado.');
+        $role = self::resolveRole($doc, Access::userId(), $role);
+        if (!self::current($doc, $booking) || in_array((string) $booking['status'], ['cancelled', 'rejected'], true)) {
+            throw new \\DomainException('O documento não está vigente ou este usuário não é um signatário autorizado.');
         }
-        foreach (self::roles($doc, Access::userId()) as $role) {
-            if ($role === 'receiver' && !Access::booking($booking, 'receive') && !Access::right('admin')) {
-                throw new \DomainException('A permissão atual de recebimento é necessária para atestar o registro.');
-            }
-            if ($role === 'inspector' && !Access::booking($booking, 'inspect') && !Access::right('admin')) {
-                throw new \DomainException('A permissão atual de inspeção é necessária para atestar o laudo.');
-            }
+        if (!self::rolePermitted($booking, $role)) {
+            throw new \\DomainException(match ($role) {
+                'receiver' => 'A permissão atual de recebimento é necessária para atestar o registro.',
+                'inspector' => 'A permissão atual de inspeção é necessária para atestar o laudo.',
+                default => 'Sem permissão para este papel.',
+            });
         }
     }
 
     private static function allAccepted(array $doc): bool
     {
         $signers = Store::decode($doc['signers_json'] ?? null);
-        if ($signers === []) {
-            return false;
-        }
-        $accepted = [];
-        foreach (Store::find('acceptances', ['agreements_id' => (int) $doc['id']]) as $a) {
-            if (hash_equals((string) $a['source_sha256'], (string) $doc['source_sha256'])) {
-                $accepted[(int) $a['users_id']] = true;
-            }
-        }
-        foreach ($signers as $s) {
-            if (!isset($accepted[(int) $s['users_id']])) {
+        if ($signers === []) { return false; }
+        $rows = Store::find('acceptances', ['agreements_id' => (int) $doc['id']]);
+        foreach ($signers as $signer) {
+            $userRows = array_values(array_filter($rows, static fn(array $row): bool =>
+                (int) ($row['users_id'] ?? 0) === (int) ($signer['users_id'] ?? 0)
+            ));
+            if (!self::roleAcceptedFromRows((array) ($signer['roles'] ?? []), $userRows, (string) $doc['source_sha256'])) {
                 return false;
             }
         }
