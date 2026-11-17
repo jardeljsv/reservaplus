@@ -368,6 +368,9 @@ final class BookingView
             echo '</form>';
             if ($dashboard && $action === 'reject') { echo '</details>'; }
         }
+        if ($dashboard) {
+            self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
+        }
         echo $dashboard ? '</div>' : '</details>';
     }
 
