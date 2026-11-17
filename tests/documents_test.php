@@ -65,6 +65,34 @@ rp_test('term PDF shows the verified GLPI login as matrícula without trusting d
     rp_assert(!str_contains($html, '<script>'));
 });
 
+rp_test('multi-role signing requires separate borrower and inspector acceptance', static function (): void {
+    $hash = str_repeat('a', 64);
+    $borrower = ['users_id' => 10837, 'role' => 'borrower', 'roles_json' => json_encode(['borrower']), 'source_sha256' => $hash];
+    $inspector = ['users_id' => 10837, 'role' => 'inspector', 'roles_json' => json_encode(['inspector']), 'source_sha256' => $hash];
+    rp_assert(DocumentService::roleAcceptedFromRows(['borrower'], [$borrower], $hash));
+    rp_assert(!DocumentService::roleAcceptedFromRows(['borrower', 'inspector'], [$borrower], $hash));
+    rp_assert(!DocumentService::roleAcceptedFromRows(['inspector'], [$borrower], $hash));
+    rp_assert(DocumentService::roleAcceptedFromRows(['borrower', 'inspector'], [$borrower, $inspector], $hash));
+    rp_assert(!DocumentService::roleAcceptedFromRows(['borrower', 'inspector'], [$borrower, $inspector], str_repeat('b', 64)));
+    $legacy = ['users_id' => 10837, 'role' => 'legacy',
+        'roles_json' => json_encode(['borrower', 'inspector']), 'source_sha256' => $hash];
+    rp_assert(DocumentService::roleAcceptedFromRows(['borrower', 'inspector'], [$legacy], $hash), 'Historical joint acceptance must remain valid');
+});
+
+rp_test('distinct consent texts are bound to each signing role', static function (): void {
+    $doc = ['purpose' => 'return_inspection', 'consent_text' => 'Aceito esta versão.',
+        'signers_json' => json_encode([['users_id' => 10837, 'roles' => ['borrower', 'inspector']]]),
+        'snapshot_json' => json_encode(['scope' => ['lines' => [['resource' => ['kind' => 'equipment']]]]])];
+    rp_throws(static fn() => DocumentService::consent($doc, 10837), DomainException::class, 'Selecione');
+    $borrower = DocumentService::consent($doc, 10837, 'borrower');
+    $inspector = DocumentService::consent($doc, 10837, 'inspector');
+    rp_assert(str_contains($borrower, 'Como beneficiário'));
+    rp_assert(!str_contains($borrower, 'Como inspetor'));
+    rp_assert(str_contains($inspector, 'Como inspetor'));
+    rp_assert($borrower !== $inspector);
+    rp_throws(static fn() => DocumentService::consent($doc, 10837, 'receiver'), DomainException::class);
+});
+
 rp_test('an unrelated account cannot obtain a consent statement for another signer', static function (): void {
     $doc = ['purpose' => 'request', 'signers_json' => json_encode([['users_id' => 12, 'roles' => ['borrower']]])];
     rp_throws(static fn () => DocumentService::consent($doc, 13), DomainException::class);
