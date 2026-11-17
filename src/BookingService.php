@@ -48,6 +48,20 @@ final class BookingService
         return ['available' => $reasons === [], 'reasons' => $reasons];
     }
 
+    /**
+     * A physically early pickup is not a change to the approved reservation period.
+     * Keep the original signed scope and record the actual issue timestamp separately.
+     */
+    public static function canIssueAt(string $approvedBegin, string $approvedEnd, string $at, int $graceMinutes = 15): bool
+    {
+        $start = strtotime($approvedBegin);
+        $end = strtotime($approvedEnd);
+        $now = strtotime($at);
+        return $start !== false && $end !== false && $now !== false
+            && $graceMinutes >= 0 && $graceMinutes <= 15
+            && $now >= $start - $graceMinutes * 60 && $now < $end;
+    }
+
     private static function operationKey(string $key): string
     {
         if (!preg_match('/^[a-zA-Z0-9._:-]{16,160}$/D', $key)) { throw new \InvalidArgumentException('Identificador de operação inválido. Reabra o formulário.'); }
@@ -330,7 +344,10 @@ final class BookingService
                     foreach (self::signaturePurposes($lines) as $purpose) { if (!DocumentService::isSatisfied($id, $purpose)) { throw new \DomainException('Há termo obrigatório aguardando assinatura válida.'); } }
                     $condition = mb_substr(trim((string) ($input['condition'] ?? '')), 0, 5000);
                     if ($condition === '') { throw new \DomainException('Registre a conferência e condição de entrega.'); }
-                    if (Store::now() < $booking['begin'] || Store::now() >= $booking['end']) { throw new \DomainException('A entrega deve ocorrer dentro do período aprovado. Reagende antes de entregar.'); }
+                    $issueAt = Store::now();
+                    if (!self::canIssueAt((string) $booking['begin'], (string) $booking['end'], $issueAt)) {
+                        throw new \DomainException('A entrega é permitida até 15 minutos antes do início aprovado e até o término da reserva.');
+                    }
                     foreach ($lines as $line) {
                         $resource = $resources[(int) $line['resources_id']];
                         Access::assertResource($resource, 'issue');
@@ -338,7 +355,9 @@ final class BookingService
                         foreach (Store::find('bookinglines', ['resources_id' => (int) $line['resources_id'], 'state' => 'issued']) as $other) {
                             if ((int) $other['bookings_id'] !== $id) { throw new \DomainException('Este recurso ainda está fisicamente com outro usuário.'); }
                         }
-                        $conflicts = CalendarBridge::conflicts($resource, $booking['begin'], $booking['end'], $id);
+                        // Validate actual early custody against other bookings and native GLPI holds.
+                        $effectiveBegin = $issueAt < $booking['begin'] ? $issueAt : $booking['begin'];
+                        $conflicts = CalendarBridge::conflicts($resource, $effectiveBegin, $booking['end'], $id);
                         if ($conflicts) { throw new \DomainException(implode(' ', $conflicts)); }
                         $snapshot = Store::decode($line['snapshot_json']); $r = $snapshot['resource'] ?? $snapshot;
                         $accessories = [];
@@ -406,6 +425,9 @@ final class BookingService
                     if (!in_array($booking['status'], ['submitted', 'approved'], true)) { throw new \DomainException('Nesta versão, altere o período antes da entrega; empréstimos ativos exigem devolução e nova solicitação.'); }
                     [$newBegin, $newEnd] = Booking::period((string) ($input['begin'] ?? $booking['begin']), (string) ($input['end'] ?? ''));
                     if ($newEnd <= Store::now()) { throw new \DomainException('Informe um período futuro.'); }
+                    if ($newBegin === (string) $booking['begin'] && $newEnd === (string) $booking['end']) {
+                        throw new \DomainException('O período informado não mudou; a aprovação e o termo existentes foram preservados.');
+                    }
                     foreach ($resources as $resource) {
                         $p = Store::decode($resource['policy_json'] ?? null);
                         $duration = (strtotime($newEnd) - strtotime($newBegin)) / 60;
