@@ -137,13 +137,11 @@ final class DocumentService
         $row['roles'] = self::roles($row, Access::userId());
         $row['pending_roles'] = self::pendingRoles($row, Access::userId());
         $row['signable_roles'] = self::signableRoles($row, $booking, Access::userId());
+        $row['signing_role'] = $row['signable_roles'][0] ?? null;
         return $row;
     }
 
-    /**
-     * Each consent explicitly attests ONE role. A multi-role user must
-     * acknowledge each responsibility separately with the appropriate rights.
-     */
+    /** One consent per document and GLPI account; record the authorized active role. */
     public static function consent(array $doc, int $userId, ?string $role = null): string
     {
         $role = self::resolveRole($doc, $userId, $role);
@@ -166,8 +164,8 @@ final class DocumentService
         $doc = self::get($documentId);
         $role = self::resolveRole($doc, Access::userId(), $role);
         self::assertSignable($doc, null, $role);
-        if (!in_array($role, self::pendingRoles($doc, Access::userId()), true)) {
-            throw new \DomainException('Este papel já possui aceite registrado.');
+        if (self::userAccepted($doc, Access::userId())) {
+            throw new \DomainException('Seu aceite já foi registrado neste documento.');
         }
         $token = bin2hex(random_bytes(32));
         $consent = self::consent($doc, Access::userId(), $role);
@@ -201,12 +199,11 @@ final class DocumentService
             $booking = Store::lock('bookings', (int) $doc['bookings_id']);
             Access::assertBooking($booking, 'read');
             $locked = Store::lock('agreements', $documentId);
-            if (self::roleAcceptedFromRows(
-                (array) ($role ? [$role] : []),
+            if (self::userAcceptedFromRows(
                 Store::find('acceptances', ['agreements_id' => $documentId, 'users_id' => $userId]),
                 (string) $locked['source_sha256']
             )) {
-                // Idempotent retry for this role only; never consume another role.
+                // One authenticated acceptance per account and source document.
                 return;
             }
             self::assertSignable($locked, $booking, $role);
@@ -594,15 +591,19 @@ final class DocumentService
     private static function resolveRole(array $doc, int $userId, ?string $role): string
     {
         $assigned = self::roles($doc, $userId);
-        if ($role === null && count($assigned) === 1) {
-            $role = (string) $assigned[0]; // backward-compatible single-role API
-        }
         if ($assigned === []) {
             throw new \DomainException('Este usuário não é um signatário designado.');
         }
+        if ($role === null) {
+            // A technical session logs its real technical role; a helpdesk
+            // session signs the same document as beneficiary.
+            $booking = Store::row('bookings', (int) $doc['bookings_id']);
+            $available = self::authorizedRoles($booking, $assigned);
+            $role = $available[0] ?? null;
+        }
         if ($role === null || !in_array($role, $assigned, true)
             || !in_array($role, ['borrower', 'receiver', 'inspector'], true)) {
-            throw new \DomainException('Selecione um papel de assinatura autorizado para sua conta.');
+            throw new \DomainException('Nenhum papel de assinatura autorizado para a conta atual.');
         }
         return $role;
     }
@@ -631,38 +632,65 @@ final class DocumentService
         return true;
     }
 
+    /** Pure source-bound account-level proof, independent of actor role. */
+    public static function userAcceptedFromRows(array $rows, string $sourceHash): bool
+    {
+        foreach ($rows as $row) {
+            if (hash_equals($sourceHash, (string) ($row['source_sha256'] ?? ''))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static function userAccepted(array $doc, int $userId): bool
+    {
+        $rows = is_array($doc['acceptances'] ?? null)
+            ? array_values(array_filter($doc['acceptances'], static fn(array $r): bool =>
+                (int) ($r['users_id'] ?? 0) === $userId
+            ))
+            : Store::find('acceptances', ['agreements_id' => (int) $doc['id'], 'users_id' => $userId]);
+        return self::userAcceptedFromRows($rows, (string) $doc['source_sha256']);
+    }
+
     public static function pendingRoles(array $doc, int $userId): array
     {
-        $assigned = self::roles($doc, $userId);
-        if ($assigned === []) { return []; }
-        $rows = is_array($doc['acceptances'] ?? null)
-            ? $doc['acceptances']
-            : Store::find('acceptances', ['agreements_id' => (int) $doc['id'], 'users_id' => $userId]);
-        return array_values(array_filter($assigned, static fn(string $role): bool =>
-            !self::roleAcceptedFromRows([$role], $rows, (string) $doc['source_sha256'])
-        ));
+        return self::userAccepted($doc, $userId) ? [] : self::roles($doc, $userId);
     }
 
     private static function rolePermitted(array $booking, string $role): bool
     {
         return match ($role) {
-            'borrower' => true, // identity verified via signed roster and account
+            'borrower' => true,
             'receiver' => Access::booking($booking, 'receive') || Access::right('admin'),
             'inspector' => Access::booking($booking, 'inspect') || Access::right('admin'),
             default => false,
         };
     }
 
+    /** Exactly one role is selected for signing, with the current profile's authority. */
+    private static function authorizedRoles(array $booking, array $assigned): array
+    {
+        $order = Session::getCurrentInterface() === 'helpdesk'
+            ? ['borrower', 'inspector', 'receiver']
+            : ['inspector', 'receiver', 'borrower'];
+        $available = [];
+        foreach ($order as $role) {
+            if (in_array($role, $assigned, true) && self::rolePermitted($booking, $role)) {
+                $available[] = $role;
+            }
+        }
+        return $available;
+    }
+
     private static function signableRoles(array $doc, array $booking, int $userId): array
     {
         if ($userId !== Access::userId() || !self::current($doc, $booking)
-            || in_array((string) $booking['status'], ['cancelled', 'rejected'], true)) {
+            || in_array((string) $booking['status'], ['cancelled', 'rejected'], true)
+            || self::userAccepted($doc, $userId)) {
             return [];
         }
-        return array_values(array_filter(
-            self::pendingRoles($doc, $userId),
-            static fn(string $role): bool => self::rolePermitted($booking, $role)
-        ));
+        return array_slice(self::authorizedRoles($booking, self::roles($doc, $userId)), 0, 1);
     }
 
     private static function assertSignable(array $doc, ?array $booking = null, ?string $role = null): void
@@ -693,7 +721,9 @@ final class DocumentService
             $userRows = array_values(array_filter($rows, static fn(array $row): bool =>
                 (int) ($row['users_id'] ?? 0) === (int) ($signer['users_id'] ?? 0)
             ));
-            if (!self::roleAcceptedFromRows((array) ($signer['roles'] ?? []), $userRows, (string) $doc['source_sha256'])) {
+            // Technical custody and inspection operations remain separately
+            // validated in BookingService. Signature is one consent per user.
+            if (!self::userAcceptedFromRows($userRows, (string) $doc['source_sha256'])) {
                 return false;
             }
         }
