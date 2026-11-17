@@ -53,6 +53,18 @@ rp_test('PDF template escapes all user data and preserves incomplete return quan
     rp_assert(str_contains($html, 'João da Conceição'));
 });
 
+rp_test('term PDF shows the verified GLPI login as matrícula without trusting declared affiliation', static function () use ($snapshot): void {
+    $document = $snapshot;
+    $document['borrower_login'] = '10837';
+    $html = PdfRenderer::html($document);
+    rp_assert(str_contains($html, '<b>Matrícula:</b> 10837'));
+    rp_assert(str_contains($html, '<b>Identificação / vínculo informado:</b> 00042'));
+    $document['borrower_login'] = '<script>alert(1)</script>';
+    $html = PdfRenderer::html($document);
+    rp_assert(str_contains($html, '&lt;script&gt;'));
+    rp_assert(!str_contains($html, '<script>'));
+});
+
 rp_test('an unrelated account cannot obtain a consent statement for another signer', static function (): void {
     $doc = ['purpose' => 'request', 'signers_json' => json_encode([['users_id' => 12, 'roles' => ['borrower']]])];
     rp_throws(static fn () => DocumentService::consent($doc, 13), DomainException::class);
