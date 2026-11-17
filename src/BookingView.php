@@ -696,12 +696,12 @@ final class BookingView
         return $lines;
     }
 
-    private static function chooseLines(array $lines, bool $accessories = false): void
+    private static function chooseLines(array $lines, bool $accessories = false, bool $checked = false): void
     {
         echo '<fieldset><legend class="fs-6">' . self::e(__('Selecione os itens desta operação', 'reservaplus')) . '</legend>';
         foreach ($lines as $line) {
             $id = (int) $line['id'];
-            echo '<label class="rp-check"><input type="checkbox" name="lines_ids[]" value="' . $id . '"><span>' . self::e(self::lineName($line)) . '</span></label>';
+            echo '<label class="rp-check"><input type="checkbox" name="lines_ids[]" value="' . $id . '"' . ($checked ? ' checked' : '') . '><span>' . self::e(self::lineName($line)) . '</span></label>';
             if ($accessories) {
                 foreach (Store::decode($line['accessories_json'] ?? null) as $index => $accessory) {
                     if (!is_array($accessory) || !is_numeric($index)) {
@@ -721,7 +721,7 @@ final class BookingView
 
     private static function actionStart(array $booking, string $action, string $label, string $description = ''): void
     {
-        echo '<details class="rp-subform"><summary>' . self::e($label) . '</summary>';
+        echo '<details class="rp-subform"><summary class="btn btn-outline-primary btn-sm">' . self::e($label) . '</summary>';
         if ($description !== '') {
             echo '<p>' . self::e($description) . '</p>';
         }
@@ -741,15 +741,16 @@ final class BookingView
         if (in_array($state, ['completed', 'rejected', 'cancelled'], true)) {
             return;
         }
-        echo '<section class="rp-panel"><h2>' . self::e(__('Próximas ações', 'reservaplus')) . '</h2>';
+        echo '<section class="rp-panel"><h2>' . self::e(__('Próximas ações', 'reservaplus')) . '</h2><div class="rp-detail-action-grid">';
         $approveLines = self::actionLines($booking, 'approve', ['requested']);
         if ($approveLines !== [] && $state === 'submitted') {
-            foreach (['approve' => __('Aprovar recursos', 'reservaplus'), 'reject' => __('Rejeitar solicitação', 'reservaplus')] as $action => $label) {
-                self::actionStart($booking, $action, $label);
-                self::chooseLines($approveLines);
-                self::textarea('reason', __('Justificativa', 'reservaplus'), '', $action === 'reject');
-                self::actionEnd($label);
-            }
+            self::formStart('approve', (int) $booking['id'], (int) $booking['revision']);
+            foreach ($approveLines as $line) { self::hidden('lines_ids[]', (int) $line['id']); }
+            echo '<button type="submit" class="btn btn-success btn-sm" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados nesta solicitação?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar recursos', 'reservaplus')) . ' (' . count($approveLines) . ')</button></form>';
+            self::actionStart($booking, 'reject', __('Rejeitar solicitação', 'reservaplus'));
+            self::chooseLines($approveLines, false, true);
+            self::textarea('reason', __('Justificativa da rejeição', 'reservaplus'), '', true);
+            self::actionEnd(__('Confirmar rejeição', 'reservaplus'));
         }
         if (in_array($state, ['approved', 'ready'], true) && Access::booking($booking, 'issue')) {
             self::actionStart($booking, 'issue', __('Registrar entrega / início de uso', 'reservaplus'), __('Confira a identidade, os recursos e os acessórios. Os termos obrigatórios devem estar aceitos antes da entrega.', 'reservaplus'));
@@ -791,7 +792,7 @@ final class BookingView
             self::textarea('reason', __('Motivo do cancelamento', 'reservaplus'), '', true);
             self::actionEnd(__('Cancelar solicitação', 'reservaplus'));
         }
-        echo '</section>';
+        echo '</div></section>';
     }
 
     private static function renderHistory(array $booking): void

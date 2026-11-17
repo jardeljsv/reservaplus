@@ -45,3 +45,10 @@
 .rp-table td .rp-quick-actions-inline form { margin: 0; }
 .rp-table td .rp-quick-actions-inline .rp-quick-reject[open] { flex-basis: 100%; }
 .rp-table td .rp-quick-actions-inline .rp-quick-reject[open] form { margin-top: 8px; }
+.rp-detail-action-grid { display:flex; flex-wrap:wrap; align-items:flex-start; gap:10px; }
+.rp-detail-action-grid>form { margin:0; }
+.rp-detail-action-grid>.rp-subform { margin:0; padding:0; border:0; }
+.rp-detail-action-grid>.rp-subform>summary { display:inline-flex; align-items:center; margin:0; list-style:none; }
+.rp-detail-action-grid>.rp-subform>summary::-webkit-details-marker { display:none; }
+.rp-detail-action-grid>.rp-subform[open] { flex-basis:100%; padding:12px; border:1px solid var(--rp-line,#dce5eb); border-radius:8px; }
+.rp-detail-action-grid>.rp-subform[open]>summary { margin-bottom:12px; }
