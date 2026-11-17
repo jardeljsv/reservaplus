@@ -133,6 +133,19 @@ final class Schema
         return array_values($columns) === ['agreements_id', 'users_id', 'role'];
     }
 
+    /** Explicit CLI-only migration entry; does not touch other plugin tables. */
+    public static function migrateRoleAcceptancesOnly(): bool
+    {
+        global $DB;
+        $table = 'glpi_plugin_reservaplus_acceptances';
+        if (!$DB->tableExists($table)) { return false; }
+        if (!$DB->fieldExists($table, 'role')
+            && !$DB->doQuery("ALTER TABLE `$table` ADD COLUMN `role` VARCHAR(24) NOT NULL DEFAULT 'legacy' AFTER `users_id`")) {
+            return false;
+        }
+        return self::migrateAcceptanceSignerIndex();
+    }
+
     private static function migrateAcceptanceSignerIndex(): bool
     {
         global $DB;
