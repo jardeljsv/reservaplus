@@ -1,0 +1,1104 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI Plugin Reserva Plus 0.3.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 12:00-0400\n"
+"PO-Revision-Date: 2026-07-05\n"
+"Last-Translator: \n"
+"Language-Team: pt_BR\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, php-format
+msgid "%1$s — cabe %2$d pessoa(s), você pediu %3$d"
+msgstr "%1$s — cabe %2$d pessoa(s), você pediu %3$d"
+
+#, php-format
+msgid "%d reserva criada."
+msgid_plural "%d reservas criadas."
+msgstr[0] "%d reserva criada."
+msgstr[1] "%d reservas criadas."
+
+#, php-format
+msgid "%d reserva da série cancelada."
+msgid_plural "%d reservas da série canceladas."
+msgstr[0] "%d reserva da série cancelada."
+msgstr[1] "%d reservas da série canceladas."
+
+
+#, php-format
+msgid "%s já está ocupado neste horário."
+msgstr "%s já está ocupado neste horário."
+
+#, php-format
+msgid "%s — falha ao registrar"
+msgstr "%s — falha ao registrar"
+
+#, php-format
+msgid "%s — já ocupado"
+msgstr "%s — já ocupado"
+
+#, php-format
+msgid "%s — sem permissão"
+msgstr "%s — sem permissão"
+
+msgid "(marque um ou vários)"
+msgstr "(marque um ou vários)"
+
+msgid "Acessível"
+msgstr "Acessível"
+
+msgid "Acima da capacidade:"
+msgstr "Acima da capacidade:"
+
+msgid "Ainda não há regras."
+msgstr "Ainda não há regras."
+
+msgid "Ajustar as configurações gerais do plugin."
+msgstr "Ajustar as configurações gerais do plugin."
+
+msgid "Antecedência mínima em minutos"
+msgstr "Antecedência mínima em minutos"
+
+msgid "Apagar"
+msgstr "Apagar"
+
+msgid "Apagar permanentemente?"
+msgstr "Apagar permanentemente?"
+
+msgid "Após N ocorrências"
+msgstr "Após N ocorrências"
+
+msgid "Ar-condicionado"
+msgstr "Ar-condicionado"
+
+msgid "As reservas criadas aparecerão aqui."
+msgstr "As reservas criadas aparecerão aqui."
+
+msgid "As reservas nativas do GLPI também ficam visíveis no calendário."
+msgstr "As reservas nativas do GLPI também ficam visíveis no calendário."
+
+msgid "Ativa"
+msgstr "Ativa"
+
+msgid "Ativar bloqueio imediatamente"
+msgstr "Ativar bloqueio imediatamente"
+
+msgid "Ativo"
+msgstr "Ativo"
+
+msgid "Atualizar"
+msgstr "Atualizar"
+
+msgid "Até"
+msgstr "Até"
+
+msgid "Avisar, mas permitir reservar"
+msgstr "Avisar, mas permitir reservar"
+
+msgid "Ações"
+msgstr "Ações"
+
+msgid "Bloqueado"
+msgstr "Bloqueado"
+
+msgid "Bloquear a reserva acima da capacidade"
+msgstr "Bloquear a reserva acima da capacidade"
+
+msgid "Bloquear horários por item ou globais."
+msgstr "Bloquear horários por item ou globais."
+
+msgid "Bloqueie janelas de manutenção ou períodos indisponíveis no calendário."
+msgstr "Bloqueie janelas de manutenção ou períodos indisponíveis no calendário."
+
+msgid "Bloqueie períodos globalmente ou para itens reserváveis específicos."
+msgstr "Bloqueie períodos globalmente ou para itens reserváveis específicos."
+
+msgid "Bloqueio apagado com sucesso."
+msgstr "Bloqueio apagado com sucesso."
+
+msgid "Bloqueio de horário"
+msgstr "Bloqueio de horário"
+
+msgid "Bloqueio de horário criado com sucesso."
+msgstr "Bloqueio de horário criado com sucesso."
+
+msgid "Bloqueio de horário do Reserva Plus"
+msgstr "Bloqueio de horário do Reserva Plus"
+
+msgid "Bloqueios"
+msgstr "Bloqueios"
+
+msgid "Bloqueios de horário"
+msgstr "Bloqueios de horário"
+
+msgid "Bloqueios de horário ativos"
+msgstr "Bloqueios de horário ativos"
+
+msgid "Bloqueios de horário do Reserva Plus"
+msgstr "Bloqueios de horário do Reserva Plus"
+
+msgid "Cadastre itens reserváveis no GLPI para configurar capacidade, recursos e acesso."
+msgstr "Cadastre itens reserváveis no GLPI para configurar capacidade, recursos e acesso."
+
+msgid "Cadastre itens reserváveis no GLPI para configurar restrições de acesso."
+msgstr "Cadastre itens reserváveis no GLPI para configurar restrições de acesso."
+
+msgid "Calendário"
+msgstr "Calendário"
+
+msgid "Calendário do Reserva Plus"
+msgstr "Calendário do Reserva Plus"
+
+msgid "Cancelada"
+msgstr "Cancelada"
+
+msgid "Canceladas"
+msgstr "Canceladas"
+
+msgid "Cancelar"
+msgstr "Cancelar"
+
+msgid "Cancelar TODA a série (ocorrências futuras)?"
+msgstr "Cancelar TODA a série (ocorrências futuras)?"
+
+msgid "Cancelar esta reserva?"
+msgstr "Cancelar esta reserva?"
+
+msgid "Cancelar série"
+msgstr "Cancelar série"
+
+msgid "Capacidade máxima"
+msgstr "Capacidade máxima"
+
+msgid "Capacidade máxima da sala"
+msgstr "Capacidade máxima da sala"
+
+#, php-format
+msgid "Capacidade máxima: %1$d pessoa(s), você pediu %2$d."
+msgstr "Capacidade máxima: %1$d pessoa(s), você pediu %2$d."
+
+msgid "Capacidade, recursos e quem pode reservar cada sala."
+msgstr "Capacidade, recursos e quem pode reservar cada sala."
+
+msgid "Central"
+msgstr "Central"
+
+msgid "Central de reservas"
+msgstr "Central de reservas"
+
+msgid "Comentário"
+msgstr "Comentário"
+
+msgid "Comportamento padrão para recorrência, horários e notificações."
+msgstr "Comportamento padrão para recorrência, horários e notificações."
+
+msgid "Configuração"
+msgstr "Configuração"
+
+msgid "Configuração da sala — Reserva Plus"
+msgstr "Configuração da sala — Reserva Plus"
+
+msgid "Configuração do Reserva Plus"
+msgstr "Configuração do Reserva Plus"
+
+msgid "Configuração do Reserva Plus salva."
+msgstr "Configuração do Reserva Plus salva."
+
+msgid "Confirmada"
+msgstr "Confirmada"
+
+msgid "Copa / café"
+msgstr "Copa / café"
+
+msgid "Criada"
+msgstr "Criada"
+
+msgid "Criar"
+msgstr "Criar"
+
+msgid "Criar reserva"
+msgstr "Criar reserva"
+
+#, php-format
+msgid "Criar reserva em %s"
+msgstr "Criar reserva em %s"
+
+msgid "Criar, ver e gerenciar reservas de itens."
+msgstr "Criar, ver e gerenciar reservas de itens."
+
+msgid "Crie um bloqueio para indisponibilizar períodos no calendário."
+msgstr "Crie um bloqueio para indisponibilizar períodos no calendário."
+
+msgid "Crie uma regra de agendamento para a entidade atual."
+msgstr "Crie uma regra de agendamento para a entidade atual."
+
+msgid "De"
+msgstr "De"
+
+msgid "Defina o que este perfil pode fazer no Reserva Plus."
+msgstr "Defina o que este perfil pode fazer no Reserva Plus."
+
+msgid "Definir regras de agendamento: duração e antecedência."
+msgstr "Definir regras de agendamento: duração e antecedência."
+
+msgid "Dia"
+msgstr "Dia"
+
+msgid "Dia todo"
+msgstr "Dia todo"
+
+msgid "Diariamente"
+msgstr "Diariamente"
+
+msgid "Dias da semana"
+msgstr "Dias da semana"
+
+msgid "Dias máximos de antecedência"
+msgstr "Dias máximos de antecedência"
+
+msgid "Disponível agora"
+msgstr "Disponível agora"
+
+msgid "Duplicar"
+msgstr "Duplicar"
+
+msgid "Duplicar reserva"
+msgstr "Duplicar reserva"
+
+msgid "Duração"
+msgstr "Duração"
+
+msgid "Duração máxima em minutos"
+msgstr "Duração máxima em minutos"
+
+msgid "Duração padrão em minutos"
+msgstr "Duração padrão em minutos"
+
+msgid "Duração rápida:"
+msgstr "Duração rápida:"
+
+msgid "E-mail próprio do plugin ao solicitante (redundante: a notificação nativa \"Nova reserva\" do GLPI já envia)"
+msgstr "E-mail próprio do plugin ao solicitante (redundante: a notificação nativa \"Nova reserva\" do GLPI já envia)"
+
+msgid "Editar"
+msgstr "Editar"
+
+msgid "Editar reserva"
+msgstr "Editar reserva"
+
+msgid "Editar reserva do Reserva Plus"
+msgstr "Editar reserva do Reserva Plus"
+
+msgid "Em branco = sem limite. O limite é conferido contra a quantidade de pessoas da reserva."
+msgstr "Em branco = sem limite. O limite é conferido contra a quantidade de pessoas da reserva."
+
+msgid "Em uma data"
+msgstr "Em uma data"
+
+msgid "Esta reserva faz parte de uma série. A alteração vale só para esta ocorrência."
+msgstr "Esta reserva faz parte de uma série. A alteração vale só para esta ocorrência."
+
+msgid "Este mês"
+msgstr "Este mês"
+
+msgid "Eu mesmo"
+msgstr "Eu mesmo"
+
+msgid "Ex: Manutenção preventiva, feriado..."
+msgstr "Ex: Manutenção preventiva, feriado..."
+
+msgid "Excluir"
+msgstr "Excluir"
+
+msgid "Exportar PDF"
+msgstr "Exportar PDF"
+
+msgid "Fechar"
+msgstr "Fechar"
+
+msgid "Filtrar"
+msgstr "Filtrar"
+
+msgid "Filtrar categoria…"
+msgstr "Filtrar categoria…"
+
+msgid "Fim"
+msgstr "Fim"
+
+msgid "Fim do horário comercial"
+msgstr "Fim do horário comercial"
+
+#, php-format
+msgid "Gerado em %1$s por %2$s"
+msgstr "Gerado em %1$s por %2$s"
+
+msgid "Gerencie e acompanhe as reservas de itens."
+msgstr "Gerencie e acompanhe as reservas de itens."
+
+msgid "Global (bloquear todos os itens)"
+msgstr "Global (bloquear todos os itens)"
+
+msgid "Global (todos os itens)"
+msgstr "Global (todos os itens)"
+
+msgid "Grupo por sala — Reserva Plus"
+msgstr "Grupo por sala — Reserva Plus"
+
+msgid "Grupos com acesso"
+msgstr "Grupos com acesso"
+
+msgid "Grupos da sala atualizados."
+msgstr "Grupos da sala atualizados."
+
+msgid "Grupos por sala"
+msgstr "Grupos por sala"
+
+msgid "Grupos por sala — Reserva Plus"
+msgstr "Grupos por sala — Reserva Plus"
+
+msgid "Hoje"
+msgstr "Hoje"
+
+msgid "Horas"
+msgstr "Horas"
+
+msgid "Horas reservadas"
+msgstr "Horas reservadas"
+
+msgid "Horários livres"
+msgstr "Horários livres"
+
+msgid "ID do perfil"
+msgstr "ID do perfil"
+
+msgid "Inativo"
+msgstr "Inativo"
+
+msgid "Informe a quantidade de pessoas da reserva."
+msgstr "Informe a quantidade de pessoas da reserva."
+
+msgid "Informe um período válido."
+msgstr "Informe um período válido."
+
+msgid "Início"
+msgstr "Início"
+
+msgid "Início do horário comercial"
+msgstr "Início do horário comercial"
+
+msgid "Item"
+msgstr "Item"
+
+msgid "Item reservável"
+msgstr "Item reservável"
+
+msgid "Itens disponíveis"
+msgstr "Itens disponíveis"
+
+msgid "Itens livres para reservar na próxima hora."
+msgstr "Itens livres para reservar na próxima hora."
+
+msgid "Itens mais reservados no período"
+msgstr "Itens mais reservados no período"
+
+msgid "Itens reserváveis"
+msgstr "Itens reserváveis"
+
+msgid "Ler"
+msgstr "Ler"
+
+#, php-format
+msgid "Limite de %d reservas por envio atingido — reduza o período/itens."
+msgstr "Limite de %d reservas por envio atingido — reduza o período/itens."
+
+msgid "Limpar"
+msgstr "Limpar"
+
+msgid "Limpar filtros"
+msgstr "Limpar filtros"
+
+msgid "Livre"
+msgstr "Livre"
+
+msgid "Manhã"
+msgstr "Manhã"
+
+msgid "Mensalmente (mesmo dia do mês)"
+msgstr "Mensalmente (mesmo dia do mês)"
+
+msgid "Minhas"
+msgstr "Minhas"
+
+msgid "Minhas reservas ativas"
+msgstr "Minhas reservas ativas"
+
+msgid "Motivo"
+msgstr "Motivo"
+
+msgid "Motivo, sala, observações..."
+msgstr "Motivo, sala, observações..."
+
+msgid "Mude a sala, o horário ou a quantidade de pessoas desta reserva."
+msgstr "Mude a sala, o horário ou a quantidade de pessoas desta reserva."
+
+msgid "Mês"
+msgstr "Mês"
+
+msgid "Nada livre agora."
+msgstr "Nada livre agora."
+
+msgid "Nas reservas ativas"
+msgstr "Nas reservas ativas"
+
+msgid "Nenhum bloqueio de horário cadastrado."
+msgstr "Nenhum bloqueio de horário cadastrado."
+
+msgid "Nenhum grupo de usuários cadastrado no GLPI."
+msgstr "Nenhum grupo de usuários cadastrado no GLPI."
+
+msgid "Nenhuma reserva criada."
+msgstr "Nenhuma reserva criada."
+
+msgid "Nenhuma reserva encontrada."
+msgstr "Nenhuma reserva encontrada."
+
+msgid "Nenhuma reserva futura da série pôde ser cancelada."
+msgstr "Nenhuma reserva futura da série pôde ser cancelada."
+
+msgid "Nenhuma reserva no período."
+msgstr "Nenhuma reserva no período."
+
+msgid "Nenhuma reserva para hoje."
+msgstr "Nenhuma reserva para hoje."
+
+msgid "Nenhuma reserva registrada."
+msgstr "Nenhuma reserva registrada."
+
+msgid "Nenhuma sala atende a esses critérios."
+msgstr "Nenhuma sala atende a esses critérios."
+
+msgid "Nenhuma sala comporta essa quantidade de pessoas."
+msgstr "Nenhuma sala comporta essa quantidade de pessoas."
+
+msgid "Nenhuma sala reservável cadastrada."
+msgstr "Nenhuma sala reservável cadastrada."
+
+msgid "No período"
+msgstr "No período"
+
+msgid "Nome"
+msgstr "Nome"
+
+msgid "Nova regra"
+msgstr "Nova regra"
+
+msgid "Nova regra do Reserva Plus"
+msgstr "Nova regra do Reserva Plus"
+
+msgid "Nova reserva"
+msgstr "Nova reserva"
+
+msgid "Nova reserva do Reserva Plus"
+msgstr "Nova reserva do Reserva Plus"
+
+msgid "Novo bloqueio"
+msgstr "Novo bloqueio"
+
+msgid "Novo bloqueio de horário"
+msgstr "Novo bloqueio de horário"
+
+msgid "Novo bloqueio de horário do Reserva Plus"
+msgstr "Novo bloqueio de horário do Reserva Plus"
+
+msgid "Não"
+msgstr "Não"
+
+msgid "Não foi possível alterar a reserva."
+msgstr "Não foi possível alterar a reserva."
+
+msgid "Não foi possível cancelar esta reserva."
+msgstr "Não foi possível cancelar esta reserva."
+
+msgid "Não foi possível gerar as datas da recorrência."
+msgstr "Não foi possível gerar as datas da recorrência."
+
+msgid "Não repete"
+msgstr "Não repete"
+
+msgid "Não reservados:"
+msgstr "Não reservados:"
+
+#, php-format
+msgid "O Reserva Plus requer GLPI >= %1$s e < %2$s."
+msgstr "O Reserva Plus requer GLPI >= %1$s e < %2$s."
+
+msgid "O Reserva Plus requer PHP 8.2 ou superior e está preparado para PHP 8.5."
+msgstr "O Reserva Plus requer PHP 8.2 ou superior e está preparado para PHP 8.5."
+
+msgid "O dia está livre por enquanto."
+msgstr "O dia está livre por enquanto."
+
+msgid "Ocorrências"
+msgstr "Ocorrências"
+
+msgid "Outros"
+msgstr "Outros"
+
+msgid "Painel"
+msgstr "Painel"
+
+msgid "Perfil não encontrado."
+msgstr "Perfil não encontrado."
+
+msgid "Permissões"
+msgstr "Permissões"
+
+msgid "Permissões do Reserva Plus atualizadas com sucesso."
+msgstr "Permissões do Reserva Plus atualizadas com sucesso."
+
+msgid "Permitir consulta de reservas de terceiros (somente leitura)"
+msgstr "Permitir consulta de reservas de terceiros (somente leitura)"
+
+msgid "Permitir reservas recorrentes"
+msgstr "Permitir reservas recorrentes"
+
+msgid "Período"
+msgstr "Período"
+
+msgid "Período anterior"
+msgstr "Período anterior"
+
+msgid "Período de bloqueio inválido."
+msgstr "Período de bloqueio inválido."
+
+msgid "Pessoa"
+msgstr "Pessoa"
+
+msgid "Pessoas"
+msgstr "Pessoas"
+
+#, php-format
+msgid "Pessoas: %d"
+msgstr "Pessoas: %d"
+
+msgid "Projetor"
+msgstr "Projetor"
+
+msgid "Próximo período"
+msgstr "Próximo período"
+
+msgid "Pública"
+msgstr "Pública"
+
+msgid "Quadro branco"
+msgstr "Quadro branco"
+
+msgid "Quantidade de pessoas"
+msgstr "Quantidade de pessoas"
+
+msgid "Recorrência"
+msgstr "Recorrência"
+
+msgid "Recursos da sala"
+msgstr "Recursos da sala"
+
+#, php-format
+msgid "Regra \"%s\": duração máxima é %d minutos (solicitado: %d min)."
+msgstr "Regra \"%s\": duração máxima é %d minutos (solicitado: %d min)."
+
+#, php-format
+msgid "Regra \"%s\": não é possível reservar com mais de %d dia(s) de antecedência."
+msgstr "Regra \"%s\": não é possível reservar com mais de %d dia(s) de antecedência."
+
+#, php-format
+msgid "Regra \"%s\": reserva deve ser feita com %d minuto(s) de antecedência."
+msgstr "Regra \"%s\": reserva deve ser feita com %d minuto(s) de antecedência."
+
+msgid "Regra criada com sucesso."
+msgstr "Regra criada com sucesso."
+
+msgid "Regra do Reserva Plus"
+msgstr "Regra do Reserva Plus"
+
+msgid "Regras"
+msgstr "Regras"
+
+msgid "Regras de agendamento por perfil, entidade e tipo de item."
+msgstr "Regras de agendamento por perfil, entidade e tipo de item."
+
+msgid "Regras do Reserva Plus"
+msgstr "Regras do Reserva Plus"
+
+msgid "Relatório de reservas"
+msgstr "Relatório de reservas"
+
+msgid "Relatório do Reserva Plus"
+msgstr "Relatório do Reserva Plus"
+
+msgid "Relatórios"
+msgstr "Relatórios"
+
+msgid "Relatórios do Reserva Plus"
+msgstr "Relatórios do Reserva Plus"
+
+msgid "Repetir"
+msgstr "Repetir"
+
+msgid "Reserva Plus"
+msgstr "Reserva Plus"
+
+msgid "Reserva alterada"
+msgstr "Reserva alterada"
+
+msgid "Reserva alterada."
+msgstr "Reserva alterada."
+
+msgid "Reserva apagada com sucesso."
+msgstr "Reserva apagada com sucesso."
+
+msgid "Reserva ativa"
+msgstr "Reserva ativa"
+
+msgid "Reserva cancelada"
+msgstr "Reserva cancelada"
+
+msgid "Reserva cancelada com sucesso."
+msgstr "Reserva cancelada com sucesso."
+
+msgid "Reserva confirmada"
+msgstr "Reserva confirmada"
+
+msgid "Reserva confirmada (GLPI)"
+msgstr "Reserva confirmada (GLPI)"
+
+msgid "Reserva do Reserva Plus"
+msgstr "Reserva do Reserva Plus"
+
+msgid "Reserva rápida"
+msgstr "Reserva rápida"
+
+msgid "Reservado"
+msgstr "Reservado"
+
+msgid "Reservado para"
+msgstr "Reservado para"
+
+msgid "Reservar"
+msgstr "Reservar"
+
+msgid "Reservar para"
+msgstr "Reservar para"
+
+msgid "Reservas"
+msgstr "Reservas"
+
+msgid "Reservas ativas agora"
+msgstr "Reservas ativas agora"
+
+msgid "Reservas de hoje"
+msgstr "Reservas de hoje"
+
+msgid "Reservas do Reserva Plus"
+msgstr "Reservas do Reserva Plus"
+
+msgid "Reservas do dia"
+msgstr "Reservas do dia"
+
+#, php-format
+msgid "Reservas do período (%d)"
+msgstr "Reservas do período (%d)"
+
+msgid "Reservas nativas do GLPI ativas no dia atual."
+msgstr "Reservas nativas do GLPI ativas no dia atual."
+
+msgid "Reservas recentes"
+msgstr "Reservas recentes"
+
+msgid "Reservas registradas no mês"
+msgstr "Reservas registradas no mês"
+
+#, php-format
+msgid "Reservas só são permitidas entre %1$s e %2$s."
+msgstr "Reservas só são permitidas entre %1$s e %2$s."
+
+msgid "Reserve itens disponíveis, visualize no calendário e acompanhe suas reservas."
+msgstr "Reserve itens disponíveis, visualize no calendário e acompanhe suas reservas."
+
+msgid "Restrita"
+msgstr "Restrita"
+
+msgid "Sala atualizada."
+msgstr "Sala atualizada."
+
+msgid "Salas"
+msgstr "Salas"
+
+msgid "Salas sem grupo ficam visíveis a todos. Salas com grupo(s) só aparecem para membros desses grupos."
+msgstr "Salas sem grupo ficam visíveis a todos. Salas com grupo(s) só aparecem para membros desses grupos."
+
+msgid "Salas — Reserva Plus"
+msgstr "Salas — Reserva Plus"
+
+msgid "Salvar"
+msgstr "Salvar"
+
+msgid "Salvar alterações"
+msgstr "Salvar alterações"
+
+msgid "Salvar bloqueio"
+msgstr "Salvar bloqueio"
+
+msgid "Salvar permissões"
+msgstr "Salvar permissões"
+
+msgid "Segredo do webhook (HMAC-SHA256)"
+msgstr "Segredo do webhook (HMAC-SHA256)"
+
+msgid "Selecionar"
+msgstr "Selecionar"
+
+msgid "Selecione ao menos um item e um período válido."
+msgstr "Selecione ao menos um item e um período válido."
+
+msgid "Selecione exatamente uma sala ao editar a reserva."
+msgstr "Selecione exatamente uma sala ao editar a reserva."
+
+msgid "Selecione os itens e configure o período da reserva."
+msgstr "Selecione os itens e configure o período da reserva."
+
+msgid "Selecione um dia no calendário."
+msgstr "Selecione um dia no calendário."
+
+msgid "Sem permissão para apagar este bloqueio."
+msgstr "Sem permissão para apagar este bloqueio."
+
+msgid "Sem seleção = acesso público."
+msgstr "Sem seleção = acesso público."
+
+msgid "Semana"
+msgstr "Semana"
+
+msgid "Semanalmente"
+msgstr "Semanalmente"
+
+msgid "Sim"
+msgstr "Sim"
+
+msgid "Solicitante"
+msgstr "Solicitante"
+
+msgid "Som / microfone"
+msgstr "Som / microfone"
+
+msgid "Status"
+msgstr "Status"
+
+#, php-format
+msgid "Sua reserva de %1$s foi alterada de %2$s para %3$s."
+msgstr "Sua reserva de %1$s foi alterada de %2$s para %3$s."
+
+#, php-format
+msgid "Sua reserva de %1$s foi alterada para %2$s."
+msgstr "Sua reserva de %1$s foi alterada para %2$s."
+
+#, php-format
+msgid "Sua reserva de %s foi confirmada para %s."
+msgstr "Sua reserva de %s foi confirmada para %s."
+
+#, php-format
+msgid "Sua reserva de %s para %s foi cancelada."
+msgstr "Sua reserva de %s para %s foi cancelada."
+
+msgid "Só esta ocorrência foi alterada — as demais da série seguem no horário original."
+msgstr "Só esta ocorrência foi alterada — as demais da série seguem no horário original."
+
+msgid "Só informativo (sem validação)"
+msgstr "Só informativo (sem validação)"
+
+msgid "TV / Monitor"
+msgstr "TV / Monitor"
+
+msgid "Tarde"
+msgstr "Tarde"
+
+msgid "Tem certeza que deseja apagar este bloqueio?"
+msgstr "Tem certeza que deseja apagar este bloqueio?"
+
+msgid "Tempo total do período"
+msgstr "Tempo total do período"
+
+msgid "Terminar"
+msgstr "Terminar"
+
+msgid "Tipo do item"
+msgstr "Tipo do item"
+
+msgid "Todas"
+msgstr "Todas"
+
+msgid "Todos"
+msgstr "Todos"
+
+msgid "Todos os itens estão reservados ou bloqueados na próxima hora."
+msgstr "Todos os itens estão reservados ou bloqueados na próxima hora."
+
+msgid "Trocar de sala"
+msgstr "Trocar de sala"
+
+msgid "URL do webhook (reserva criada/cancelada)"
+msgstr "URL do webhook (reserva criada/cancelada)"
+
+msgid "Uso por período, pessoas e itens mais reservados — pronto para imprimir ou salvar em PDF."
+msgstr "Uso por período, pessoas e itens mais reservados — pronto para imprimir ou salvar em PDF."
+
+msgid "Usuário selecionado para a reserva é inválido."
+msgstr "Usuário selecionado para a reserva é inválido."
+
+msgid "Ver calendário"
+msgstr "Ver calendário"
+
+msgid "Ver todas"
+msgstr "Ver todas"
+
+msgid "Videoconferência"
+msgstr "Videoconferência"
+
+msgid "Visualizar relatórios e métricas de uso."
+msgstr "Visualizar relatórios e métricas de uso."
+
+msgid "Visualize e gerencie reservas. Clique em um dia para reservar rapidamente."
+msgstr "Visualize e gerencie reservas. Clique em um dia para reservar rapidamente."
+
+msgid "Você não pode editar esta reserva."
+msgstr "Você não pode editar esta reserva."
+
+msgid "Você não tem acesso a esta sala."
+msgstr "Você não tem acesso a esta sala."
+
+msgid "Você só pode apagar reservas criadas por você."
+msgstr "Você só pode apagar reservas criadas por você."
+
+msgid "Voltar"
+msgstr "Voltar"
+
+msgid "clique para selecionar"
+msgstr "clique para selecionar"
+
+msgid "configurado — deixe em branco para manter"
+msgstr "configurado — deixe em branco para manter"
+
+#, php-format
+msgid "em %d datas."
+msgstr "em %d datas."
+
+msgid "escolha uma sala"
+msgstr "escolha uma sala"
+
+msgid "item reservável"
+msgstr "item reservável"
+
+msgid "o período solicitado"
+msgstr "o período solicitado"
+
+msgid "opcional"
+msgstr "opcional"
+
+msgid "sem limite"
+msgstr "sem limite"
+
+msgid "só salas que cabem"
+msgstr "só salas que cabem"
+
+msgid "Últimas reservas registradas no sistema."
+msgstr "Últimas reservas registradas no sistema."
+
+# --- v0.6.0: e-mail HTML, painel de procura, direito de gerenciar todas ---
+
+#, php-format
+msgid "%1$s · %2$s"
+msgstr "%1$s · %2$s"
+
+msgid "(marque um ou vários — em ordem alfabética)"
+msgstr "(marque um ou vários — em ordem alfabética)"
+
+msgid "Anote o novo horário na sua agenda."
+msgstr "Anote o novo horário na sua agenda."
+
+msgid "Anterior"
+msgstr "Anterior"
+
+msgid "Datas"
+msgstr "Datas"
+
+msgid "Este é o único e-mail da série — não enviamos uma mensagem por ocorrência."
+msgstr "Este é o único e-mail da série — não enviamos uma mensagem por ocorrência."
+
+msgid "Gerenciar todas"
+msgstr "Gerenciar todas"
+
+msgid "Início (mais próximo)"
+msgstr "Início (mais próximo)"
+
+msgid "Ir"
+msgstr "Ir"
+
+msgid "Ir para a data"
+msgstr "Ir para a data"
+
+msgid "Item (A → Z)"
+msgstr "Item (A → Z)"
+
+msgid "Item (Z → A)"
+msgstr "Item (Z → A)"
+
+msgid "Mais recentes"
+msgstr "Mais recentes"
+
+msgid "Minhas reservas"
+msgstr "Minhas reservas"
+
+#, php-format
+msgid "Nada corresponde a \"%s\". Tente outro termo ou limpe os filtros."
+msgstr "Nada corresponde a \"%s\". Tente outro termo ou limpe os filtros."
+
+msgid "Ninguém com esse nome."
+msgstr "Ninguém com esse nome."
+
+msgid "Novo horário da sua reserva"
+msgstr "Novo horário da sua reserva"
+
+msgid "O horário voltou a ficar livre para outras pessoas."
+msgstr "O horário voltou a ficar livre para outras pessoas."
+
+msgid "Ordenar por"
+msgstr "Ordenar por"
+
+msgid "Pessoa (A → Z)"
+msgstr "Pessoa (A → Z)"
+
+msgid "Precisa mudar alguma coisa? Edite ou cancele a reserva em \"Minhas reservas\"."
+msgstr "Precisa mudar alguma coisa? Edite ou cancele a reserva em \"Minhas reservas\"."
+
+msgid "Procurar"
+msgstr "Procurar"
+
+msgid "Procurar pessoa"
+msgstr "Procurar pessoa"
+
+msgid "Procurar pessoa…"
+msgstr "Procurar pessoa…"
+
+msgid "Procurar sala"
+msgstr "Procurar sala"
+
+msgid "Procurar sala pelo nome…"
+msgstr "Procurar sala pelo nome…"
+
+msgid "Procurar sala…"
+msgstr "Procurar sala…"
+
+msgid "Próximo"
+msgstr "Próximo"
+
+#, php-format
+msgid "Reserva alterada: %1$s — %2$s"
+msgstr "Reserva alterada: %1$s — %2$s"
+
+#, php-format
+msgid "Reserva cancelada: %1$s — %2$s"
+msgstr "Reserva cancelada: %1$s — %2$s"
+
+#, php-format
+msgid "Reserva confirmada: %1$s — %2$s"
+msgstr "Reserva confirmada: %1$s — %2$s"
+
+msgid "Reservas confirmadas"
+msgstr "Reservas confirmadas"
+
+msgid "Sem este direito o usuário só cancela/apaga as reservas dele."
+msgstr "Sem este direito o usuário só cancela/apaga as reservas dele."
+
+#, php-format
+msgid "Sua reserva de %s está confirmada. 🎉"
+msgstr "Sua reserva de %s está confirmada. 🎉"
+
+#, php-format
+msgid "Sua reserva de %s foi cancelada. ❌"
+msgstr "Sua reserva de %s foi cancelada. ❌"
+
+msgid "Sua reserva foi alterada. ✏️"
+msgstr "Sua reserva foi alterada. ✏️"
+
+msgid "Sua reserva foi cancelada"
+msgstr "Sua reserva foi cancelada"
+
+msgid "Suas reservas estão confirmadas"
+msgstr "Suas reservas estão confirmadas"
+
+msgid "Série de reservas"
+msgstr "Série de reservas"
+
+msgid "Tudo certo com a sua reserva"
+msgstr "Tudo certo com a sua reserva"
+
+#, php-format
+msgid "e mais %d ocorrência(s)."
+msgstr "e mais %d ocorrência(s)."
+
+msgid "sala, pessoa, comentário ou #id"
+msgstr "sala, pessoa, comentário ou #id"
+
+msgid "✅ Agora"
+msgstr "✅ Agora"
+
+msgid "👥 Pessoas"
+msgstr "👥 Pessoas"
+
+msgid "📅 Fazer nova reserva"
+msgstr "📅 Fazer nova reserva"
+
+msgid "📅 Ver minhas reservas"
+msgstr "📅 Ver minhas reservas"
+
+msgid "📍 Item"
+msgstr "📍 Item"
+
+msgid "📍 Itens"
+msgstr "📍 Itens"
+
+msgid "📝 Observações"
+msgstr "📝 Observações"
+
+msgid "🔁 Reservas criadas"
+msgstr "🔁 Reservas criadas"
+
+msgid "🕒 Antes"
+msgstr "🕒 Antes"
+
+msgid "🕒 Horário"
+msgstr "🕒 Horário"
+
+msgid "🕒 Período"
+msgstr "🕒 Período"
+
+msgid "🕒 Quando"
+msgstr "🕒 Quando"
+
+msgid "🙋 Para"
+msgstr "🙋 Para"
+
+#, php-format
+msgid "%d reserva foi confirmada. 🎉"
+msgid_plural "%d reservas foram confirmadas. 🎉"
+msgstr[0] "%d reserva foi confirmada. 🎉"
+msgstr[1] "%d reservas foram confirmadas. 🎉"
+
+#, php-format
+msgid "Reserva confirmada: %2$s (%1$d ocorrência)"
+msgid_plural "Reservas confirmadas: %2$s (%1$d ocorrências)"
+msgstr[0] "Reserva confirmada: %2$s (%1$d ocorrência)"
+msgstr[1] "Reservas confirmadas: %2$s (%1$d ocorrências)"

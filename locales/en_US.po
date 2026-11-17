@@ -1,0 +1,1104 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI Plugin Reserva Plus 0.3.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 12:00-0400\n"
+"PO-Revision-Date: 2026-07-05\n"
+"Last-Translator: \n"
+"Language-Team: en_US\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, php-format
+msgid "%1$s — cabe %2$d pessoa(s), você pediu %3$d"
+msgstr "%1$s — seats %2$d, you asked for %3$d"
+
+#, php-format
+msgid "%d reserva criada."
+msgid_plural "%d reservas criadas."
+msgstr[0] "%d reservation created."
+msgstr[1] "%d reservations created."
+
+#, php-format
+msgid "%d reserva da série cancelada."
+msgid_plural "%d reservas da série canceladas."
+msgstr[0] "%d reservation in the series cancelled."
+msgstr[1] "%d reservations in the series cancelled."
+
+
+#, php-format
+msgid "%s já está ocupado neste horário."
+msgstr "%s is already booked at this time."
+
+#, php-format
+msgid "%s — falha ao registrar"
+msgstr "%s — failed to register"
+
+#, php-format
+msgid "%s — já ocupado"
+msgstr "%s — already booked"
+
+#, php-format
+msgid "%s — sem permissão"
+msgstr "%s — no permission"
+
+msgid "(marque um ou vários)"
+msgstr "(check one or more)"
+
+msgid "Acessível"
+msgstr "Accessible"
+
+msgid "Acima da capacidade:"
+msgstr "Above capacity:"
+
+msgid "Ainda não há regras."
+msgstr "No rules yet."
+
+msgid "Ajustar as configurações gerais do plugin."
+msgstr "Adjust the plugin general settings."
+
+msgid "Antecedência mínima em minutos"
+msgstr "Minimum notice in minutes"
+
+msgid "Apagar"
+msgstr "Delete"
+
+msgid "Apagar permanentemente?"
+msgstr "Delete permanently?"
+
+msgid "Após N ocorrências"
+msgstr "After N occurrences"
+
+msgid "Ar-condicionado"
+msgstr "Air conditioning"
+
+msgid "As reservas criadas aparecerão aqui."
+msgstr "Created reservations will appear here."
+
+msgid "As reservas nativas do GLPI também ficam visíveis no calendário."
+msgstr "Native GLPI reservations are also visible on the calendar."
+
+msgid "Ativa"
+msgstr "Active"
+
+msgid "Ativar bloqueio imediatamente"
+msgstr "Activate block immediately"
+
+msgid "Ativo"
+msgstr "Active"
+
+msgid "Atualizar"
+msgstr "Update"
+
+msgid "Até"
+msgstr "To"
+
+msgid "Avisar, mas permitir reservar"
+msgstr "Warn, but allow booking"
+
+msgid "Ações"
+msgstr "Actions"
+
+msgid "Bloqueado"
+msgstr "Blocked"
+
+msgid "Bloquear a reserva acima da capacidade"
+msgstr "Block bookings above capacity"
+
+msgid "Bloquear horários por item ou globais."
+msgstr "Block time slots per item or globally."
+
+msgid "Bloqueie janelas de manutenção ou períodos indisponíveis no calendário."
+msgstr "Block maintenance windows or unavailable periods on the calendar."
+
+msgid "Bloqueie períodos globalmente ou para itens reserváveis específicos."
+msgstr "Block periods globally or for specific reservable items."
+
+msgid "Bloqueio apagado com sucesso."
+msgstr "Block deleted successfully."
+
+msgid "Bloqueio de horário"
+msgstr "Time block"
+
+msgid "Bloqueio de horário criado com sucesso."
+msgstr "Time block created successfully."
+
+msgid "Bloqueio de horário do Reserva Plus"
+msgstr "Reserva Plus time block"
+
+msgid "Bloqueios"
+msgstr "Blocks"
+
+msgid "Bloqueios de horário"
+msgstr "Time blocks"
+
+msgid "Bloqueios de horário ativos"
+msgstr "Active time blocks"
+
+msgid "Bloqueios de horário do Reserva Plus"
+msgstr "Reserva Plus time blocks"
+
+msgid "Cadastre itens reserváveis no GLPI para configurar capacidade, recursos e acesso."
+msgstr "Register reservable items in GLPI to set capacity, features and access."
+
+msgid "Cadastre itens reserváveis no GLPI para configurar restrições de acesso."
+msgstr "Register reservable items in GLPI to configure access restrictions."
+
+msgid "Calendário"
+msgstr "Calendar"
+
+msgid "Calendário do Reserva Plus"
+msgstr "Reserva Plus calendar"
+
+msgid "Cancelada"
+msgstr "Cancelled"
+
+msgid "Canceladas"
+msgstr "Cancelled"
+
+msgid "Cancelar"
+msgstr "Cancel"
+
+msgid "Cancelar TODA a série (ocorrências futuras)?"
+msgstr "Cancel the ENTIRE series (future occurrences)?"
+
+msgid "Cancelar esta reserva?"
+msgstr "Cancel this reservation?"
+
+msgid "Cancelar série"
+msgstr "Cancel series"
+
+msgid "Capacidade máxima"
+msgstr "Maximum capacity"
+
+msgid "Capacidade máxima da sala"
+msgstr "Room maximum capacity"
+
+#, php-format
+msgid "Capacidade máxima: %1$d pessoa(s), você pediu %2$d."
+msgstr "Maximum capacity: %1$d, you asked for %2$d."
+
+msgid "Capacidade, recursos e quem pode reservar cada sala."
+msgstr "Capacity, features and who can book each room."
+
+msgid "Central"
+msgstr "Home"
+
+msgid "Central de reservas"
+msgstr "Reservations home"
+
+msgid "Comentário"
+msgstr "Comment"
+
+msgid "Comportamento padrão para recorrência, horários e notificações."
+msgstr "Default behavior for recurrence, hours and notifications."
+
+msgid "Configuração"
+msgstr "Configuration"
+
+msgid "Configuração da sala — Reserva Plus"
+msgstr "Room settings — Reserva Plus"
+
+msgid "Configuração do Reserva Plus"
+msgstr "Reserva Plus configuration"
+
+msgid "Configuração do Reserva Plus salva."
+msgstr "Reserva Plus configuration saved."
+
+msgid "Confirmada"
+msgstr "Confirmed"
+
+msgid "Copa / café"
+msgstr "Kitchenette / coffee"
+
+msgid "Criada"
+msgstr "Created"
+
+msgid "Criar"
+msgstr "Create"
+
+msgid "Criar reserva"
+msgstr "Create reservation"
+
+#, php-format
+msgid "Criar reserva em %s"
+msgstr "Create reservation on %s"
+
+msgid "Criar, ver e gerenciar reservas de itens."
+msgstr "Create, view and manage item reservations."
+
+msgid "Crie um bloqueio para indisponibilizar períodos no calendário."
+msgstr "Create a block to make periods unavailable on the calendar."
+
+msgid "Crie uma regra de agendamento para a entidade atual."
+msgstr "Create a scheduling rule for the current entity."
+
+msgid "De"
+msgstr "From"
+
+msgid "Defina o que este perfil pode fazer no Reserva Plus."
+msgstr "Define what this profile can do in Reserva Plus."
+
+msgid "Definir regras de agendamento: duração e antecedência."
+msgstr "Define scheduling rules: duration and notice."
+
+msgid "Dia"
+msgstr "Day"
+
+msgid "Dia todo"
+msgstr "All day"
+
+msgid "Diariamente"
+msgstr "Daily"
+
+msgid "Dias da semana"
+msgstr "Days of the week"
+
+msgid "Dias máximos de antecedência"
+msgstr "Maximum days ahead"
+
+msgid "Disponível agora"
+msgstr "Available now"
+
+msgid "Duplicar"
+msgstr "Duplicate"
+
+msgid "Duplicar reserva"
+msgstr "Duplicate reservation"
+
+msgid "Duração"
+msgstr "Duration"
+
+msgid "Duração máxima em minutos"
+msgstr "Maximum duration in minutes"
+
+msgid "Duração padrão em minutos"
+msgstr "Default duration in minutes"
+
+msgid "Duração rápida:"
+msgstr "Quick duration:"
+
+msgid "E-mail próprio do plugin ao solicitante (redundante: a notificação nativa \"Nova reserva\" do GLPI já envia)"
+msgstr "Plugin's own e-mail to the requester (redundant: GLPI's native \"New reservation\" notification already sends one)"
+
+msgid "Editar"
+msgstr "Edit"
+
+msgid "Editar reserva"
+msgstr "Edit booking"
+
+msgid "Editar reserva do Reserva Plus"
+msgstr "Edit Reserva Plus booking"
+
+msgid "Em branco = sem limite. O limite é conferido contra a quantidade de pessoas da reserva."
+msgstr "Empty = no limit. The limit is checked against the number of people in the booking."
+
+msgid "Em uma data"
+msgstr "On a date"
+
+msgid "Esta reserva faz parte de uma série. A alteração vale só para esta ocorrência."
+msgstr "This booking is part of a series. The change applies to this occurrence only."
+
+msgid "Este mês"
+msgstr "This month"
+
+msgid "Eu mesmo"
+msgstr "Myself"
+
+msgid "Ex: Manutenção preventiva, feriado..."
+msgstr "E.g.: Preventive maintenance, holiday..."
+
+msgid "Excluir"
+msgstr "Delete"
+
+msgid "Exportar PDF"
+msgstr "Export PDF"
+
+msgid "Fechar"
+msgstr "Close"
+
+msgid "Filtrar"
+msgstr "Filter"
+
+msgid "Filtrar categoria…"
+msgstr "Filter category…"
+
+msgid "Fim"
+msgstr "End"
+
+msgid "Fim do horário comercial"
+msgstr "End of business hours"
+
+#, php-format
+msgid "Gerado em %1$s por %2$s"
+msgstr "Generated on %1$s by %2$s"
+
+msgid "Gerencie e acompanhe as reservas de itens."
+msgstr "Manage and track item reservations."
+
+msgid "Global (bloquear todos os itens)"
+msgstr "Global (block all items)"
+
+msgid "Global (todos os itens)"
+msgstr "Global (all items)"
+
+msgid "Grupo por sala — Reserva Plus"
+msgstr "Room group — Reserva Plus"
+
+msgid "Grupos com acesso"
+msgstr "Groups with access"
+
+msgid "Grupos da sala atualizados."
+msgstr "Room groups updated."
+
+msgid "Grupos por sala"
+msgstr "Groups per room"
+
+msgid "Grupos por sala — Reserva Plus"
+msgstr "Groups per room — Reserva Plus"
+
+msgid "Hoje"
+msgstr "Today"
+
+msgid "Horas"
+msgstr "Hours"
+
+msgid "Horas reservadas"
+msgstr "Hours reserved"
+
+msgid "Horários livres"
+msgstr "Free time slots"
+
+msgid "ID do perfil"
+msgstr "Profile ID"
+
+msgid "Inativo"
+msgstr "Inactive"
+
+msgid "Informe a quantidade de pessoas da reserva."
+msgstr "Enter the number of people for the reservation."
+
+msgid "Informe um período válido."
+msgstr "Enter a valid period."
+
+msgid "Início"
+msgstr "Start"
+
+msgid "Início do horário comercial"
+msgstr "Start of business hours"
+
+msgid "Item"
+msgstr "Item"
+
+msgid "Item reservável"
+msgstr "Reservable item"
+
+msgid "Itens disponíveis"
+msgstr "Available items"
+
+msgid "Itens livres para reservar na próxima hora."
+msgstr "Items free to reserve in the next hour."
+
+msgid "Itens mais reservados no período"
+msgstr "Most reserved items in the period"
+
+msgid "Itens reserváveis"
+msgstr "Reservable items"
+
+msgid "Ler"
+msgstr "Read"
+
+#, php-format
+msgid "Limite de %d reservas por envio atingido — reduza o período/itens."
+msgstr "Limit of %d reservations per submission reached — reduce the period/items."
+
+msgid "Limpar"
+msgstr "Clear"
+
+msgid "Limpar filtros"
+msgstr "Clear filters"
+
+msgid "Livre"
+msgstr "Free"
+
+msgid "Manhã"
+msgstr "Morning"
+
+msgid "Mensalmente (mesmo dia do mês)"
+msgstr "Monthly (same day of month)"
+
+msgid "Minhas"
+msgstr "Mine"
+
+msgid "Minhas reservas ativas"
+msgstr "My active reservations"
+
+msgid "Motivo"
+msgstr "Reason"
+
+msgid "Motivo, sala, observações..."
+msgstr "Reason, room, notes..."
+
+msgid "Mude a sala, o horário ou a quantidade de pessoas desta reserva."
+msgstr "Change the room, the time or the number of people for this booking."
+
+msgid "Mês"
+msgstr "Month"
+
+msgid "Nada livre agora."
+msgstr "Nothing free right now."
+
+msgid "Nas reservas ativas"
+msgstr "In active reservations"
+
+msgid "Nenhum bloqueio de horário cadastrado."
+msgstr "No time blocks registered."
+
+msgid "Nenhum grupo de usuários cadastrado no GLPI."
+msgstr "No user groups registered in GLPI."
+
+msgid "Nenhuma reserva criada."
+msgstr "No reservation created."
+
+msgid "Nenhuma reserva encontrada."
+msgstr "No reservation found."
+
+msgid "Nenhuma reserva futura da série pôde ser cancelada."
+msgstr "No future reservation in the series could be cancelled."
+
+msgid "Nenhuma reserva no período."
+msgstr "No reservation in the period."
+
+msgid "Nenhuma reserva para hoje."
+msgstr "No reservation for today."
+
+msgid "Nenhuma reserva registrada."
+msgstr "No reservation registered."
+
+msgid "Nenhuma sala atende a esses critérios."
+msgstr "No room matches these criteria."
+
+msgid "Nenhuma sala comporta essa quantidade de pessoas."
+msgstr "No room can hold that many people."
+
+msgid "Nenhuma sala reservável cadastrada."
+msgstr "No reservable room registered."
+
+msgid "No período"
+msgstr "In the period"
+
+msgid "Nome"
+msgstr "Name"
+
+msgid "Nova regra"
+msgstr "New rule"
+
+msgid "Nova regra do Reserva Plus"
+msgstr "New Reserva Plus rule"
+
+msgid "Nova reserva"
+msgstr "New reservation"
+
+msgid "Nova reserva do Reserva Plus"
+msgstr "New Reserva Plus reservation"
+
+msgid "Novo bloqueio"
+msgstr "New block"
+
+msgid "Novo bloqueio de horário"
+msgstr "New time block"
+
+msgid "Novo bloqueio de horário do Reserva Plus"
+msgstr "New Reserva Plus time block"
+
+msgid "Não"
+msgstr "No"
+
+msgid "Não foi possível alterar a reserva."
+msgstr "The booking could not be changed."
+
+msgid "Não foi possível cancelar esta reserva."
+msgstr "This reservation could not be cancelled."
+
+msgid "Não foi possível gerar as datas da recorrência."
+msgstr "Could not generate the recurrence dates."
+
+msgid "Não repete"
+msgstr "Doesn't repeat"
+
+msgid "Não reservados:"
+msgstr "Not reserved:"
+
+#, php-format
+msgid "O Reserva Plus requer GLPI >= %1$s e < %2$s."
+msgstr "Reserva Plus requires GLPI >= %1$s and < %2$s."
+
+msgid "O Reserva Plus requer PHP 8.2 ou superior e está preparado para PHP 8.5."
+msgstr "Reserva Plus requires PHP 8.2 or higher and is ready for PHP 8.5."
+
+msgid "O dia está livre por enquanto."
+msgstr "The day is free for now."
+
+msgid "Ocorrências"
+msgstr "Occurrences"
+
+msgid "Outros"
+msgstr "Others"
+
+msgid "Painel"
+msgstr "Dashboard"
+
+msgid "Perfil não encontrado."
+msgstr "Profile not found."
+
+msgid "Permissões"
+msgstr "Permissions"
+
+msgid "Permissões do Reserva Plus atualizadas com sucesso."
+msgstr "Reserva Plus permissions updated successfully."
+
+msgid "Permitir consulta de reservas de terceiros (somente leitura)"
+msgstr "Allow viewing other people's reservations (read-only)"
+
+msgid "Permitir reservas recorrentes"
+msgstr "Allow recurring reservations"
+
+msgid "Período"
+msgstr "Period"
+
+msgid "Período anterior"
+msgstr "Previous period"
+
+msgid "Período de bloqueio inválido."
+msgstr "Invalid block period."
+
+msgid "Pessoa"
+msgstr "Person"
+
+msgid "Pessoas"
+msgstr "People"
+
+#, php-format
+msgid "Pessoas: %d"
+msgstr "People: %d"
+
+msgid "Projetor"
+msgstr "Projector"
+
+msgid "Próximo período"
+msgstr "Next period"
+
+msgid "Pública"
+msgstr "Public"
+
+msgid "Quadro branco"
+msgstr "Whiteboard"
+
+msgid "Quantidade de pessoas"
+msgstr "Number of people"
+
+msgid "Recorrência"
+msgstr "Recurrence"
+
+msgid "Recursos da sala"
+msgstr "Room features"
+
+#, php-format
+msgid "Regra \"%s\": duração máxima é %d minutos (solicitado: %d min)."
+msgstr "Rule \"%s\": maximum duration is %d minutes (requested: %d min)."
+
+#, php-format
+msgid "Regra \"%s\": não é possível reservar com mais de %d dia(s) de antecedência."
+msgstr "Rule \"%s\": cannot book more than %d day(s) ahead."
+
+#, php-format
+msgid "Regra \"%s\": reserva deve ser feita com %d minuto(s) de antecedência."
+msgstr "Rule \"%s\": reservation must be made %d minute(s) in advance."
+
+msgid "Regra criada com sucesso."
+msgstr "Rule created successfully."
+
+msgid "Regra do Reserva Plus"
+msgstr "Reserva Plus rule"
+
+msgid "Regras"
+msgstr "Rules"
+
+msgid "Regras de agendamento por perfil, entidade e tipo de item."
+msgstr "Scheduling rules by profile, entity and item type."
+
+msgid "Regras do Reserva Plus"
+msgstr "Reserva Plus rules"
+
+msgid "Relatório de reservas"
+msgstr "Reservation report"
+
+msgid "Relatório do Reserva Plus"
+msgstr "Reserva Plus report"
+
+msgid "Relatórios"
+msgstr "Reports"
+
+msgid "Relatórios do Reserva Plus"
+msgstr "Reserva Plus reports"
+
+msgid "Repetir"
+msgstr "Repeat"
+
+msgid "Reserva Plus"
+msgstr "Reserva Plus"
+
+msgid "Reserva alterada"
+msgstr "Booking updated"
+
+msgid "Reserva alterada."
+msgstr "Booking updated."
+
+msgid "Reserva apagada com sucesso."
+msgstr "Reservation deleted successfully."
+
+msgid "Reserva ativa"
+msgstr "Active reservation"
+
+msgid "Reserva cancelada"
+msgstr "Reservation cancelled"
+
+msgid "Reserva cancelada com sucesso."
+msgstr "Reservation cancelled successfully."
+
+msgid "Reserva confirmada"
+msgstr "Reservation confirmed"
+
+msgid "Reserva confirmada (GLPI)"
+msgstr "Reservation confirmed (GLPI)"
+
+msgid "Reserva do Reserva Plus"
+msgstr "Reserva Plus reservation"
+
+msgid "Reserva rápida"
+msgstr "Quick reservation"
+
+msgid "Reservado"
+msgstr "Reserved"
+
+msgid "Reservado para"
+msgstr "Reserved for"
+
+msgid "Reservar"
+msgstr "Reserve"
+
+msgid "Reservar para"
+msgstr "Reserve for"
+
+msgid "Reservas"
+msgstr "Reservations"
+
+msgid "Reservas ativas agora"
+msgstr "Active reservations now"
+
+msgid "Reservas de hoje"
+msgstr "Today's reservations"
+
+msgid "Reservas do Reserva Plus"
+msgstr "Reserva Plus reservations"
+
+msgid "Reservas do dia"
+msgstr "Day's reservations"
+
+#, php-format
+msgid "Reservas do período (%d)"
+msgstr "Reservations in the period (%d)"
+
+msgid "Reservas nativas do GLPI ativas no dia atual."
+msgstr "Native GLPI reservations active today."
+
+msgid "Reservas recentes"
+msgstr "Recent reservations"
+
+msgid "Reservas registradas no mês"
+msgstr "Reservations registered this month"
+
+#, php-format
+msgid "Reservas só são permitidas entre %1$s e %2$s."
+msgstr "Reservations are only allowed between %1$s and %2$s."
+
+msgid "Reserve itens disponíveis, visualize no calendário e acompanhe suas reservas."
+msgstr "Reserve available items, view them on the calendar and track your reservations."
+
+msgid "Restrita"
+msgstr "Restricted"
+
+msgid "Sala atualizada."
+msgstr "Room updated."
+
+msgid "Salas"
+msgstr "Rooms"
+
+msgid "Salas sem grupo ficam visíveis a todos. Salas com grupo(s) só aparecem para membros desses grupos."
+msgstr "Rooms without a group are visible to everyone. Rooms with group(s) only appear to members of those groups."
+
+msgid "Salas — Reserva Plus"
+msgstr "Rooms — Reserva Plus"
+
+msgid "Salvar"
+msgstr "Save"
+
+msgid "Salvar alterações"
+msgstr "Save changes"
+
+msgid "Salvar bloqueio"
+msgstr "Save block"
+
+msgid "Salvar permissões"
+msgstr "Save permissions"
+
+msgid "Segredo do webhook (HMAC-SHA256)"
+msgstr "Webhook secret (HMAC-SHA256)"
+
+msgid "Selecionar"
+msgstr "Select"
+
+msgid "Selecione ao menos um item e um período válido."
+msgstr "Select at least one item and a valid period."
+
+msgid "Selecione exatamente uma sala ao editar a reserva."
+msgstr "Select exactly one room when editing a booking."
+
+msgid "Selecione os itens e configure o período da reserva."
+msgstr "Select the items and set the reservation period."
+
+msgid "Selecione um dia no calendário."
+msgstr "Select a day on the calendar."
+
+msgid "Sem permissão para apagar este bloqueio."
+msgstr "No permission to delete this block."
+
+msgid "Sem seleção = acesso público."
+msgstr "No selection = public access."
+
+msgid "Semana"
+msgstr "Week"
+
+msgid "Semanalmente"
+msgstr "Weekly"
+
+msgid "Sim"
+msgstr "Yes"
+
+msgid "Solicitante"
+msgstr "Requester"
+
+msgid "Som / microfone"
+msgstr "Audio / microphone"
+
+msgid "Status"
+msgstr "Status"
+
+#, php-format
+msgid "Sua reserva de %1$s foi alterada de %2$s para %3$s."
+msgstr "Your booking of %1$s was moved from %2$s to %3$s."
+
+#, php-format
+msgid "Sua reserva de %1$s foi alterada para %2$s."
+msgstr "Your booking of %1$s was changed to %2$s."
+
+#, php-format
+msgid "Sua reserva de %s foi confirmada para %s."
+msgstr "Your reservation of %s was confirmed for %s."
+
+#, php-format
+msgid "Sua reserva de %s para %s foi cancelada."
+msgstr "Your reservation of %s for %s was cancelled."
+
+msgid "Só esta ocorrência foi alterada — as demais da série seguem no horário original."
+msgstr "Only this occurrence was changed — the rest of the series keeps its original time."
+
+msgid "Só informativo (sem validação)"
+msgstr "Informational only (no validation)"
+
+msgid "TV / Monitor"
+msgstr "TV / Monitor"
+
+msgid "Tarde"
+msgstr "Afternoon"
+
+msgid "Tem certeza que deseja apagar este bloqueio?"
+msgstr "Are you sure you want to delete this block?"
+
+msgid "Tempo total do período"
+msgstr "Total time in the period"
+
+msgid "Terminar"
+msgstr "End"
+
+msgid "Tipo do item"
+msgstr "Item type"
+
+msgid "Todas"
+msgstr "All"
+
+msgid "Todos"
+msgstr "All"
+
+msgid "Todos os itens estão reservados ou bloqueados na próxima hora."
+msgstr "All items are reserved or blocked in the next hour."
+
+msgid "Trocar de sala"
+msgstr "Change room"
+
+msgid "URL do webhook (reserva criada/cancelada)"
+msgstr "Webhook URL (reservation created/cancelled)"
+
+msgid "Uso por período, pessoas e itens mais reservados — pronto para imprimir ou salvar em PDF."
+msgstr "Usage by period, people and most-reserved items — ready to print or save as PDF."
+
+msgid "Usuário selecionado para a reserva é inválido."
+msgstr "The user selected for the reservation is invalid."
+
+msgid "Ver calendário"
+msgstr "View calendar"
+
+msgid "Ver todas"
+msgstr "View all"
+
+msgid "Videoconferência"
+msgstr "Video conferencing"
+
+msgid "Visualizar relatórios e métricas de uso."
+msgstr "View reports and usage metrics."
+
+msgid "Visualize e gerencie reservas. Clique em um dia para reservar rapidamente."
+msgstr "View and manage reservations. Click a day to quickly reserve."
+
+msgid "Você não pode editar esta reserva."
+msgstr "You cannot edit this booking."
+
+msgid "Você não tem acesso a esta sala."
+msgstr "You do not have access to this room."
+
+msgid "Você só pode apagar reservas criadas por você."
+msgstr "You can only delete reservations you created."
+
+msgid "Voltar"
+msgstr "Back"
+
+msgid "clique para selecionar"
+msgstr "click to select"
+
+msgid "configurado — deixe em branco para manter"
+msgstr "configured — leave blank to keep"
+
+#, php-format
+msgid "em %d datas."
+msgstr "across %d date(s)."
+
+msgid "escolha uma sala"
+msgstr "pick a room"
+
+msgid "item reservável"
+msgstr "reservable item"
+
+msgid "o período solicitado"
+msgstr "the requested period"
+
+msgid "opcional"
+msgstr "optional"
+
+msgid "sem limite"
+msgstr "no limit"
+
+msgid "só salas que cabem"
+msgstr "only rooms that fit"
+
+msgid "Últimas reservas registradas no sistema."
+msgstr "Latest reservations registered in the system."
+
+# --- v0.6.0: e-mail HTML, painel de procura, direito de gerenciar todas ---
+
+#, php-format
+msgid "%1$s · %2$s"
+msgstr "%1$s · %2$s"
+
+msgid "(marque um ou vários — em ordem alfabética)"
+msgstr "(pick one or more — sorted A→Z)"
+
+msgid "Anote o novo horário na sua agenda."
+msgstr "Note the new time in your calendar."
+
+msgid "Anterior"
+msgstr "Previous"
+
+msgid "Datas"
+msgstr "Dates"
+
+msgid "Este é o único e-mail da série — não enviamos uma mensagem por ocorrência."
+msgstr "This is the only e-mail for the series — we do not send one message per occurrence."
+
+msgid "Gerenciar todas"
+msgstr "Manage all"
+
+msgid "Início (mais próximo)"
+msgstr "Start (soonest)"
+
+msgid "Ir"
+msgstr "Go"
+
+msgid "Ir para a data"
+msgstr "Go to date"
+
+msgid "Item (A → Z)"
+msgstr "Item (A → Z)"
+
+msgid "Item (Z → A)"
+msgstr "Item (Z → A)"
+
+msgid "Mais recentes"
+msgstr "Most recent"
+
+msgid "Minhas reservas"
+msgstr "My reservations"
+
+#, php-format
+msgid "Nada corresponde a \"%s\". Tente outro termo ou limpe os filtros."
+msgstr "Nothing matches \"%s\". Try another term or clear the filters."
+
+msgid "Ninguém com esse nome."
+msgstr "Nobody by that name."
+
+msgid "Novo horário da sua reserva"
+msgstr "Your reservation has a new time"
+
+msgid "O horário voltou a ficar livre para outras pessoas."
+msgstr "The slot is free for other people again."
+
+msgid "Ordenar por"
+msgstr "Sort by"
+
+msgid "Pessoa (A → Z)"
+msgstr "Person (A → Z)"
+
+msgid "Precisa mudar alguma coisa? Edite ou cancele a reserva em \"Minhas reservas\"."
+msgstr "Need to change something? Edit or cancel it under \"My reservations\"."
+
+msgid "Procurar"
+msgstr "Search"
+
+msgid "Procurar pessoa"
+msgstr "Search person"
+
+msgid "Procurar pessoa…"
+msgstr "Search person…"
+
+msgid "Procurar sala"
+msgstr "Search room"
+
+msgid "Procurar sala pelo nome…"
+msgstr "Search room by name…"
+
+msgid "Procurar sala…"
+msgstr "Search room…"
+
+msgid "Próximo"
+msgstr "Next"
+
+#, php-format
+msgid "Reserva alterada: %1$s — %2$s"
+msgstr "Reservation changed: %1$s — %2$s"
+
+#, php-format
+msgid "Reserva cancelada: %1$s — %2$s"
+msgstr "Reservation cancelled: %1$s — %2$s"
+
+#, php-format
+msgid "Reserva confirmada: %1$s — %2$s"
+msgstr "Reservation confirmed: %1$s — %2$s"
+
+msgid "Reservas confirmadas"
+msgstr "Reservations confirmed"
+
+msgid "Sem este direito o usuário só cancela/apaga as reservas dele."
+msgstr "Without this right the user can only cancel/delete their own reservations."
+
+#, php-format
+msgid "Sua reserva de %s está confirmada. 🎉"
+msgstr "Your reservation for %s is confirmed. 🎉"
+
+#, php-format
+msgid "Sua reserva de %s foi cancelada. ❌"
+msgstr "Your reservation for %s was cancelled. ❌"
+
+msgid "Sua reserva foi alterada. ✏️"
+msgstr "Your reservation was changed. ✏️"
+
+msgid "Sua reserva foi cancelada"
+msgstr "Your reservation was cancelled"
+
+msgid "Suas reservas estão confirmadas"
+msgstr "Your reservations are confirmed"
+
+msgid "Série de reservas"
+msgstr "Reservation series"
+
+msgid "Tudo certo com a sua reserva"
+msgstr "Your reservation is all set"
+
+#, php-format
+msgid "e mais %d ocorrência(s)."
+msgstr "and %d more occurrence(s)."
+
+msgid "sala, pessoa, comentário ou #id"
+msgstr "room, person, comment or #id"
+
+msgid "✅ Agora"
+msgstr "✅ Now"
+
+msgid "👥 Pessoas"
+msgstr "👥 People"
+
+msgid "📅 Fazer nova reserva"
+msgstr "📅 Make a new reservation"
+
+msgid "📅 Ver minhas reservas"
+msgstr "📅 See my reservations"
+
+msgid "📍 Item"
+msgstr "📍 Item"
+
+msgid "📍 Itens"
+msgstr "📍 Items"
+
+msgid "📝 Observações"
+msgstr "📝 Notes"
+
+msgid "🔁 Reservas criadas"
+msgstr "🔁 Reservations created"
+
+msgid "🕒 Antes"
+msgstr "🕒 Before"
+
+msgid "🕒 Horário"
+msgstr "🕒 Time"
+
+msgid "🕒 Período"
+msgstr "🕒 Period"
+
+msgid "🕒 Quando"
+msgstr "🕒 When"
+
+msgid "🙋 Para"
+msgstr "🙋 For"
+
+#, php-format
+msgid "%d reserva foi confirmada. 🎉"
+msgid_plural "%d reservas foram confirmadas. 🎉"
+msgstr[0] "%d reservation was confirmed. 🎉"
+msgstr[1] "%d reservations were confirmed. 🎉"
+
+#, php-format
+msgid "Reserva confirmada: %2$s (%1$d ocorrência)"
+msgid_plural "Reservas confirmadas: %2$s (%1$d ocorrências)"
+msgstr[0] "Reservation confirmed: %2$s (%1$d occurrence)"
+msgstr[1] "Reservations confirmed: %2$s (%1$d occurrences)"

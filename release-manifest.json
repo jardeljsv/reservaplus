@@ -1,0 +1,594 @@
+{
+  "plugin": "reservaplus",
+  "version": "0.7.0-rc3",
+  "release_kind": "staging release candidate",
+  "source_baseline": "supplied ReservaPlus 0.6.1",
+  "minimum_glpi": "11.0.7",
+  "maximum_glpi_exclusive": "11.1.0",
+  "minimum_php": "8.2",
+  "validated": {
+    "glpi": "11.0.7",
+    "php": "8.3.6",
+    "database": "MariaDB 10.11.14",
+    "tcpdf": "6.11.2",
+    "date": "2026-10-28",
+    "php_files_linted": 101,
+    "standalone_checks": 129,
+    "legacy_live_checks": 95,
+    "live_integration_scenario_groups": 53,
+    "preserved_existing_rights": 40,
+    "standalone_test_files": 16,
+    "browser_task_checks": 23,
+    "javascript_files_checked": 8,
+    "baseline_live_integration_scenario_groups": 38,
+    "approval_policy_integration_scenario_groups": 15,
+    "baseline_browser_task_checks": 12,
+    "native_ticket_browser_task_checks": 7,
+    "approval_admin_positive_browser_task_checks": 1,
+    "approval_admin_foreign_identity_http_checks": 3,
+    "source_unchanged_during_final_run": true,
+    "new_php_error_log_entries": 3,
+    "new_sql_error_log_entries": 0,
+    "browser_page_errors": 0,
+    "new_php_warning_entries": 3,
+    "new_php_error_entries": 0,
+    "native_runtime_warning": "GLPI Document::isImage warned that EXIF was disabled in the disposable PHP runtime; the installed extension was enabled.",
+    "native_ticket_rerun_after_exif_enabled": true,
+    "native_ticket_rerun_new_php_log_entries": 0,
+    "native_ticket_rerun_new_sql_log_entries": 0,
+    "full_functional_run_passed": true,
+    "diagnostic_review_completed": true,
+    "native_ticket_rerun_source_unchanged": true
+  },
+  "production_deployed": false,
+  "documents": {
+    "setup_and_limits": "README.md",
+    "architecture": "docs/ARCHITECTURE.md",
+    "validation": "docs/VALIDATION.md",
+    "changes": "CHANGELOG.md",
+    "usage_review": "docs/UX_REVIEW.md",
+    "approval_setup": "docs/APPROVALS.md"
+  },
+  "files": {
+    "CHANGELOG.md": {
+      "sha256": "f5a241ec7e30ef21f2f931d869b5b5129debe4cd1beebb59678365ebf71a82b6",
+      "bytes": 5614
+    },
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "bytes": 35149
+    },
+    "README.md": {
+      "sha256": "6f6d3900f2c18e0f9a9c4a00535c8679dbe78b9e4fdd2f860a4271acf16fe942",
+      "bytes": 17730
+    },
+    "ajax/availability.php": {
+      "sha256": "0f06b1e00d8758239ad8b218d127e07b06042019e50182d358b3817e38ce199c",
+      "bytes": 2084
+    },
+    "ajax/events.php": {
+      "sha256": "e4d17454177cb7e4580077d6ed01a50b1d4a765ee36931e70a81fa325b0e46b3",
+      "bytes": 844
+    },
+    "ajax/freeslots.php": {
+      "sha256": "c644d54b7933f652ba82d80a6067559560ee8cb32149d5df59bf9022d445c37e",
+      "bytes": 1260
+    },
+    "ajax/workflow.events.php": {
+      "sha256": "6e9744e5ba8d8ad20f49857b866a6cc1ae080bdb15e4d85573012a18e08130c9",
+      "bytes": 1455
+    },
+    "css/dashboard.css": {
+      "sha256": "037cba3af4f5b879492c44a1c0031e91e6b0f82bb841e4693d44c36e26be3896",
+      "bytes": 7379
+    },
+    "css/intake.css": {
+      "sha256": "07e182595466c6e16bb6e3ea88a72a0ca2eb9577faabce6a086036cc25865232",
+      "bytes": 11192
+    },
+    "css/reservaplus.css": {
+      "sha256": "e5d40ebd78722ee1c6b604ff398c378649b1a8fed9ecc7ccb0923c909254edef",
+      "bytes": 50781
+    },
+    "css/resource-admin.css": {
+      "sha256": "92e8a98edf7b99c18e97f97880fcd763fb4d4f28c30773260a31bc2eaad604b3",
+      "bytes": 15007
+    },
+    "css/workflow-calendar.css": {
+      "sha256": "a3ec761705cd147e7bfd6c3205817ab3032457ad7f39efc24dab187efef98a66",
+      "bytes": 10126
+    },
+    "css/workflow.css": {
+      "sha256": "ec54f320f2738507bbb78ec7caea9cf2247102c519faafd3a8636702bcc97c4d",
+      "bytes": 14831
+    },
+    "docs/APPROVALS.md": {
+      "sha256": "767aafdae615b1d5b58e4f4c127b6a9ede225b2a4ec67b62add339aec4033461",
+      "bytes": 8063
+    },
+    "docs/ARCHITECTURE.md": {
+      "sha256": "ddb08e53637ff03df455e9a8f78cfddbc5f0621d78e3d66cf00c57721c6850ed",
+      "bytes": 14060
+    },
+    "docs/UX_REVIEW.md": {
+      "sha256": "93883a8e39ced0cc4bba18b0b9e4891a99fe608b4c9def2fcac62875d71ed82a",
+      "bytes": 8190
+    },
+    "docs/VALIDATION.md": {
+      "sha256": "f350f48f562e334aa886cc2341a3ae8e4b0608ba1a07df5fe4aa1eca05e6f7ac",
+      "bytes": 19732
+    },
+    "front/agreement.download.php": {
+      "sha256": "a5a1061c24c05402f55d0923c34b8c22e86f5c800fa099b0274f2aa8a16544b4",
+      "bytes": 1251
+    },
+    "front/agreement.php": {
+      "sha256": "4b0bd8a07fb7fb7f540f543f8c913303f3f311abf98fbf59b9272a6bb9827693",
+      "bytes": 8296
+    },
+    "front/block.action.php": {
+      "sha256": "58e7c83911c2b0ea70c2bb9852773203c16fe15130f8a09f4d7d9d161d3fb602",
+      "bytes": 895
+    },
+    "front/block.form.php": {
+      "sha256": "e860f22afcb320c239a53e2203824900d8320f521491bda9e94be0d93810181d",
+      "bytes": 5748
+    },
+    "front/block.php": {
+      "sha256": "14df960178458cfd0000be7235e8206efb7faf097a87fbfda04ceac5c5cf0e35",
+      "bytes": 4891
+    },
+    "front/booking.action.php": {
+      "sha256": "f005644c133e9e141d68c3a861600bbdb47395bcf85951ed51a64c16c962ab9a",
+      "bytes": 6671
+    },
+    "front/booking.form.php": {
+      "sha256": "3d52c92a219e910fc70c3bf7ef54a615080558f2236d2f1293003bcecad34a93",
+      "bytes": 4803
+    },
+    "front/booking.php": {
+      "sha256": "55960e05d5ba659a002dbe5b28b0a4d81b0fb329536cbc627e5c91746ffc3801",
+      "bytes": 6896
+    },
+    "front/calendar.php": {
+      "sha256": "54ff77ae5977fc2139bf6f15b5fa10fcf6e23d7dd20460581e467ff880c92fa9",
+      "bytes": 18064
+    },
+    "front/config.form.php": {
+      "sha256": "c799894a62f51828500b15c0d56ae10b90f9299ae253a5d2922058bc39bb725f",
+      "bytes": 3556
+    },
+    "front/dashboard.php": {
+      "sha256": "d75d94f118cf9f6722c711be6eb036651ab8a9e56518365717f22e338da7a91f",
+      "bytes": 1479
+    },
+    "front/itemgroup.php": {
+      "sha256": "ce87047f80b55be807dd801390cd6f8612e3d51f1a3a32ce779c93633d0aa16b",
+      "bytes": 9699
+    },
+    "front/profile.rights.php": {
+      "sha256": "71463162f061db61b02db4ef50b2b72aa21ee7163af6fbd99434b1c753579639",
+      "bytes": 791
+    },
+    "front/report.php": {
+      "sha256": "c70dc5aad0d71e1030a88d2dc4352feec97ac99b95fd0295674a9621b249abb0",
+      "bytes": 15961
+    },
+    "front/reservation.action.php": {
+      "sha256": "78e5f419d6db3eb70c79c7b5257acc5cf50427ec8f37da795f425672a7340282",
+      "bytes": 2209
+    },
+    "front/reservation.form.php": {
+      "sha256": "3336e66f9812c117957e4f867ddb5566000c3e9fdd839f387baabca0c91ff423",
+      "bytes": 50123
+    },
+    "front/reservation.php": {
+      "sha256": "5c64bc5f37db4cd0ac46c7e9959784d0f1eaf765b380d7342d7ef15bdf863d28",
+      "bytes": 451
+    },
+    "front/resource.form.php": {
+      "sha256": "a28a211a13308bcfe06b47e22799a78ed2357a860a4385046f8fdd944e934d03",
+      "bytes": 22030
+    },
+    "front/resource.import.php": {
+      "sha256": "6db99ba0e04c6d6e9ca34b8d75e8a3efcd0fd68b842373ecd0eb2e55c390e30f",
+      "bytes": 5159
+    },
+    "front/resource.php": {
+      "sha256": "dabfbae5c0b7dfd198699899c5dc49ee8a6d6cfcd34357b02c37407dc4efbf57",
+      "bytes": 6763
+    },
+    "front/rule.form.php": {
+      "sha256": "c2dee4e14dd4be921c69f2f6a710070d01de3c8c697550a362d528384fb3aa5e",
+      "bytes": 3353
+    },
+    "front/rule.php": {
+      "sha256": "76cd1213cc1cd2d85f899583cd5f9205ecc443598c4ed93f33e7a402f3492c2f",
+      "bytes": 2558
+    },
+    "front/sector.php": {
+      "sha256": "fac93b4dcd583b5e40275f3944f364cca06088fa8c36414ef54b54ae2add304d",
+      "bytes": 5027
+    },
+    "front/verify.php": {
+      "sha256": "2209565a045215bcc6d47b583ee0ecf5b11bc0952f855401714600461eb614bb",
+      "bytes": 2871
+    },
+    "front/workflow.calendar.php": {
+      "sha256": "67c73d780e61b07c5e336ee9b483af7bc191cd03d578ceca980ae144c73cb8fc",
+      "bytes": 921
+    },
+    "hook.php": {
+      "sha256": "7a1b6c89f1edbf8fb542e141a25e7722b2f3526f2490459fcbd32b67ab187e83",
+      "bytes": 1094
+    },
+    "js/intake.js": {
+      "sha256": "e621f7f468e76df77ca92b278383847aa7ce87b6335bf234250ad9c953c99d0a",
+      "bytes": 3134
+    },
+    "js/reservaplus.js": {
+      "sha256": "80cd1bae74455e650e1a2d3641c08ee6994c0fddbca66ceee3610b7e4cd61282",
+      "bytes": 51799
+    },
+    "js/resource-admin.js": {
+      "sha256": "048b9321495ac791d10e2b48dacde936a3bf6479647e06f95c21a6944e5b7812",
+      "bytes": 5449
+    },
+    "js/workflow-calendar.js": {
+      "sha256": "76cdf14f749d4562feb6815c280bbf8d38a334b13eb5fa8f3e12841a2a608f7b",
+      "bytes": 5228
+    },
+    "locales/en_US.mo": {
+      "sha256": "0754eb8290fc711b83c749d7f82bee9d316eb44d4aec188508fef17ac6d246a1",
+      "bytes": 23916
+    },
+    "locales/en_US.po": {
+      "sha256": "213a757f5f7781f8151f78b07f62c1ab6c7b971adb93f1a11ec6705d7bb5686d",
+      "bytes": 25484
+    },
+    "locales/pt_BR.mo": {
+      "sha256": "ebb826ed397cfa2175bc4cee1dbc08d43e88a0bb00ed70723687626a58f5a311",
+      "bytes": 24642
+    },
+    "locales/pt_BR.po": {
+      "sha256": "f132410964f53ca9c910a076b3e70557b62b66c6a6ae080c8ce71b55b4b6580a",
+      "bytes": 26208
+    },
+    "logo.png": {
+      "sha256": "504d1ba14882b41b3f8a9d3998278adad6d4a1c3a65364d3664610154c246083",
+      "bytes": 14120
+    },
+    "public/css/dashboard.css": {
+      "sha256": "037cba3af4f5b879492c44a1c0031e91e6b0f82bb841e4693d44c36e26be3896",
+      "bytes": 7379
+    },
+    "public/css/intake.css": {
+      "sha256": "07e182595466c6e16bb6e3ea88a72a0ca2eb9577faabce6a086036cc25865232",
+      "bytes": 11192
+    },
+    "public/css/reservaplus.css": {
+      "sha256": "e5d40ebd78722ee1c6b604ff398c378649b1a8fed9ecc7ccb0923c909254edef",
+      "bytes": 50781
+    },
+    "public/css/resource-admin.css": {
+      "sha256": "92e8a98edf7b99c18e97f97880fcd763fb4d4f28c30773260a31bc2eaad604b3",
+      "bytes": 15007
+    },
+    "public/css/workflow-calendar.css": {
+      "sha256": "a3ec761705cd147e7bfd6c3205817ab3032457ad7f39efc24dab187efef98a66",
+      "bytes": 10126
+    },
+    "public/css/workflow.css": {
+      "sha256": "ec54f320f2738507bbb78ec7caea9cf2247102c519faafd3a8636702bcc97c4d",
+      "bytes": 14831
+    },
+    "public/js/intake.js": {
+      "sha256": "e621f7f468e76df77ca92b278383847aa7ce87b6335bf234250ad9c953c99d0a",
+      "bytes": 3134
+    },
+    "public/js/reservaplus.js": {
+      "sha256": "80cd1bae74455e650e1a2d3641c08ee6994c0fddbca66ceee3610b7e4cd61282",
+      "bytes": 51799
+    },
+    "public/js/resource-admin.js": {
+      "sha256": "048b9321495ac791d10e2b48dacde936a3bf6479647e06f95c21a6944e5b7812",
+      "bytes": 5449
+    },
+    "public/js/workflow-calendar.js": {
+      "sha256": "76cdf14f749d4562feb6815c280bbf8d38a334b13eb5fa8f3e12841a2a608f7b",
+      "bytes": 5228
+    },
+    "reservaplus.xml": {
+      "sha256": "4f8a077e81e1519174fe650ffc784c6b22c522b0f2ce0d29a4248e5f058254c7",
+      "bytes": 965
+    },
+    "setup.php": {
+      "sha256": "457bebb93875a3e3c4b8f86ecd7e1220132c4cba191d0036c7e9401398ba822d",
+      "bytes": 6169
+    },
+    "sql/install.php": {
+      "sha256": "d7291f6a703656f319ca1cd1ca1fef0ada103c446a237a06fa37db3e6713d91b",
+      "bytes": 9220
+    },
+    "sql/uninstall.php": {
+      "sha256": "75280c75c10ff40e647dc5a761dc3b405d4b37fa1f1a5180d2eb6b6cc0031709",
+      "bytes": 1117
+    },
+    "src/Access.php": {
+      "sha256": "c6264d252611ed29dce2b29a2b91a525a0a5631cdf706cee59c8341e12c10d65",
+      "bytes": 13043
+    },
+    "src/Agreement.php": {
+      "sha256": "1cdef35adca88b711243ee267fce1d58be1fe82dd430ca78c8a201afe9db4fbb",
+      "bytes": 1802
+    },
+    "src/ApprovalDefaultsView.php": {
+      "sha256": "d1396b152c272057002e8b09108cf75dd14447113ea8164dd2cd8411145d73fb",
+      "bytes": 5640
+    },
+    "src/ApprovalPolicy.php": {
+      "sha256": "2b7fab07324cb065cf2156396dedb1c9c2f6375bf43ebe6269e3bd2b0b6460b8",
+      "bytes": 13219
+    },
+    "src/AvailabilityService.php": {
+      "sha256": "1b9bc6754cdb435d868d8da2cede62d9cb3c552e58a3432a4130c7146f57679e",
+      "bytes": 13362
+    },
+    "src/Block.php": {
+      "sha256": "a88b59126b1f3424b822a3b3d7a47b1f17e261f920c32afc82ad61419d4990ab",
+      "bytes": 1008
+    },
+    "src/Booking.php": {
+      "sha256": "27ab966ac9cbb1a9bd08b70cde33c11a277a960d90d9d8146220c43df0828c45",
+      "bytes": 4480
+    },
+    "src/BookingQuery.php": {
+      "sha256": "a36881b46b3687b688dfc7593d2b4c7fde4719819b9ab3c4215b12f058a4f2b0",
+      "bytes": 4312
+    },
+    "src/BookingService.php": {
+      "sha256": "63fe6278db54e10ad18a45e147f92c356e61fab8f7a6f2c7e33b874287a157f7",
+      "bytes": 38937
+    },
+    "src/BookingView.php": {
+      "sha256": "c422b11b68c12adf22fb0705b7be4767619abaae3f7ac20fe427080d0444df43",
+      "bytes": 48329
+    },
+    "src/CalendarBridge.php": {
+      "sha256": "cb787d2a40c2b182db43b9b125d3d9e3a218f3efc56d9ac224d63b7f420439cb",
+      "bytes": 7276
+    },
+    "src/Config.php": {
+      "sha256": "1c992da2bf7f1e72efca22b7b135f79f55aaea5ef60ca04ea20497946cead55b",
+      "bytes": 10437
+    },
+    "src/Dashboard.php": {
+      "sha256": "85dc6d458646579cab22733b2974bf65694d0b31396edad4f0f27377be7808cf",
+      "bytes": 20302
+    },
+    "src/DocumentService.php": {
+      "sha256": "31976c45fda4ddd81591fe049dd747766b0ea0adc6af67337a28427583026b43",
+      "bytes": 45743
+    },
+    "src/EmailTemplate.php": {
+      "sha256": "79e2289303625977def67531a8cc25f32eca05f84a0b91f4554bd5f584fcbe00",
+      "bytes": 19086
+    },
+    "src/ItemGroup.php": {
+      "sha256": "c786aee81bb4d461c05217890905d37b400df027e21baddcf3818e30abe6679c",
+      "bytes": 8140
+    },
+    "src/ItemSetting.php": {
+      "sha256": "a355598029271ce9027ba1e420f7b56da84936c5d4fb94398ff8dddbca46579e",
+      "bytes": 9468
+    },
+    "src/LegacyCalendar.php": {
+      "sha256": "1807d5cf0eb5873617516631449827e75d56f7c54b5724a0229df7f635de66e3",
+      "bytes": 4851
+    },
+    "src/LegacyResourceCatalog.php": {
+      "sha256": "94d872bafe90c6f7f49ead5455acca62e56d599d93798f41ac936d91510db3ca",
+      "bytes": 9997
+    },
+    "src/Mailer.php": {
+      "sha256": "c29c5cecccfca7bea5bd2867977983bc908c37beaf5138b8e329fc829a7b3c01",
+      "bytes": 3859
+    },
+    "src/NotificationService.php": {
+      "sha256": "441bce4189eefcb2d015c34e5e6ef2191dba0b392b1bdfff012fa87d46041bb4",
+      "bytes": 15394
+    },
+    "src/PdfRenderer.php": {
+      "sha256": "c44d6e61b05adac57bc8e914cbece35c2a8fc1070af8ede2e3967e536f71f9cb",
+      "bytes": 9041
+    },
+    "src/Profile.php": {
+      "sha256": "1cf6de745736975db34d3c3f55b63a1566786378f68996782604082800f4e0af",
+      "bytes": 13338
+    },
+    "src/Report.php": {
+      "sha256": "1a7c37145954b5542b43220adf0f58d9492f7cd174b15380975c68f0afea0223",
+      "bytes": 448
+    },
+    "src/RequestDraft.php": {
+      "sha256": "0275033f38dcc4ec740eed96bfbc644de2c99d33625994c2ff5e9b6d85c764fe",
+      "bytes": 8643
+    },
+    "src/RequestIntakeView.php": {
+      "sha256": "1ca63ce4c3f86c41d0b45c711cccfa7cd00ee131a4f15c0b241270c0b4f09af0",
+      "bytes": 29638
+    },
+    "src/ReservationRequest.php": {
+      "sha256": "418424dcf149e2f5075133229c44e1e77ee7a9d5b90127dea24524204492119d",
+      "bytes": 38356
+    },
+    "src/Resource.php": {
+      "sha256": "494dda2a099bffeab67efb71a28f46ce401b7e6a398db6ec536a008b70c27ddb",
+      "bytes": 3462
+    },
+    "src/ResourceAdminView.php": {
+      "sha256": "b0c5a50a3acfcc5dfa1eae47d9c750ada22c32d42f3012deaa2871c8b649a750",
+      "bytes": 18514
+    },
+    "src/ResourceService.php": {
+      "sha256": "ba4f9863f0b109a1c27eb248383bb0ed25a5cdeae783ae2caf27d97a99121635",
+      "bytes": 29163
+    },
+    "src/Rule.php": {
+      "sha256": "14e58588611d503b8cd180fe75f68dbf4359384b851cc57b0b5ca6b539c81372",
+      "bytes": 3775
+    },
+    "src/Schema.php": {
+      "sha256": "87f98a4e3649d49ac41ff6d890038da06da87209d7435670f6ff26402d75f206",
+      "bytes": 11054
+    },
+    "src/Sector.php": {
+      "sha256": "887639945db28b91bd4cba23387c83fa77a776e0f2edf186a1f2b3f0041b40cb",
+      "bytes": 3177
+    },
+    "src/ServiceCatalogItem.php": {
+      "sha256": "9261b94b9799d3369a881b1adb962b7853cebb87e0944f9a9d9463a944e678ad",
+      "bytes": 1059
+    },
+    "src/ServiceCatalogProvider.php": {
+      "sha256": "545ccdb47e3272b13d2a98a7aaad8fc8e174dcfa62b0b58532f1bf149f3207e4",
+      "bytes": 2475
+    },
+    "src/Store.php": {
+      "sha256": "65d069f2d7af3d61f5db91e2e865cf6684e8e23ee474088a707cf93b4c72c87f",
+      "bytes": 6003
+    },
+    "src/TechnicianDashboard.php": {
+      "sha256": "9944d20961e9ee120fb8f6381e16250b29a7a2749d23ebaf280d3053375f2cb4",
+      "bytes": 27392
+    },
+    "src/TicketBridge.php": {
+      "sha256": "ac2b7fe5c0569d4e472baf2b8adee3ffe9e641241e8af02a1764793886015eab",
+      "bytes": 23575
+    },
+    "src/TicketTab.php": {
+      "sha256": "9ae1af08f83f23fff267d182b994808c6b427ef03777043e5917ae49e20df8fd",
+      "bytes": 3402
+    },
+    "src/WorkflowCalendarView.php": {
+      "sha256": "aa43922dd4881e73c4cc7c7ed31aa5d989820f250fa01ebf3d5b1541fb58c7c5",
+      "bytes": 32206
+    },
+    "src/WorkflowHooks.php": {
+      "sha256": "915480b873b4c2e61a33ec905579557542386eed64b08c95a1148589108b01e3",
+      "bytes": 7469
+    },
+    "tests/access_test.php": {
+      "sha256": "a8cbebc2ac358c9a5696f67fab4581877223ce16284c488ae67157abc9fc61c5",
+      "bytes": 4942
+    },
+    "tests/approval_admin_test.php": {
+      "sha256": "9d3b2d62a6f0689d40e030ee96e1261e638ebecd5d33cad2bc5d8898edfd37fe",
+      "bytes": 6087
+    },
+    "tests/approval_native_test.php": {
+      "sha256": "15095e06b5d6af7bf9b62ab21c36a4dd39602ebbeaea20cce82cfb99160dbeb5",
+      "bytes": 3547
+    },
+    "tests/approval_policy_integration.php": {
+      "sha256": "2b385ccc143670ebb45ea760615adfe83794f8cca883333ea811d94073a7a77a",
+      "bytes": 26208
+    },
+    "tests/approval_policy_test.php": {
+      "sha256": "c030c27ce7d7b0026634e7b05db71ca9f2f3b9eabef11c174304578261829df4",
+      "bytes": 13337
+    },
+    "tests/bootstrap.php": {
+      "sha256": "8fce18b38e549c16d64950843f029e4e0ce79c4ff5988a916c8620958cf1efae",
+      "bytes": 3325
+    },
+    "tests/calendar_test.php": {
+      "sha256": "d0841c001decdb8c72aa2c5c441255af8a4b02671b5951318c4742b38e868713",
+      "bytes": 3136
+    },
+    "tests/dashboard_test.php": {
+      "sha256": "406b60257704b7f970ea54f50ef9dd403f2320bec176f090aa4883fb970f04c5",
+      "bytes": 4535
+    },
+    "tests/documents_integration.php": {
+      "sha256": "d361142789607e325a25596838e417e8b29ac3225151ade297090f316cdc811a",
+      "bytes": 14076
+    },
+    "tests/documents_test.php": {
+      "sha256": "bb56434ee37e5bc19f352e93e1f1b356357e35413500fa037450e05c3f55762c",
+      "bytes": 5644
+    },
+    "tests/intake_test.php": {
+      "sha256": "e8fdd9d8d770e4ff287112b01f3406b566dd1544638f6690ebacd7359cc4f13e",
+      "bytes": 4111
+    },
+    "tests/integration_concurrency.php": {
+      "sha256": "511b46be3529d6f27396137bf25d9e048d3b0928cc721e3eab094eceb8bb9ae7",
+      "bytes": 6863
+    },
+    "tests/integration_cron.php": {
+      "sha256": "a72fd04162024de80b247db23a9b38dc380bcb9b7434697f17a773b155f30cd2",
+      "bytes": 5124
+    },
+    "tests/integration_workflow.php": {
+      "sha256": "b2cf9fb78ddc59176891bce44c6b87ac056e8a92640989a4112fc2e9d7d1b40a",
+      "bytes": 16161
+    },
+    "tests/legacy_catalog_integration.php": {
+      "sha256": "73051f0a39a810c75493b6c4483642c4a1e439bd4ea02a0e1ed2cd79d73bf960",
+      "bytes": 7087
+    },
+    "tests/legacy_catalog_test.php": {
+      "sha256": "182e061c621b1cc03580645916c26b7879feaf16ec9ef94f87aaff87823d5369",
+      "bytes": 2311
+    },
+    "tests/legacy_security_test.php": {
+      "sha256": "e92303eee85e2e20f5139d7bf408f2f85ff2d3f0f9fb3435867b1f7de885d18a",
+      "bytes": 13477
+    },
+    "tests/query_test.php": {
+      "sha256": "dd401205db6b7c6644013e834223742f0109a0f232c77be224df283c87cd2e24",
+      "bytes": 1596
+    },
+    "tests/resource_admin_test.php": {
+      "sha256": "2e287eabf89df1d5ba83ec420aabcc1c48e4c381f4c7d5703c586dcc49f336b1",
+      "bytes": 5242
+    },
+    "tests/resource_test.php": {
+      "sha256": "f5f150de76fdfea362f44e50b38a2f4d35e4e329b0b24e1d5b32e8e17c551e65",
+      "bytes": 6830
+    },
+    "tests/resources_integration.php": {
+      "sha256": "853230e8bf2e6c60dcc04b96e3273fe5377f4c70b034ed933ff6ae1995f62c99",
+      "bytes": 6376
+    },
+    "tests/ticket_context_test.php": {
+      "sha256": "6ca94855f2f2bf1ccf88cb2ecffc87087a2278839a283e6a2fdb33cd9dd10b4d",
+      "bytes": 7356
+    },
+    "tests/ui_test.php": {
+      "sha256": "bc8c078b64c730e63374b15246c615b9bf5e732ae3665c89c9d0538053a1c5ac",
+      "bytes": 2438
+    },
+    "tests/workflow_test.php": {
+      "sha256": "413989c71c4ccd8e81bb1072ecd546d8677b1a4095d05f0be990737ba5ec3a6b",
+      "bytes": 4106
+    },
+    "tools/po2mo.php": {
+      "sha256": "0d39ba68b130018c03aa361a549d7ff77c08550c5778f427079266ec19cc49a8",
+      "bytes": 5742
+    },
+    "tools/render_emails.php": {
+      "sha256": "235ec4967f296c2f0de4d437fc2d88103745d7f462190388c1f1c9280c0a6855",
+      "bytes": 6027
+    },
+    "tools/run-tests.sh": {
+      "sha256": "ab0c9a6335a0249fbf36a46039383c5385a33868300578fe428ae005a9f40b83",
+      "bytes": 1289
+    },
+    "tools/verify.php": {
+      "sha256": "02418def3afcc1187fd92f84306e9669042f72f4340796a8c3cbb7d0a31d6f89",
+      "bytes": 23118
+    }
+  }
+}

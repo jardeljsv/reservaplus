@@ -1,0 +1,51 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/bootstrap.php';
+
+if (!class_exists('Session', false)) {
+    class Session
+    {
+        public static int $user = 7;
+        public static function getLoginUserID(): int { return self::$user; }
+    }
+}
+
+use GlpiPlugin\Reservaplus\BookingView;
+
+rp_test('workflow commands bind action, resource context, user and expiry while allowing retries', function (): void {
+    $_SESSION = [];
+    Session::$user = 7;
+    $key = BookingView::command('receive', 42);
+    BookingView::checkCommand($key, 'receive', 42);
+    BookingView::checkCommand($key, 'receive', 42);
+    rp_throws(fn() => BookingView::checkCommand($key, 'issue', 42), DomainException::class);
+    rp_throws(fn() => BookingView::checkCommand($key, 'receive', 43), DomainException::class);
+    Session::$user = 8;
+    rp_throws(fn() => BookingView::checkCommand($key, 'receive', 42), DomainException::class);
+    Session::$user = 7;
+    $_SESSION['reservaplus_commands'][$key]['expires'] = time() - 1;
+    rp_throws(fn() => BookingView::checkCommand($key, 'receive', 42), DomainException::class);
+});
+
+rp_test('untrusted field values stay escaped and repeated fields retain unique label targets', function (): void {
+    $attack = '\"><script>alert(1)</script>';
+    ob_start();
+    BookingView::input('begin', 'Início', $attack);
+    BookingView::input('begin', 'Início', $attack);
+    BookingView::textarea('purpose', 'Finalidade', '</textarea><script>evil()</script>');
+    $html = ob_get_clean();
+    rp_assert(!str_contains($html, '<script>'));
+    preg_match_all('/\bid="([^"]+)"/', $html, $ids);
+    rp_same(count($ids[1]), count(array_unique($ids[1])));
+    foreach ($ids[1] as $id) { rp_assert(str_contains($html, 'for="' . $id . '"')); }
+    rp_same('', BookingView::e(['malformed' => 'query']));
+});
+
+rp_test('workflow links honor GLPI subdirectory and errors do not reveal runtime internals', function (): void {
+    global $CFG_GLPI;
+    $CFG_GLPI['root_doc'] = '/support';
+    rp_same('/support/plugins/reservaplus/front/booking.php?id=7', BookingView::url('booking.php', ['id' => 7]));
+    rp_same('/support/front/ticket.form.php?id=8', BookingView::ticketUrl(8));
+    rp_same('Escolha outro período.', BookingView::publicError(new DomainException('Escolha outro período.')));
+    rp_assert(!str_contains(BookingView::publicError(new RuntimeException('SQL failure /private/config.php')), '/private'));
+});

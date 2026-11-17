@@ -1,0 +1,2372 @@
+/* =========================================================================
+   Reserva Plus — Sistema de Design (identidade: Azul Corporativo)
+   Tokens centralizados em :root. Para trocar a identidade no futuro,
+   basta ajustar as variáveis abaixo.
+   ========================================================================= */
+
+.reservaplus-shell {
+  --rp-primary: #2563eb;
+  --rp-primary-dark: #1d4ed8;
+  --rp-primary-darker: #1e40af;
+  --rp-accent: #0891b2;
+  --rp-primary-50: #eef2ff;
+  --rp-primary-100: #e0e7ff;
+  --rp-primary-200: #c7d2fe;
+  --rp-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 48%, #0891b2 100%);
+  --rp-gradient-soft: linear-gradient(135deg, rgba(37,99,235,0.14), rgba(8,145,178,0.08));
+
+  --rp-amber: #d97706;
+  --rp-amber-bg: #fef3c7;
+  --rp-amber-text: #78350f;
+  --rp-red: #dc2626;
+  --rp-red-bg: #fee2e2;
+  --rp-red-text: #7f1d1d;
+  --rp-rose: #db2777;
+  --rp-rose-bg: #fce7f3;
+  --rp-violet: #7c3aed;
+  --rp-violet-bg: #ede9fe;
+  --rp-green: #059669;
+  --rp-green-bg: #d1fae5;
+  --rp-green-text: #064e3b;
+
+  --rp-ink: #0f172a;
+  --rp-text: #1e293b;
+  --rp-muted: #475569;
+  --rp-faint: #64748b;
+  --rp-border: #bdd0ea;
+  --rp-border-strong: #8faac8;
+  --rp-line: #d0e0f0;
+  --rp-surface: #ffffff;
+  --rp-surface-2: #f0f5ff;
+
+  --rp-radius: 16px;
+  --rp-radius-sm: 12px;
+  --rp-radius-xs: 9px;
+  --rp-shadow-sm: 0 1px 3px rgba(15,23,42,0.07), 0 2px 8px rgba(30,64,175,0.07);
+  --rp-shadow: 0 2px 4px rgba(15,23,42,0.06), 0 12px 32px rgba(30,64,175,0.14);
+  --rp-shadow-lg: 0 24px 60px rgba(30,64,175,0.26);
+  --rp-ring: 0 0 0 3px rgba(37,99,235,0.22);
+  --rp-hairline: inset 0 1px 0 rgba(255,255,255,0.8);
+
+  color: var(--rp-text);
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+  width: 100%;
+}
+
+/* ---------------------------------------------------------------- Buttons */
+
+.reservaplus-shell .btn {
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease,
+    border-color 140ms ease, color 140ms ease;
+}
+
+.reservaplus-shell .btn:active {
+  transform: translateY(1px);
+}
+
+.reservaplus-shell .btn-primary {
+  background: var(--rp-primary);
+  border-color: var(--rp-primary);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+  color: #ffffff;
+}
+
+.reservaplus-shell .btn-primary:hover,
+.reservaplus-shell .btn-primary:focus {
+  background: var(--rp-primary-dark);
+  border-color: var(--rp-primary-dark);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.34);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.reservaplus-shell .btn-outline-primary {
+  border-color: var(--rp-primary-200);
+  color: var(--rp-primary-dark);
+}
+
+.reservaplus-shell .btn-outline-primary:hover,
+.reservaplus-shell .btn-outline-primary:focus {
+  background: var(--rp-primary);
+  border-color: var(--rp-primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.reservaplus-shell .btn-outline-secondary {
+  border-color: var(--rp-border-strong);
+  color: var(--rp-text);
+}
+
+.reservaplus-shell .btn-outline-secondary:hover,
+.reservaplus-shell .btn-outline-secondary:focus {
+  background: var(--rp-surface-2);
+  border-color: var(--rp-primary-200);
+  color: var(--rp-primary-dark);
+}
+
+.reservaplus-shell .btn-secondary {
+  background: var(--rp-ink);
+  border-color: var(--rp-ink);
+  color: #ffffff;
+}
+
+.reservaplus-shell .btn-outline-warning {
+  border-color: #fcd34d;
+  color: var(--rp-amber-text);
+}
+
+.reservaplus-shell .btn-outline-warning:hover,
+.reservaplus-shell .btn-outline-warning:focus {
+  background: var(--rp-amber-bg);
+  border-color: var(--rp-amber);
+  color: var(--rp-amber-text);
+}
+
+/* Buttons inside the hero (light on dark) */
+
+.reservaplus-hero .btn-primary {
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.25);
+  color: var(--rp-primary-dark);
+  font-weight: 700;
+}
+
+.reservaplus-hero .btn-primary:hover,
+.reservaplus-hero .btn-primary:focus {
+  background: var(--rp-primary-50);
+  border-color: var(--rp-primary-50);
+  color: var(--rp-primary-darker);
+}
+
+.reservaplus-hero .btn-outline-primary {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+}
+
+.reservaplus-hero .btn-outline-primary:hover,
+.reservaplus-hero .btn-outline-primary:focus {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+/* ----------------------------------------------------------- Surfaces */
+
+.reservaplus-toolbar,
+.reservaplus-panel {
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius);
+  box-shadow: var(--rp-shadow), var(--rp-hairline);
+}
+
+.reservaplus-toolbar,
+.reservaplus-panel {
+  padding: 22px;
+}
+
+/* ------------------------------------------------------------- Hero / brand */
+
+.reservaplus-hero {
+  align-items: center;
+  background: var(--rp-gradient);
+  border: none;
+  border-radius: var(--rp-radius);
+  box-shadow: var(--rp-shadow-lg);
+  color: #ffffff;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 48%, #0891b2 100%);
+  min-height: 180px;
+  overflow: hidden;
+  padding: 30px 34px;
+  position: relative;
+}
+
+.reservaplus-hero::before {
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.28), transparent 42%),
+    radial-gradient(circle at 8% 96%, rgba(255, 255, 255, 0.18), transparent 38%);
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.reservaplus-hero::after {
+  background: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.07' stroke-width='1.4'%3E%3Crect x='8' y='8' width='32' height='32' rx='6'/%3E%3Cpath d='M8 18h32M18 8v32'/%3E%3C/g%3E%3C/svg%3E") repeat;
+  content: "";
+  inset: 0;
+  opacity: 0.6;
+  position: absolute;
+}
+
+.reservaplus-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.reservaplus-hero-content {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+}
+
+/* Brand mark — reusable logo (icon badge + wordmark) */
+
+.reservaplus-brand {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.reservaplus-brand-mark {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 10px 24px rgba(2, 6, 23, 0.22);
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 1.9rem;
+  height: 60px;
+  justify-content: center;
+  width: 60px;
+}
+
+.reservaplus-brand-text {
+  display: grid;
+  gap: 2px;
+}
+
+.reservaplus-kicker {
+  color: var(--rp-primary-dark);
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.reservaplus-hero .reservaplus-kicker {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.reservaplus-hero h1,
+.reservaplus-toolbar h1,
+.reservaplus-panel h1,
+.reservaplus-panel h2 {
+  color: var(--rp-ink);
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin: 0;
+}
+
+.reservaplus-hero h1 {
+  color: #ffffff;
+  font-size: 2.05rem;
+  font-weight: 800;
+  text-shadow: 0 1px 4px rgba(2, 6, 23, 0.18);
+}
+
+.reservaplus-toolbar h1,
+.reservaplus-panel h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.reservaplus-panel h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.reservaplus-hero p,
+.reservaplus-toolbar p,
+.reservaplus-panel p {
+  color: var(--rp-muted);
+  margin: 6px 0 0;
+  max-width: 720px;
+}
+
+.reservaplus-hero p {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.reservaplus-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: flex-end;
+}
+
+.reservaplus-actions .btn,
+.reservaplus-row-actions .btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-height: 38px;
+}
+
+/* ---------------------------------------------------------------- Toolbar (sub-pages) */
+
+.reservaplus-toolbar,
+.reservaplus-panel-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.reservaplus-panel-header {
+  margin-bottom: 18px;
+}
+
+.reservaplus-toolbar {
+  border-left: 5px solid;
+  border-image: linear-gradient(180deg, var(--rp-primary), var(--rp-accent)) 1;
+}
+
+/* ------------------------------------------------------------------- Stats */
+
+.reservaplus-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.reservaplus-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.reservaplus-grid-main {
+  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+}
+
+.reservaplus-stat {
+  background: var(--rp-surface);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--rp-radius-sm);
+  box-shadow: var(--rp-shadow-sm), var(--rp-hairline);
+  display: grid;
+  gap: 4px;
+  min-height: 138px;
+  overflow: hidden;
+  padding: 20px;
+  position: relative;
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.reservaplus-stat::before {
+  background: var(--rp-stat-color, var(--rp-primary)); /* fallback */
+  background: linear-gradient(90deg, var(--rp-stat-color, var(--rp-primary)), color-mix(in srgb, var(--rp-stat-color, var(--rp-primary)) 55%, #ffffff));
+  content: "";
+  height: 5px;
+  inset: 0 0 auto 0;
+  position: absolute;
+}
+
+.reservaplus-stat:hover {
+  border-color: var(--rp-stat-color, var(--rp-primary));
+  box-shadow: var(--rp-shadow);
+  transform: translateY(-3px);
+}
+
+.reservaplus-stat-icon {
+  align-items: center;
+  background: var(--rp-stat-bg, var(--rp-primary-100));
+  border-radius: 11px;
+  color: var(--rp-stat-color, var(--rp-primary));
+  display: inline-flex;
+  font-size: 1.2rem;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.reservaplus-stat strong {
+  color: var(--rp-stat-color, var(--rp-primary));
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+.reservaplus-stat span {
+  color: var(--rp-ink);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.reservaplus-stat small {
+  color: var(--rp-faint);
+  font-size: 0.78rem;
+}
+
+/* Stat color variants */
+.reservaplus-stat--primary { --rp-stat-color: #2563eb; --rp-stat-bg: linear-gradient(135deg, #dbeafe, #c7d2fe); }
+.reservaplus-stat--accent  { --rp-stat-color: #0891b2; --rp-stat-bg: linear-gradient(135deg, #cffafe, #a5f3fc); }
+.reservaplus-stat--rose    { --rp-stat-color: #db2777; --rp-stat-bg: linear-gradient(135deg, #fce7f3, #fbcfe8); }
+.reservaplus-stat--violet  { --rp-stat-color: #7c3aed; --rp-stat-bg: linear-gradient(135deg, #ede9fe, #ddd6fe); }
+.reservaplus-stat--amber   { --rp-stat-color: #d97706; --rp-stat-bg: linear-gradient(135deg, #fef3c7, #fde68a); }
+
+/* --------------------------------------------------------------- Lists */
+
+.reservaplus-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reservaplus-list-row {
+  align-items: center;
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-left: 4px solid var(--rp-primary);
+  border-radius: var(--rp-radius-xs);
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  min-height: 68px;
+  padding: 13px 16px;
+  transition: background 140ms ease, border-left-color 140ms ease,
+    box-shadow 140ms ease, transform 140ms ease;
+}
+
+.reservaplus-list-row:hover {
+  background: var(--rp-primary-50);
+  border-left-color: var(--rp-accent);
+  box-shadow: 0 4px 16px rgba(37,99,235,0.14);
+  transform: translateX(2px);
+}
+
+.reservaplus-list-row div {
+  display: grid;
+  gap: 4px;
+}
+
+.reservaplus-list-row strong {
+  color: var(--rp-ink);
+  font-weight: 700;
+}
+
+.reservaplus-list-row span {
+  color: var(--rp-muted);
+}
+
+.reservaplus-list-row small {
+  color: var(--rp-faint);
+}
+
+/* --------------------------------------------------------------- Badges */
+
+.reservaplus-badge {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 700;
+  gap: 5px;
+  min-height: 26px;
+  padding: 3px 11px;
+  white-space: nowrap;
+}
+
+.reservaplus-badge::before {
+  border-radius: 999px;
+  content: "";
+  height: 7px;
+  width: 7px;
+}
+
+.reservaplus-badge-approved {
+  background: linear-gradient(135deg, #dbeafe, #c7d2fe);
+  color: #1e40af;
+  border: 1px solid #a5b4fc;
+}
+.reservaplus-badge-approved::before { background: var(--rp-primary); }
+
+.reservaplus-badge-danger {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: var(--rp-red-text);
+  border: 1px solid #fca5a5;
+}
+.reservaplus-badge-danger::before { background: var(--rp-red); }
+
+/* Inline "para outra pessoa" chip should not render a leading dot */
+.reservaplus-table .reservaplus-badge::before { display: none; }
+
+/* --------------------------------------------------------------- Empty state */
+
+.reservaplus-empty {
+  align-items: center;
+  background:
+    var(--rp-gradient-soft),
+    var(--rp-surface-2);
+  border: 1px dashed var(--rp-border-strong);
+  border-radius: var(--rp-radius-sm);
+  color: var(--rp-muted);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  min-height: 188px;
+  padding: 28px;
+  text-align: center;
+}
+
+.reservaplus-empty i {
+  background: linear-gradient(135deg, var(--rp-primary-100), var(--rp-primary-200));
+  border-radius: 50%;
+  box-shadow: 0 8px 20px rgba(37,99,235,0.2);
+  color: var(--rp-primary);
+  font-size: 1.7rem;
+  height: 64px;
+  line-height: 64px;
+  width: 64px;
+}
+
+.reservaplus-empty strong {
+  color: var(--rp-ink);
+  font-size: 1rem;
+}
+
+.reservaplus-empty-table {
+  background: none;
+  border: none;
+  min-height: 130px;
+}
+
+/* --------------------------------------------------------------- Filters */
+
+.reservaplus-filters {
+  align-items: end;
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius);
+  box-shadow: var(--rp-shadow-sm);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  padding: 18px;
+}
+
+/* A busca livre ocupa a linha inteira: é o campo mais usado do painel. */
+.reservaplus-filters .reservaplus-filter-search {
+  grid-column: 1 / -1;
+}
+
+.reservaplus-filters label,
+.reservaplus-form-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.reservaplus-filters span,
+.reservaplus-form-grid span {
+  color: var(--rp-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.reservaplus-shell .form-control,
+.reservaplus-shell .form-select {
+  border-color: var(--rp-border-strong);
+  border-radius: 9px;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.reservaplus-shell .form-control:focus,
+.reservaplus-shell .form-select:focus {
+  border-color: var(--rp-primary);
+  box-shadow: var(--rp-ring);
+}
+
+/* --------------------------------------------------------------- Table */
+
+.reservaplus-table {
+  margin-bottom: 0;
+}
+
+.reservaplus-table thead th {
+  background: var(--rp-surface-2);
+  border-bottom: 1px solid var(--rp-border);
+  color: var(--rp-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reservaplus-table tbody tr {
+  transition: background 120ms ease;
+}
+
+.reservaplus-table tbody tr:hover {
+  background: var(--rp-primary-50);
+}
+
+.reservaplus-table td {
+  vertical-align: middle;
+}
+
+.reservaplus-row-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.reservaplus-inline-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- Forms */
+
+.reservaplus-form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reservaplus-field-wide {
+  grid-column: 1 / -1;
+}
+
+.reservaplus-toggle {
+  align-items: center;
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex !important;
+  gap: 10px !important;
+  min-height: 46px;
+  padding: 10px 14px;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.reservaplus-toggle:hover {
+  background: var(--rp-primary-50);
+  border-color: var(--rp-primary-200);
+}
+
+.reservaplus-toggle input {
+  accent-color: var(--rp-primary);
+  height: 18px;
+  width: 18px;
+}
+
+.reservaplus-config .reservaplus-form-grid {
+  max-width: 980px;
+}
+
+/* "Reservar para outra pessoa" highlight */
+
+.reservaplus-reservation-form {
+  align-items: end;
+  grid-template-columns: minmax(260px, 1.15fr) minmax(210px, 0.85fr) minmax(210px, 0.85fr);
+  max-width: 1060px;
+}
+
+.reservaplus-reservation-form .reservaplus-field-wide {
+  grid-column: 1 / -1;
+  max-width: 720px;
+}
+
+.reservaplus-for-others {
+  background: var(--rp-primary-50);
+  border: 1px solid var(--rp-primary-200);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.reservaplus-for-others span {
+  align-items: center;
+  color: var(--rp-primary-dark);
+  display: flex;
+}
+
+.reservaplus-ico-accent {
+  color: var(--rp-primary);
+  margin-right: 4px;
+}
+
+/* --------------------------------------------------- Profile permissions */
+
+.reservaplus-perms {
+  padding: 0;
+}
+
+.reservaplus-perms-head {
+  align-items: center;
+  border-bottom: 1px solid var(--rp-border);
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+}
+
+.reservaplus-perms-icon {
+  align-items: center;
+  background: var(--rp-gradient);
+  border-radius: 14px;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.3);
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 1.6rem;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.reservaplus-perms-head h2 {
+  color: var(--rp-ink);
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.reservaplus-perms-head p {
+  color: var(--rp-muted);
+  margin: 2px 0 0;
+}
+
+.reservaplus-perms-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reservaplus-perm-row {
+  align-items: center;
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  border-radius: var(--rp-radius-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 16px;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.reservaplus-perm-row:hover {
+  border-color: var(--rp-primary-200);
+  box-shadow: var(--rp-shadow-sm);
+}
+
+.reservaplus-perm-ico {
+  align-items: center;
+  background: var(--rp-primary-100);
+  border-radius: 10px;
+  color: var(--rp-primary);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.reservaplus-perm-info {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 180px;
+}
+
+.reservaplus-perm-info strong {
+  color: var(--rp-ink);
+  font-size: 0.95rem;
+}
+
+.reservaplus-perm-info span {
+  color: var(--rp-muted);
+  font-size: 0.82rem;
+}
+
+.reservaplus-perm-info code {
+  background: none;
+  color: var(--rp-faint);
+  font-size: 0.72rem;
+  padding: 0;
+}
+
+.reservaplus-perm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reservaplus-perm-toggle {
+  cursor: pointer;
+  margin: 0;
+  user-select: none;
+}
+
+.reservaplus-perm-toggle input {
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
+}
+
+.reservaplus-perm-toggle span {
+  align-items: center;
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border-strong);
+  border-radius: 999px;
+  color: var(--rp-muted);
+  display: inline-flex;
+  font-size: 0.8rem;
+  font-weight: 600;
+  gap: 6px;
+  padding: 5px 13px;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.reservaplus-perm-toggle span::before {
+  border: 1.5px solid var(--rp-border-strong);
+  border-radius: 5px;
+  content: "";
+  height: 13px;
+  transition: background 140ms ease, border-color 140ms ease;
+  width: 13px;
+}
+
+.reservaplus-perm-toggle:hover span {
+  border-color: var(--rp-primary);
+  color: var(--rp-primary-dark);
+}
+
+.reservaplus-perm-toggle input:checked + span {
+  background: var(--rp-primary);
+  border-color: var(--rp-primary);
+  color: #ffffff;
+}
+
+.reservaplus-perm-toggle input:checked + span::before {
+  background: #ffffff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E")
+    center / 10px no-repeat;
+  border-color: #ffffff;
+}
+
+.reservaplus-perm-toggle input:focus-visible + span {
+  box-shadow: var(--rp-ring);
+}
+
+.reservaplus-perm-toggle input:disabled + span {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.reservaplus-perms-foot {
+  border-top: 1px solid var(--rp-border);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+/* Real-time availability indicator */
+
+.reservaplus-availability {
+  align-items: center;
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  display: flex;
+  font-size: 0.9rem;
+  font-weight: 600;
+  gap: 9px;
+  margin-top: 2px;
+  padding: 11px 14px;
+}
+
+.reservaplus-availability i {
+  font-size: 1.15rem;
+}
+
+.reservaplus-availability.is-checking {
+  background: var(--rp-surface-2);
+  border-color: var(--rp-border-strong);
+  color: var(--rp-muted);
+}
+
+.reservaplus-availability.is-checking i {
+  animation: reservaplus-spin 0.8s linear infinite;
+}
+
+.reservaplus-availability.is-available {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-color: #34d399;
+  color: #064e3b;
+  font-weight: 700;
+}
+
+.reservaplus-availability.is-busy {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-color: #fbbf24;
+  color: #78350f;
+  font-weight: 700;
+}
+
+.reservaplus-availability.is-error {
+  background: var(--rp-surface-2);
+  border-color: var(--rp-border-strong);
+  color: var(--rp-muted);
+}
+
+.reservaplus-availability.is-info {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-color: #818cf8;
+  color: #3730a3;
+  font-weight: 700;
+}
+
+@keyframes reservaplus-spin {
+  to { transform: rotate(360deg); }
+}
+
+.reservaplus-form-panel .reservaplus-actions {
+  justify-content: flex-start;
+}
+
+/* --------------------------------------------------------------- Calendar */
+
+.reservaplus-calendar-panel {
+  background:
+    linear-gradient(180deg, rgba(37, 99, 235, 0.06), rgba(14, 165, 233, 0.02) 240px),
+    var(--rp-surface);
+  border: 1px solid var(--rp-border);
+  box-shadow: var(--rp-shadow);
+}
+
+.reservaplus-calendar-panel .reservaplus-panel-header {
+  border-bottom: 1px solid var(--rp-border);
+  padding-bottom: 18px;
+}
+
+.reservaplus-calendar {
+  display: grid;
+  gap: 16px;
+  min-height: 640px;
+}
+
+.reservaplus-calendar-title {
+  color: var(--rp-ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+}
+
+.reservaplus-calendar-grid {
+  background: var(--rp-border-strong);
+  border: 1px solid var(--rp-border-strong);
+  border-radius: var(--rp-radius-sm);
+  box-shadow: var(--rp-shadow-sm);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.reservaplus-calendar-weekday,
+.reservaplus-calendar-day {
+  min-height: 44px;
+  padding: 8px;
+}
+
+.reservaplus-calendar-weekday {
+  background: linear-gradient(180deg, #eef3fa, var(--rp-surface-2));
+  border-bottom: 2px solid var(--rp-border-strong);
+  color: var(--rp-primary-dark);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  min-height: 40px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.reservaplus-calendar-day {
+  background: var(--rp-surface);
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  grid-auto-rows: min-content;
+  min-height: 122px;
+  outline: 0;
+  position: relative;
+  transition: box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.reservaplus-calendar-day::after {
+  background: var(--rp-primary);
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+  color: #ffffff;
+  content: "+";
+  display: grid;
+  font-size: 1.05rem;
+  font-weight: 800;
+  height: 26px;
+  opacity: 0;
+  place-items: center;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  transform: scale(0.7);
+  transition: opacity 160ms ease, transform 160ms ease;
+  width: 26px;
+}
+
+.reservaplus-calendar-day:hover,
+.reservaplus-calendar-day:focus {
+  background: var(--rp-primary-50);
+  box-shadow: inset 0 0 0 2px var(--rp-primary), 0 14px 28px rgba(37, 99, 235, 0.2);
+  transform: translateY(-3px);
+  z-index: 2;
+}
+
+.reservaplus-calendar-day:hover::after,
+.reservaplus-calendar-day:focus::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.reservaplus-calendar-day.is-muted {
+  background: var(--rp-surface-2);
+  color: var(--rp-faint);
+}
+
+.reservaplus-calendar-day.is-today {
+  background: linear-gradient(180deg, var(--rp-primary-100), var(--rp-primary-50));
+  box-shadow: inset 0 0 0 2.5px var(--rp-primary), 0 4px 16px rgba(37,99,235,0.14);
+  z-index: 1;
+}
+
+.reservaplus-calendar-day.is-today .reservaplus-calendar-day-number {
+  background: var(--rp-primary);
+  border-radius: 999px;
+  color: #ffffff;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  width: 24px;
+}
+
+.reservaplus-calendar-day-number {
+  color: var(--rp-text);
+  font-weight: 800;
+}
+
+.reservaplus-calendar-event {
+  border-radius: 6px;
+  color: var(--rp-ink);
+  cursor: default;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  padding: 4px 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Event types — distinct hues per source/status */
+.reservaplus-calendar-event.native {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left: 3px solid var(--rp-primary);
+  color: #1e40af;
+}
+
+.reservaplus-calendar-event.request,
+.reservaplus-calendar-event.request.created {
+  background: linear-gradient(135deg, #cffafe, #a5f3fc);
+  border-left: 3px solid var(--rp-accent);
+  color: #164e63;
+}
+
+.reservaplus-calendar-event.request.cancelled {
+  background: #f1f5f9;
+  border-left: 3px solid var(--rp-faint);
+  opacity: 0.72;
+  color: #64748b;
+}
+
+.reservaplus-calendar-event.block {
+  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+  border-left: 3px solid var(--rp-rose);
+  color: #831843;
+}
+
+.reservaplus-calendar-more {
+  background: var(--rp-surface-2);
+  border-radius: 6px;
+  color: var(--rp-muted);
+  cursor: default;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+}
+
+.reservaplus-calendar.is-loading .reservaplus-calendar-title {
+  animation: reservaplus-pulse 1.2s ease-in-out infinite;
+}
+
+.reservaplus-calendar-skeleton {
+  animation: reservaplus-pulse 1.2s ease-in-out infinite;
+  background: var(--rp-surface-2) !important;
+  cursor: default !important;
+}
+
+.reservaplus-calendar-skeleton:hover,
+.reservaplus-calendar-skeleton:focus {
+  background: var(--rp-surface-2) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.reservaplus-calendar-skeleton::after {
+  display: none !important;
+}
+
+@keyframes reservaplus-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+.reservaplus-calendar-legend {
+  border-top: 1px solid var(--rp-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.reservaplus-calendar-legend-item {
+  align-items: center;
+  color: var(--rp-muted);
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 600;
+  gap: 7px;
+}
+
+.reservaplus-calendar-legend-dot {
+  border-radius: 4px;
+  flex-shrink: 0;
+  height: 13px;
+  width: 22px;
+}
+
+.reservaplus-legend-native    { background: var(--rp-primary-100); border-left: 3px solid var(--rp-primary); }
+.reservaplus-legend-active    { background: #e0f2fe; border-left: 3px solid var(--rp-accent); }
+.reservaplus-legend-block     { background: var(--rp-rose-bg); border-left: 3px solid var(--rp-rose); }
+
+/* View switcher */
+
+.reservaplus-view-switcher {
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+}
+
+.reservaplus-view-switcher .btn {
+  border: none !important;
+  border-radius: 7px;
+  box-shadow: none !important;
+  font-size: 0.82rem;
+  min-height: 30px;
+  padding: 4px 14px;
+  transform: none !important;
+}
+
+.reservaplus-view-switcher .btn-outline-secondary {
+  background: transparent;
+  color: var(--rp-muted);
+}
+
+.reservaplus-view-switcher .btn-secondary {
+  background: var(--rp-surface);
+  box-shadow: var(--rp-shadow-sm) !important;
+  color: var(--rp-primary-dark);
+}
+
+/* Ir para a data — pular direto para um mês/dia sem clicar seta por seta */
+
+.reservaplus-date-jump {
+  align-items: center;
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  display: inline-flex;
+  gap: 6px;
+  padding: 3px 8px;
+}
+
+.reservaplus-date-jump > i {
+  color: var(--rp-primary);
+  font-size: 1rem;
+}
+
+.reservaplus-date-jump input[type="date"] {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.82rem;
+  min-height: 30px;
+  padding: 2px 4px;
+  width: 9.5rem;
+}
+
+.reservaplus-date-jump input[type="date"]:focus {
+  box-shadow: none;
+  outline: 2px solid var(--rp-primary-200);
+  outline-offset: 1px;
+}
+
+/* Campos de procura (salas e pessoas) */
+
+.rp-search-box {
+  position: relative;
+}
+
+.rp-search-box > i {
+  color: var(--rp-faint);
+  font-size: 0.95rem;
+  left: 10px;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.rp-search-box input {
+  padding-left: 32px !important;
+  width: 100%;
+}
+
+.rp-search-box--wide {
+  margin-bottom: 10px;
+}
+
+.rp-search-empty {
+  color: var(--rp-faint);
+  font-size: 0.8rem;
+  margin: 6px 0 0;
+}
+
+/* O <select> de pessoas vira lista rolável quando tem campo de busca junto */
+[data-reservaplus-user-picker] select[size] {
+  margin-top: 8px;
+}
+
+/* Week view */
+
+.reservaplus-week-grid {
+  background: var(--rp-border);
+  border: 1px solid var(--rp-border-strong);
+  border-radius: var(--rp-radius-sm);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-height: 360px;
+  overflow: hidden;
+}
+
+.reservaplus-week-col {
+  background: var(--rp-surface);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  outline: 0;
+  transition: box-shadow 160ms ease;
+}
+
+.reservaplus-week-col:hover,
+.reservaplus-week-col:focus {
+  box-shadow: inset 0 0 0 2px var(--rp-primary);
+  z-index: 1;
+}
+
+.reservaplus-week-col-header {
+  align-items: center;
+  background: var(--rp-surface-2);
+  border-bottom: 2px solid var(--rp-border-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 4px;
+  text-align: center;
+}
+
+.reservaplus-week-col.is-today .reservaplus-week-col-header {
+  background: var(--rp-gradient);
+  border-bottom-color: var(--rp-primary-darker);
+  color: #ffffff;
+}
+
+.reservaplus-week-dayname {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reservaplus-week-daynum {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.reservaplus-week-events {
+  background:
+    repeating-linear-gradient(
+      var(--rp-surface) 0,
+      var(--rp-surface) 47px,
+      var(--rp-border) 47px,
+      var(--rp-border) 48px
+    );
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 96px;
+  overflow: hidden;
+  padding: 8px 6px;
+}
+
+.reservaplus-week-events .reservaplus-calendar-event {
+  cursor: default;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reservaplus-week-event-time {
+  color: var(--rp-muted);
+  font-size: 0.66rem;
+}
+
+.reservaplus-week-empty {
+  align-items: center;
+  color: var(--rp-faint);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.74rem;
+  font-weight: 600;
+  gap: 4px;
+  justify-content: center;
+  min-height: 96px;
+  opacity: 0.7;
+  text-align: center;
+}
+
+/* Day view */
+
+.reservaplus-day-view {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 300px;
+}
+
+.reservaplus-dayview-event {
+  align-items: center;
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  border-left: 4px solid var(--rp-primary);
+  border-radius: var(--rp-radius-xs);
+  cursor: pointer;
+  display: flex;
+  gap: 16px;
+  min-height: 60px;
+  outline: 0;
+  padding: 12px 18px;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+.reservaplus-dayview-event:hover,
+.reservaplus-dayview-event:focus {
+  box-shadow: var(--rp-shadow);
+  transform: translateX(3px);
+}
+
+.reservaplus-dayview-event.native {
+  background: var(--rp-primary-50);
+  border-left-color: var(--rp-primary);
+}
+
+.reservaplus-dayview-event.request,
+.reservaplus-dayview-event.request.created {
+  background: #f0f9ff;
+  border-left-color: var(--rp-accent);
+}
+
+.reservaplus-dayview-event.request.cancelled {
+  background: var(--rp-surface-2);
+  border-left-color: var(--rp-faint);
+  opacity: 0.7;
+}
+
+.reservaplus-dayview-event.block {
+  background: #fdf2f8;
+  border-left-color: var(--rp-rose);
+}
+
+.reservaplus-dayview-time {
+  color: var(--rp-primary-dark);
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 116px;
+}
+
+.reservaplus-dayview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.reservaplus-dayview-info strong {
+  color: var(--rp-ink);
+  display: block;
+  font-size: 0.96rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reservaplus-dayview-empty {
+  align-items: center;
+  color: var(--rp-faint);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-height: 220px;
+  text-align: center;
+}
+
+.reservaplus-dayview-empty i {
+  color: var(--rp-primary-200);
+  font-size: 2.4rem;
+}
+
+/* --------------------------------------------------------------- Modals */
+
+.reservaplus-modal[hidden],
+.reservaplus-daydetail[hidden] {
+  display: none;
+}
+
+.reservaplus-modal {
+  inset: 0;
+  position: fixed;
+  z-index: 1050;
+}
+
+.reservaplus-modal-backdrop {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  inset: 0;
+  position: absolute;
+}
+
+.reservaplus-modal-dialog {
+  animation: reservaplus-modal-in 200ms ease;
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border-strong);
+  border-radius: var(--rp-radius);
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.32);
+  left: 50%;
+  max-height: calc(100vh - 48px);
+  max-width: 720px;
+  overflow: auto;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 32px));
+}
+
+@keyframes reservaplus-modal-in {
+  from { opacity: 0; transform: translate(-50%, -46%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.reservaplus-modal-header,
+.reservaplus-modal-footer {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.reservaplus-modal-header {
+  background: var(--rp-gradient-soft);
+  border-bottom: 1px solid var(--rp-border);
+}
+
+.reservaplus-modal-header h2 {
+  color: var(--rp-ink);
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.reservaplus-modal-header p {
+  color: var(--rp-muted);
+  margin: 4px 0 0;
+  text-transform: capitalize;
+}
+
+.reservaplus-modal-body {
+  display: grid;
+  gap: 15px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 20px;
+}
+
+.reservaplus-modal-body label {
+  display: grid;
+  gap: 6px;
+}
+
+.reservaplus-modal-body label span {
+  color: var(--rp-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.reservaplus-modal-footer {
+  border-top: 1px solid var(--rp-border);
+  justify-content: flex-end;
+}
+
+.reservaplus-modal-open {
+  overflow: hidden;
+}
+
+/* Day detail panel */
+
+.reservaplus-daydetail {
+  inset: 0;
+  position: fixed;
+  z-index: 1060;
+}
+
+.reservaplus-daydetail-dialog {
+  animation: reservaplus-modal-in 200ms ease;
+  background: var(--rp-surface);
+  border: 1px solid var(--rp-border-strong);
+  border-radius: var(--rp-radius);
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.34);
+  display: flex;
+  flex-direction: column;
+  left: 50%;
+  max-height: calc(100vh - 48px);
+  max-width: 560px;
+  overflow: hidden;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+}
+
+.reservaplus-daydetail-body {
+  display: grid;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.reservaplus-daydetail-event {
+  align-items: center;
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-border);
+  border-left: 4px solid var(--rp-primary);
+  border-radius: var(--rp-radius-xs);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 11px 15px;
+}
+
+.reservaplus-daydetail-event.native {
+  background: var(--rp-primary-50);
+  border-left-color: var(--rp-primary);
+}
+
+.reservaplus-daydetail-event.request,
+.reservaplus-daydetail-event.request.created {
+  background: #f0f9ff;
+  border-left-color: var(--rp-accent);
+}
+
+.reservaplus-daydetail-event.request.cancelled {
+  background: var(--rp-surface-2);
+  border-left-color: var(--rp-faint);
+  opacity: 0.7;
+}
+
+.reservaplus-daydetail-event.block {
+  background: #fdf2f8;
+  border-left-color: var(--rp-rose);
+}
+
+.reservaplus-daydetail-event-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.reservaplus-daydetail-event-info strong {
+  color: var(--rp-ink);
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reservaplus-daydetail-event-time {
+  color: var(--rp-muted);
+  font-size: 0.78rem;
+}
+
+.reservaplus-daydetail-empty {
+  color: var(--rp-muted);
+  padding: 26px;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------- Responsive */
+
+@media (max-width: 1180px) {
+  .reservaplus-stats,
+  .reservaplus-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reservaplus-reservation-form,
+  .reservaplus-grid-main {
+    grid-template-columns: 1fr;
+  }
+
+  .reservaplus-week-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .reservaplus-date-jump {
+    order: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .reservaplus-hero,
+  .reservaplus-toolbar,
+  .reservaplus-panel-header,
+  .reservaplus-list-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reservaplus-hero-content {
+    align-items: flex-start;
+  }
+
+  .reservaplus-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .reservaplus-stats,
+  .reservaplus-filters,
+  .reservaplus-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reservaplus-shell {
+    padding: 12px;
+  }
+
+  .reservaplus-calendar-grid {
+    gap: 3px;
+  }
+
+  .reservaplus-calendar-day {
+    min-height: 84px;
+    padding: 6px;
+  }
+
+  .reservaplus-modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .reservaplus-week-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .reservaplus-dayview-time {
+    min-width: 76px;
+  }
+}
+
+/* ================================================================
+   BOOKING FORM — layout dois painéis + item cards
+   ================================================================ */
+
+.rp-booking-panel {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.rp-booking-panel .reservaplus-panel-header {
+  padding: 20px 26px 18px;
+  border-bottom: 1px solid var(--rp-border);
+}
+
+.rp-booking-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  min-height: 560px;
+}
+
+/* ── COLUNA ESQUERDA ── */
+
+.rp-item-col {
+  border-right: 1px solid var(--rp-border);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #f8faff 0%, #eef2ff 100%);
+  overflow: hidden;
+}
+
+.rp-col-head {
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid var(--rp-border);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.rp-col-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--rp-primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rp-col-hint {
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+}
+
+.rp-item-tools {
+  padding: 10px 12px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--rp-line);
+}
+
+.rp-item-tools select {
+  max-width: 160px;
+  flex: 1;
+}
+
+.rp-item-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px 12px;
+}
+
+.rp-item-cat {
+  margin-bottom: 4px;
+}
+
+.rp-item-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rp-muted);
+}
+
+.rp-item-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px;
+  padding: 10px 12px;
+  margin: 2px 0;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  background: var(--rp-surface);
+  font-weight: 400 !important;
+  font-size: 0.88rem;
+  color: var(--rp-text);
+  user-select: none;
+  position: relative;
+}
+
+.rp-item-card:hover {
+  background: var(--rp-primary-50);
+  border-color: var(--rp-primary-200);
+}
+
+.rp-item-card input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.rp-item-name {
+  flex: 1;
+  line-height: 1.3;
+}
+
+.rp-item-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rp-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: transparent;
+  transition: all 140ms ease;
+  font-size: 0.75rem;
+}
+
+.rp-item-card:has(input:checked) {
+  background: linear-gradient(135deg, var(--rp-primary-100), var(--rp-primary-50));
+  border-color: var(--rp-primary);
+  color: var(--rp-primary-darker);
+  font-weight: 600 !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15), 0 4px 12px rgba(37,99,235,0.12);
+}
+
+.rp-item-card:has(input:checked) .rp-item-check {
+  background: var(--rp-primary);
+  border-color: var(--rp-primary);
+  color: #fff;
+}
+
+.rp-item-list--error {
+  outline: 2px solid var(--rp-red);
+  border-radius: 10px;
+  animation: rp-shake 0.35s ease;
+}
+
+@keyframes rp-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+/* ── COLUNA DIREITA ── */
+
+.rp-options-col {
+  padding: 22px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.rp-section {
+  background: linear-gradient(180deg, #f8faff, #f0f5ff);
+  border: 1px solid var(--rp-line);
+  border-radius: var(--rp-radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rp-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--rp-primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rp-dt-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.rp-dt-label {
+  display: grid !important;
+  gap: 4px;
+  flex: 1;
+}
+
+.rp-dt-label > span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--rp-text);
+}
+
+.rp-dt-sep {
+  color: var(--rp-muted);
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.rp-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rp-presets-label {
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  font-weight: 600;
+}
+
+.rp-presets-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rp-slots-btn {
+  margin-left: auto;
+}
+
+.rp-availability,
+.rp-slots {
+  margin: -6px 0;
+}
+
+.rp-for-others {
+  background: var(--rp-primary-50);
+  border: 1px solid var(--rp-primary-200);
+  border-radius: var(--rp-radius-xs);
+  padding: 12px 14px;
+}
+
+.rp-submit-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.rp-btn-reservar {
+  flex: 1;
+  padding: 12px 20px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.rp-btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  animation: rp-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Overlay de submit */
+.rp-submit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+  animation: rp-fade-in 0.18s ease forwards;
+}
+
+@keyframes rp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.rp-submit-card {
+  background: var(--rp-surface);
+  border-radius: 20px;
+  padding: 2.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  box-shadow: var(--rp-shadow-lg);
+  animation: rp-pop-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes rp-pop-in {
+  from { transform: scale(0.75); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.rp-submit-spinner {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 4px solid var(--rp-primary-100);
+  border-top-color: var(--rp-primary);
+  animation: rp-spin 0.8s linear infinite;
+}
+
+@keyframes rp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.rp-submit-card span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--rp-ink);
+}
+
+/* Toolbars legadas (duracao) */
+.reservaplus-duration-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0.35rem;
+}
+
+.reservaplus-presets-label {
+  font-size: 0.85rem;
+  color: var(--rp-muted, #6b7280);
+  margin-right: 0.15rem;
+}
+
+/* Painel "Disponivel agora" no dashboard */
+.reservaplus-available-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem;
+}
+
+.reservaplus-available-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--rp-border, #e5e7eb);
+  border-radius: var(--rp-radius-sm, 8px);
+  background: var(--rp-surface-2, #f0f5ff);
+}
+
+.reservaplus-available-card strong {
+  color: var(--rp-ink, #111827);
+}
+
+.reservaplus-available-card small {
+  color: var(--rp-muted, #6b7280);
+}
+
+.reservaplus-available-card .btn {
+  margin-top: 0.35rem;
+  align-self: flex-start;
+}
+
+.reservaplus-available-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--rp-green, #16a34a);
+}
+
+/* Horários livres (chips) no formulário */
+.reservaplus-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.1rem 0 0.35rem;
+}
+
+.reservaplus-slots-empty,
+.reservaplus-slots-loading {
+  font-size: 0.85rem;
+  color: var(--rp-muted, #6b7280);
+}
+
+/* Recorrência no formulário */
+.reservaplus-recurrence {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--rp-border, #e5e7eb);
+  border-radius: var(--rp-radius-sm, 8px);
+  background: var(--rp-faint, #f9fafb);
+}
+
+.reservaplus-rec-weekdays,
+.reservaplus-rec-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.reservaplus-rec-label {
+  font-size: 0.82rem;
+  color: var(--rp-muted, #6b7280);
+  align-self: center;
+}
+
+.reservaplus-dow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+/* Campo obrigatório (asterisco) */
+.rp-required {
+  color: #d63939;
+  font-weight: 700;
+}
+
+/* Lista de itens dentro do modal de reserva rápida */
+.rp-item-list--modal {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #d5dbe4;
+  border-radius: 8px;
+  padding: 6px;
+  margin-top: 4px;
+}
+.rp-modal-field-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+/* ================================================================ Salas:
+   capacidade, recursos e busca de sala (v0.5.0)
+   ================================================================ */
+
+/* --- Badges e dicas de campo na tela de Salas --- */
+
+.reservaplus-item-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.reservaplus-badge-neutral {
+  background: var(--rp-surface-2);
+  color: var(--rp-muted);
+  border: 1px solid var(--rp-line);
+}
+
+.reservaplus-capacity-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.reservaplus-capacity-row input[type="number"] {
+  width: 92px;
+  flex-shrink: 0;
+}
+
+.reservaplus-capacity-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.reservaplus-field-hint {
+  color: var(--rp-faint);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* --- Filtro de salas no formulário de reserva --- */
+
+.rp-room-filter {
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--rp-line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rp-room-filter-fit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--rp-muted);
+  cursor: pointer;
+  margin: 0;
+}
+
+.rp-room-filter-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.rp-feature-chip {
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rp-feature-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.rp-feature-chip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--rp-line);
+  background: var(--rp-surface);
+  color: var(--rp-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.rp-feature-chip:hover span {
+  border-color: var(--rp-primary-200);
+  background: var(--rp-primary-50);
+}
+
+.rp-feature-chip.is-checked span,
+.rp-feature-chip:has(input:checked) span {
+  background: var(--rp-primary);
+  border-color: var(--rp-primary);
+  color: #fff;
+}
+
+.rp-room-filter-empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--rp-amber-text);
+  background: var(--rp-amber-bg);
+  border-radius: var(--rp-radius-xs);
+  padding: 6px 9px;
+}
+
+/* --- Capacidade e recursos no card da sala --- */
+
+.rp-item-capacity {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--rp-surface-2);
+  border: 1px solid var(--rp-line);
+  color: var(--rp-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.rp-item-capacity i {
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+.rp-item-features {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--rp-faint);
+  font-size: 0.85rem;
+}
+
+.rp-item-card:has(input:checked) .rp-item-capacity {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: var(--rp-primary-200);
+  color: var(--rp-primary-darker);
+}
+
+.rp-item-card:has(input:checked) .rp-item-features {
+  color: var(--rp-primary-dark);
+}
+
+/* --- Aviso "acima da capacidade" na lista de reservas --- */
+
+.reservaplus-table td.rp-over-capacity {
+  color: var(--rp-amber-text);
+  font-weight: 700;
+}
+
+.rp-capacity-hint {
+  color: var(--rp-faint);
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+
+/* --- Caixa informativa (ex.: alterando uma ocorrência de série) --- */
+
+.reservaplus-availability--info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rp-primary-50);
+  border: 1px solid var(--rp-primary-200);
+  color: var(--rp-primary-darker);
+  border-radius: var(--rp-radius-xs);
+  padding: 9px 12px;
+  font-size: 0.82rem;
+}
