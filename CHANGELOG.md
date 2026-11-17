@@ -2,6 +2,9 @@
 
 ## Em desenvolvimento — após 0.7.0-rc3 (sem nova versão instalada)
 
+- Retirada antecipada em até 15 minutos, com reserva aprovada, termo válido e verificação de conflitos no intervalo efetivo; o horário real é registrado sem alterar o período aprovado.
+- Alteração que não modifica as datas é ignorada sem recriar aprovações ou invalidar termos. Mudanças efetivas de período continuam exigindo novo escopo e assinatura, preservando histórico.
+
 - Preparação automática pós-transação dos termos aplicáveis na solicitação, após aprovação e na devolução/conferência. Reusa a geração idempotente e o versionamento existentes, sem remover verificações de assinatura.
 - Destaque **Ler e assinar termo** nas reservas do solicitante, na listagem e no detalhe/aba do chamado. Documento manual permanece como contingência para falhas e reservas antigas.
 - PDF inclui **Matrícula** com o login da conta GLPI do beneficiário, congelado na preparação do documento; sem alterar hashes de documentos previamente emitidos.
