@@ -836,7 +836,7 @@ final class BookingView
             self::actionEnd(__('Confirmar rejeição', 'reservaplus'));
         }
         if (in_array($state, ['approved', 'ready'], true) && Access::booking($booking, 'issue')) {
-            self::actionStart($booking, 'issue', __('Registrar entrega / início de uso', 'reservaplus'), __('Confira a identidade, os recursos e os acessórios. Os termos obrigatórios devem estar aceitos antes da entrega.', 'reservaplus'));
+            self::actionStart($booking, 'issue', __('Registrar entrega / início de uso', 'reservaplus'), __('Confira a identidade, os recursos e os acessórios. Com termos assinados e sem conflitos, a entrega pode ser feita até 15 minutos antes do horário previsto.', 'reservaplus'));
             self::textarea('condition', __('Condição na entrega e conferência dos acessórios', 'reservaplus'), '', true);
             self::actionEnd(__('Confirmar entrega', 'reservaplus'));
         }
