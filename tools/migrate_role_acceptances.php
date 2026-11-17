@@ -21,11 +21,25 @@ if (!in_array('--apply', $argv, true)) {
 }
 
 $glpiRoot = dirname(__DIR__, 3);
-require_once $glpiRoot . '/inc/includes.php';
+$autoload = $glpiRoot . '/vendor/autoload.php';
+if (!is_file($autoload)) {
+    fwrite(STDERR, "ERROR: GLPI vendor/autoload.php was not found.\n");
+    exit(1);
+}
+// GLPI 11 CLI: loading inc/includes.php alone does not initialize $DB.
+// Boot the application kernel as done by the integration test harness.
+require_once $autoload;
+$kernel = new \Glpi\Kernel\Kernel();
+$kernel->boot();
 require_once dirname(__DIR__) . '/src/Schema.php';
 
 use GlpiPlugin\Reservaplus\Schema;
 
+global $DB;
+if (!isset($DB) || !$DB instanceof \DBmysql) {
+    fwrite(STDERR, "ERROR: GLPI database connection was not initialized. Migration not started.\n");
+    exit(1);
+}
 if (Schema::roleAcceptanceSchemaReady()) {
     fwrite(STDOUT, "OK: per-role acceptance schema is already active.\n");
     exit(0);
