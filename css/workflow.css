@@ -90,3 +90,13 @@
 .rp-workflow .rp-requester-actions .rp-requester-repeat { background:#0f766e; border-color:#0f766e; color:#fff; }
 .rp-workflow .rp-requester-actions .rp-requester-repeat:hover { background:#115e59; border-color:#115e59; color:#fff; }
 .rp-workflow .rp-requester-actions .btn:focus-visible { outline:3px solid #93c5fd; outline-offset:2px; }
+
+
+/* Automatic signing — visible detail action, compact shortcuts on requester lists. */
+.rp-workflow .rp-signature-highlight { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; padding:18px; margin:12px 0 16px; border:1px solid #c4b5fd; border-radius:12px; background:#f5f3ff; color:#312e81; }
+.rp-workflow .rp-signature-highlight strong { display:block; font-size:16px; margin-bottom:6px; }
+.rp-workflow .rp-signature-highlight p { margin:7px 0 0; font-size:13px; }
+.rp-workflow .rp-signature-state { display:inline-block; border-radius:6px; padding:3px 8px; font-size:12px; font-weight:700; background:#ede9fe; color:#5b21b6; }
+.rp-workflow .rp-signature-cta { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:10px 18px; border-radius:9px; font-weight:700; background:#7c3aed; border:1px solid #7c3aed; color:#fff; text-decoration:none; }
+.rp-workflow .rp-signature-cta:hover, .rp-workflow .rp-signature-cta:focus { background:#6d28d9; border-color:#6d28d9; color:#fff; }
+@media(max-width:640px){.rp-workflow .rp-signature-highlight .rp-signature-cta{width:100%;}}
