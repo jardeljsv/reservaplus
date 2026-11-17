@@ -2,6 +2,9 @@
 
 ## Em desenvolvimento — após 0.7.0-rc3 (sem nova versão instalada)
 
+- Interface simplificada (solicitante): apresenta apenas o próprio aceite do beneficiário; não mostra ações ou avisos de assinatura do inspetor e oculta identificação técnica do PDF. A assinatura técnica continua obrigatória no backend quando prevista.
+- Mensagem amigável de indisponibilidade ao solicitante se a migração obrigatória do esquema de aceites ainda não foi aplicada.
+
 - **Aceites por papel:** um usuário que seja simultaneamente beneficiário e inspetor assina cada responsabilidade separadamente. O beneficiário pode registrar ciência com seu perfil de solicitante; o inspetor só assina com a permissão técnica adequada.
 - Migração aditiva e controlada: coluna `role` na tabela de aceites e índice único por documento, usuário e papel. Aceites antigos preservados como `legacy`, mantendo os papéis previamente confirmados.
 - O desafio de assinatura e o texto de aceite são específicos por papel; o PDF e as evidências registram cada aceite isoladamente. Um aceite de beneficiário não completa a assinatura de inspeção.
