@@ -65,10 +65,13 @@ rp_test('term PDF shows the verified GLPI login as matrícula without trusting d
     rp_assert(!str_contains($html, '<script>'));
 });
 
-rp_test('multi-role signing requires separate borrower and inspector acceptance', static function (): void {
+rp_test('one account-level consent is source-bound and independently records the chosen role', static function (): void {
     $hash = str_repeat('a', 64);
     $borrower = ['users_id' => 10837, 'role' => 'borrower', 'roles_json' => json_encode(['borrower']), 'source_sha256' => $hash];
     $inspector = ['users_id' => 10837, 'role' => 'inspector', 'roles_json' => json_encode(['inspector']), 'source_sha256' => $hash];
+    rp_assert(DocumentService::userAcceptedFromRows([$borrower], $hash));
+    rp_assert(DocumentService::userAcceptedFromRows([$inspector], $hash));
+    rp_assert(!DocumentService::userAcceptedFromRows([$borrower], str_repeat('b', 64)));
     rp_assert(DocumentService::roleAcceptedFromRows(['borrower'], [$borrower], $hash));
     rp_assert(!DocumentService::roleAcceptedFromRows(['borrower', 'inspector'], [$borrower], $hash));
     rp_assert(!DocumentService::roleAcceptedFromRows(['inspector'], [$borrower], $hash));
