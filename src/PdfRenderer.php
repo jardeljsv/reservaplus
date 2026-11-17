@@ -49,6 +49,7 @@ final class PdfRenderer
             . ' | <b>Versão do escopo:</b> ' . (int) ($scope['scope_revision'] ?? 1) . '</p>';
         $html .= '<p><b>Usuário beneficiário:</b> ' . $e((string) ($borrower['name'] ?? ''))
             . ' (GLPI #' . (int) ($scope['users_id_borrower'] ?? 0) . ')<br>'
+            . '<b>Matrícula:</b> ' . $e((string) ($s['borrower_login'] ?? 'Não informada')) . '<br>'
             . '<b>Identificação / vínculo informado:</b> ' . $e((string) ($borrower['registration'] ?? $borrower['matricula'] ?? 'Não informado'))
             . '<br><b>Unidade do beneficiário:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada')) . '</p>';
         $html .= '<p><b>Período previsto:</b> ' . $e((string) ($scope['begin'] ?? '')) . ' até '
