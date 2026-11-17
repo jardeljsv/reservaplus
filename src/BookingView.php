@@ -395,6 +395,19 @@ final class BookingView
         echo '</div>';
     }
 
+    /** Link only to a current document the logged-in beneficiary can sign. */
+    private static function signatureActionDocument(int $bookingId, ?array $docs = null): ?array
+    {
+        $docs ??= DocumentService::forBooking($bookingId);
+        foreach ($docs as $doc) {
+            if (!empty($doc['is_current']) && !empty($doc['can_sign'])
+                && !in_array((string) $doc['status'], ['complete', 'superseded', 'accepted', 'artifact_error'], true)) {
+                return $doc;
+            }
+        }
+        return null;
+    }
+
     /** Self-service shortcuts: never expose staff custody or approval commands. */
     public static function renderRequesterActions(array $booking): void
     {
@@ -405,7 +418,12 @@ final class BookingView
         echo '<div class="rp-requester-actions" aria-label="' . self::e(__('Ações da minha reserva', 'reservaplus')) . '">';
         self::link('booking.php', __('Acompanhar', 'reservaplus'), ['id' => $id], 'rp-requester-follow btn-sm');
         if (!in_array($status, ['cancelled', 'rejected'], true)) {
-            echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('booking.php', ['id' => $id]) . '#rp-booking-documents') . '">' . self::e(__('Termos e assinaturas', 'reservaplus')) . '</a>';
+            $doc = self::signatureActionDocument($id);
+            if ($doc !== null) {
+                echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('agreement.php', ['id' => (int) $doc['id']])) . '"><i class="ti ti-file-pencil" aria-hidden="true"></i> ' . self::e(__('Ler e assinar termo', 'reservaplus')) . '</a>';
+            } else {
+                echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('booking.php', ['id' => $id]) . '#rp-booking-documents') . '">' . self::e(__('Termos e assinaturas', 'reservaplus')) . '</a>';
+            }
         }
         if (Access::right('request')) {
             self::link('booking.form.php', __('Reservar novamente', 'reservaplus'), ['copy_booking_id' => $id], 'rp-requester-repeat btn-sm');
@@ -684,6 +702,15 @@ final class BookingView
         $documents = DocumentService::forBooking($id);
         $current = array_values(array_filter($documents, static fn(array $d): bool => !empty($d['is_current'])));
         $historical = array_values(array_filter($documents, static fn(array $d): bool => empty($d['is_current'])));
+        $signature = self::signatureActionDocument($id, $current);
+        if ($signature !== null) {
+            echo '<div class="rp-signature-highlight" role="status">';
+            echo '<div><strong>' . self::e(__('Termo de responsabilidade', 'reservaplus')) . '</strong>';
+            echo '<span class="rp-signature-state">' . self::e(__('Aguardando assinatura', 'reservaplus')) . '</span>';
+            echo '<p>' . self::e(__('Assinatura necessária antes da próxima etapa. Confira o documento e registre seu aceite.', 'reservaplus')) . '</p></div>';
+            self::link('agreement.php', __('Ler e assinar termo', 'reservaplus'), ['id' => (int) $signature['id']] + self::ticketContextQuery(self::$ticketContext), 'rp-signature-cta');
+            echo '</div>';
+        }
         if ($current !== []) { self::documentTable($current); }
         $state = (string) $booking['status'];
         $purposes = [];
