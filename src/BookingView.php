@@ -325,13 +325,24 @@ final class BookingView
     }
 
     /** Shortcuts never bypass BookingService's locks, revision checks or native GLPI validation. */
-    private static function renderListActions(array $booking, array $lines): void
+    public static function renderListActions(array $booking, array $lines): void
     {
         $eligible = [];
         if (($booking['status'] ?? '') === 'submitted') {
             foreach ($lines as $line) {
-                if (Access::canApproveLine($booking, $line) && self::approvalProgress($booking, $line)['status'] === 'pending') {
-                    $eligible[] = (int) $line['id'];
+                if (!Access::canApproveLine($booking, $line)) { continue; }
+                // List/search projections do not include $booking['approvals'].
+                // Read the pending records directly, just like TicketBridge::pendingForActor().
+                $pending = Store::find('bookingapprovals', [
+                    'bookings_id' => (int) $booking['id'],
+                    'lines_id' => (int) $line['id'],
+                    'status' => 'pending',
+                ]);
+                foreach ($pending as $approval) {
+                    if (TicketBridge::targetMatchesActor($approval)) {
+                        $eligible[] = (int) $line['id'];
+                        break;
+                    }
                 }
             }
         }
