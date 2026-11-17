@@ -126,7 +126,10 @@ final class Schema
         $table = 'glpi_plugin_reservaplus_acceptances';
         if (!$DB->tableExists($table) || !$DB->fieldExists($table, 'role')) { return false; }
         $columns = [];
-        foreach ($DB->request("SHOW INDEX FROM `$table` WHERE Key_name = 'signer'") as $index) {
+        // GLPI 11 DBmysql::request() accepts criteria only; metadata SQL uses query().
+        $result = $DB->query("SHOW INDEX FROM `$table` WHERE Key_name = 'signer'");
+        if ($result === false) { return false; }
+        foreach ($result as $index) {
             $columns[(int) $index['Seq_in_index']] = (string) $index['Column_name'];
         }
         ksort($columns);
