@@ -721,7 +721,13 @@ final class BookingView
 
     private static function actionStart(array $booking, string $action, string $label, string $description = ''): void
     {
-        echo '<details class="rp-subform"><summary class="btn btn-outline-primary btn-sm">' . self::e($label) . '</summary>';
+        $color = match ($action) {
+            'reject' => 'rp-action-reject',
+            'cancel' => 'rp-action-cancel',
+            'extend' => 'rp-action-reschedule',
+            default => 'rp-action-neutral',
+        };
+        echo '<details class="rp-subform"><summary class="btn rp-detail-action-button ' . $color . '">' . self::e($label) . '</summary>';
         if ($description !== '') {
             echo '<p>' . self::e($description) . '</p>';
         }
@@ -746,7 +752,7 @@ final class BookingView
         if ($approveLines !== [] && $state === 'submitted') {
             self::formStart('approve', (int) $booking['id'], (int) $booking['revision']);
             foreach ($approveLines as $line) { self::hidden('lines_ids[]', (int) $line['id']); }
-            echo '<button type="submit" class="btn btn-success btn-sm" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados nesta solicitação?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar recursos', 'reservaplus')) . ' (' . count($approveLines) . ')</button></form>';
+            echo '<button type="submit" class="btn rp-detail-action-button rp-action-approve" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados nesta solicitação?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar recursos', 'reservaplus')) . ' (' . count($approveLines) . ')</button></form>';
             self::actionStart($booking, 'reject', __('Rejeitar solicitação', 'reservaplus'));
             self::chooseLines($approveLines, false, true);
             self::textarea('reason', __('Justificativa da rejeição', 'reservaplus'), '', true);
