@@ -2,6 +2,11 @@
 
 ## Em desenvolvimento — após 0.7.0-rc3 (sem nova versão instalada)
 
+- **Aceites por papel:** um usuário que seja simultaneamente beneficiário e inspetor assina cada responsabilidade separadamente. O beneficiário pode registrar ciência com seu perfil de solicitante; o inspetor só assina com a permissão técnica adequada.
+- Migração aditiva e controlada: coluna `role` na tabela de aceites e índice único por documento, usuário e papel. Aceites antigos preservados como `legacy`, mantendo os papéis previamente confirmados.
+- O desafio de assinatura e o texto de aceite são específicos por papel; o PDF e as evidências registram cada aceite isoladamente. Um aceite de beneficiário não completa a assinatura de inspeção.
+- **Atenção:** executar a migração `tools/migrate_role_acceptances.php --apply` após backup e antes de habilitar o novo código em homologação. Sem ela, os novos aceites são bloqueados de forma explícita.
+
 - Retirada antecipada em até 15 minutos, com reserva aprovada, termo válido e verificação de conflitos no intervalo efetivo; o horário real é registrado sem alterar o período aprovado.
 - Alteração que não modifica as datas é ignorada sem recriar aprovações ou invalidar termos. Mudanças efetivas de período continuam exigindo novo escopo e assinatura, preservando histórico.
 
@@ -20,7 +25,7 @@
 - CI para sintaxe PHP 8.2/8.3 e testes independentes. Esses testes não certificam integração no GLPI real.
 - Documentação em português para instalação, perfis, ações e homologação.
 
-**Estado:** desenvolvimento em homologação; versão declarada em setup.php continua 0.7.0-rc3. Sem alteração de schema ou migração do banco nessas melhorias de interface.
+**Estado:** desenvolvimento em homologação; versão declarada em setup.php continua 0.7.0-rc3. A melhoria de assinaturas por papel exige a migração de banco descrita em `docs/INSTALACAO.md`.
 
 # Changes
 
