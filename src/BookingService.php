@@ -426,7 +426,8 @@ final class BookingService
                     [$newBegin, $newEnd] = Booking::period((string) ($input['begin'] ?? $booking['begin']), (string) ($input['end'] ?? ''));
                     if ($newEnd <= Store::now()) { throw new \DomainException('Informe um período futuro.'); }
                     if ($newBegin === (string) $booking['begin'] && $newEnd === (string) $booking['end']) {
-                        throw new \DomainException('O período informado não mudou; a aprovação e o termo existentes foram preservados.');
+                        // No-op: do not supersede native approvals, calendar hold or signed scope.
+                        return;
                     }
                     foreach ($resources as $resource) {
                         $p = Store::decode($resource['policy_json'] ?? null);
