@@ -35,12 +35,12 @@ function rp_doc_login(string $name, int $rights = Access::ADMIN): int
     return (int) $user->getID();
 }
 
-function rp_doc_accept(int $id): array
+function rp_doc_accept(int $id, ?string $role = null): array
 {
     DocumentService::artifact($id, 'source');
-    $challenge = DocumentService::issueChallenge($id);
-    $consent = hash('sha256', DocumentService::consent(DocumentService::get($id), Access::userId()));
-    return DocumentService::accept($id, $challenge, $consent, bin2hex(random_bytes(24)));
+    $challenge = DocumentService::issueChallenge($id, $role);
+    $consent = hash('sha256', DocumentService::consent(DocumentService::get($id), Access::userId(), $role));
+    return DocumentService::accept($id, $challenge, $consent, bin2hex(random_bytes(24)), $role);
 }
 
 $borrower = rp_doc_login('glpi');
@@ -200,6 +200,33 @@ rp_test('inspection needs actual findings and separate inspector attestation; co
     rp_assert(!DocumentService::isSatisfied($bookingId, 'return_inspection'));
     rp_assert(DocumentService::prepare($bookingId, 'return_inspection') !== $id);
     rp_same(2, count(Store::find('acceptances', ['agreements_id' => $id])), 'Correction preserves earlier acceptance evidence');
+});
+
+rp_test('beneficiary and inspector same GLPI account sign independently under different rights', function () use ($bookingId, $lineId, $borrower): void {
+    rp_doc_login('glpi', Access::ADMIN);
+    Store::update('bookinglines', $lineId, [
+        'inspector_users_id' => $borrower,
+        'inspection_at' => Store::now(),
+        'inspection_json' => Store::json(['result' => 'pass', 'findings' => 'Conferência realizada pelo beneficiário inspetor.']),
+    ]);
+    Store::update('bookings', $bookingId, ['status' => 'returning']);
+    $document = DocumentService::prepare($bookingId, 'return_inspection');
+    $doc = DocumentService::get($document);
+    rp_same(['borrower', 'inspector'], $doc['roles']);
+
+    rp_doc_login('glpi', READ);
+    $doc = rp_doc_accept($document, 'borrower');
+    rp_same('partially_signed', $doc['status']);
+    rp_same(['borrower'], $doc['acceptances'][0]['roles']);
+    rp_throws(static fn() => DocumentService::issueChallenge($document, 'inspector'), DomainException::class, 'permissão');
+    rp_assert(!DocumentService::isSatisfied($bookingId, 'return_inspection'));
+
+    rp_doc_login('glpi', Access::ADMIN);
+    $doc = rp_doc_accept($document, 'inspector');
+    rp_same('complete', $doc['status']);
+    rp_same(2, count($doc['acceptances']));
+    rp_same(['inspector'], $doc['acceptances'][1]['roles']);
+    rp_assert(DocumentService::isSatisfied($bookingId, 'return_inspection'));
 });
 
 rp_test('expired approval hold blocks fresh signature even before cron', function () use ($bookingId): void {
