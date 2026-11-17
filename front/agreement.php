@@ -14,6 +14,9 @@ header('Cache-Control: private, no-store');
 header('X-Robots-Tag: noindex, nofollow');
 $id = (int) ($_POST['id'] ?? $_GET['id'] ?? 0);
 $error = '';
+// The helpdesk UI presents only the beneficiary's own consent.
+// Staff responsibilities remain enforced server-side and visible in central.
+$isRequesterInterface = Session::getCurrentInterface() === 'helpdesk';
 $returnTicket = 0;
 $contextValidated = false;
 $hasTicketContext = array_key_exists('_return_ticket', $_POST) || array_key_exists('_return_ticket', $_GET);
@@ -51,6 +54,9 @@ try {
     if ($hasTicketContext && !$contextValidated) { http_response_code(403); }
     $error = ($e instanceof DomainException || $e instanceof InvalidArgumentException)
         ? $e->getMessage() : 'Não foi possível processar este documento. Tente novamente ou contate a equipe responsável.';
+    if ($isRequesterInterface && str_contains($error, 'Atualize o banco do Reserva Plus')) {
+        $error = 'O aceite está temporariamente indisponível. Solicite à equipe responsável a regularização do sistema.';
+    }
     if (!$e instanceof DomainException && !$e instanceof InvalidArgumentException) {
         error_log('ReservaPlus document operation failed: ' . get_class($e));
     }
@@ -82,12 +88,23 @@ if (!empty($doc['final_sha256'])) {
 }
 echo '<a class="btn btn-outline-secondary" href="' . $e(BookingView::url('verify.php', ['code' => $doc['verification_token']] + BookingView::ticketContextQuery($returnTicket))) . '">Verificar integridade</a></p>';
 echo '<iframe title="PDF original da versão a ser aceita" src="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=source&inline=1') . '" style="width:100%;height:560px;border:1px solid #ccd5df"></iframe>';
-echo '<details class="rp-subform"><summary>Identificação técnica do arquivo</summary><p class="rp-muted">SHA-256 do original: <code>' . $e((string) $doc['source_sha256']) . '</code></p></details>';
-echo '<h2>Signatários e finalidade</h2><ul>';
+if (!$isRequesterInterface) {
+    echo '<details class="rp-subform"><summary>Identificação técnica do arquivo</summary><p class="rp-muted">SHA-256 do original: <code>' . $e((string) $doc['source_sha256']) . '</code></p></details>';
+}
+echo '<h2>' . ($isRequesterInterface ? 'Meu aceite' : 'Signatários e finalidade') . '</h2><ul>';
 $rolesPending = (array) ($doc['pending_roles'] ?? []);
 $rolesAvailable = (array) ($doc['signable_roles'] ?? []);
+if ($isRequesterInterface) {
+    // Presentation only: backend still requires every assigned staff signature.
+    $rolesPending = array_values(array_intersect($rolesPending, ['borrower']));
+    $rolesAvailable = array_values(array_intersect($rolesAvailable, ['borrower']));
+}
 foreach ($doc['signers'] as $signer) {
+    if ($isRequesterInterface && (int) ($signer['users_id'] ?? 0) !== Access::userId()) {
+        continue;
+    }
     foreach ((array) ($signer['roles'] ?? []) as $role) {
+        if ($isRequesterInterface && $role !== 'borrower') { continue; }
         $acceptedRecord = null;
         foreach ($doc['acceptances'] as $acceptance) {
             if ((int) ($acceptance['users_id'] ?? 0) !== (int) $signer['users_id']) { continue; }
@@ -104,7 +121,9 @@ echo '</ul>';
 if ($doc['is_current'] && $rolesPending !== []) {
     foreach ($rolesPending as $role) {
         echo '<div class="rp-signature-role card my-3 p-3">';
-        echo '<h3>' . $e(DocumentService::roleLabel((string) $role)) . '</h3>';
+        if (!$isRequesterInterface) {
+            echo '<h3>' . $e(DocumentService::roleLabel((string) $role)) . '</h3>';
+        }
         if (!in_array($role, $rolesAvailable, true)) {
             $reason = match ($role) {
                 'receiver' => 'A assinatura como recebedor exige o perfil com permissão de recebimento.',
@@ -124,9 +143,13 @@ if ($doc['is_current'] && $rolesPending !== []) {
                 echo Html::hidden($name, ['value' => $value]);
             }
             if ($returnTicket > 0) { BookingView::hidden('_return_ticket', $returnTicket); }
-            echo '<p><strong>Este aceite corresponde somente ao papel: ' . $e(DocumentService::roleLabel((string) $role)) . '.</strong> Abra o PDF original e confira o registro antes de confirmar.</p>';
+            echo $isRequesterInterface
+                ? '<p><strong>Confira o termo de devolução e registre sua ciência.</strong> Abra o PDF original antes de confirmar.</p>'
+                : '<p><strong>Este aceite corresponde somente ao papel: ' . $e(DocumentService::roleLabel((string) $role)) . '.</strong> Abra o PDF original e confira o registro antes de confirmar.</p>';
             echo '<label class="form-check"><input class="form-check-input" type="checkbox" name="accept_statement" value="1" required><span class="form-check-label">' . $e($consent) . '</span></label>';
-            echo '<button type="submit" class="btn btn-primary mt-3">Assinar como ' . $e(DocumentService::roleLabel((string) $role)) . '</button>';
+            echo '<button type="submit" class="btn btn-primary mt-3">'
+                . ($isRequesterInterface ? 'Confirmar meu aceite' : 'Assinar como ' . $e(DocumentService::roleLabel((string) $role)))
+                . '</button>';
             Html::closeForm();
         } catch (Throwable $failure) {
             $message = ($failure instanceof DomainException || $failure instanceof InvalidArgumentException)
