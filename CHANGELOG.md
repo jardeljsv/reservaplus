@@ -2,10 +2,13 @@
 
 ## Em desenvolvimento — após 0.7.0-rc3 (sem nova versão instalada)
 
+- Assinatura simplificada: apenas **um botão "Assinar termo" por conta GLPI e documento**. Se a mesma pessoa é beneficiário e recebedor/inspetor, uma confirmação registra o papel autorizado do perfil utilizado; não solicita segundo aceite para a mesma pessoa. Recebimento e conferência técnicos continuam sendo operações independentes e auditadas.
+- O PDF de comprovante registra o papel efetivamente utilizado na assinatura; aceites históricos permanecem preservados e não são reescritos.
+
 - Interface simplificada (solicitante): apresenta apenas o próprio aceite do beneficiário; não mostra ações ou avisos de assinatura do inspetor e oculta identificação técnica do PDF. A assinatura técnica continua obrigatória no backend quando prevista.
 - Mensagem amigável de indisponibilidade ao solicitante se a migração obrigatória do esquema de aceites ainda não foi aplicada.
 
-- **Aceites por papel:** um usuário que seja simultaneamente beneficiário e inspetor assina cada responsabilidade separadamente. O beneficiário pode registrar ciência com seu perfil de solicitante; o inspetor só assina com a permissão técnica adequada.
+- **Aceites por papel:** a estrutura admite comprovantes por papel, mas o fluxo atual solicita **um aceite por usuário e documento**; o papel efetivo é escolhido conforme a interface e as permissões.
 - Migração aditiva e controlada: coluna `role` na tabela de aceites e índice único por documento, usuário e papel. Aceites antigos preservados como `legacy`, mantendo os papéis previamente confirmados.
 - O desafio de assinatura e o texto de aceite são específicos por papel; o PDF e as evidências registram cada aceite isoladamente. Um aceite de beneficiário não completa a assinatura de inspeção.
 - **Atenção:** executar a migração `tools/migrate_role_acceptances.php --apply` após backup e antes de habilitar o novo código em homologação. Sem ela, os novos aceites são bloqueados de forma explícita.
