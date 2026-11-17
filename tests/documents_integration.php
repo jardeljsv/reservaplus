@@ -227,6 +227,18 @@ rp_test('same GLPI user signs the document once, with account and active role re
     rp_throws(static fn() => DocumentService::issueChallenge($document, 'inspector'),
         DomainException::class, 'já foi registrado');
     rp_same(1, count(Store::find('acceptances', ['agreements_id' => $document])));
+
+    // When the same account chooses the authorized technical profile first,
+    // the single acceptance records Inspector, not a second Beneficiary action.
+    Store::update('bookinglines', $lineId, [
+        'inspection_json' => Store::json(['result' => 'pass', 'findings' => 'Conferência técnica atualizada para nova versão.']),
+    ]);
+    $technicalDocument = DocumentService::prepare($bookingId, 'return_inspection');
+    rp_assert($technicalDocument !== $document);
+    $technicalDoc = rp_doc_accept($technicalDocument, 'inspector');
+    rp_same('complete', $technicalDoc['status']);
+    rp_same(1, count($technicalDoc['acceptances']));
+    rp_same(['inspector'], $technicalDoc['acceptances'][0]['roles']);
 });
 
 rp_test('expired approval hold blocks fresh signature even before cron', function () use ($bookingId): void {
