@@ -464,6 +464,20 @@ final class BookingService
 
     private static function afterCommit(int $id, string $message): void
     {
+        // Prepare terms only after the business transaction. Failure never rolls back custody.
+        try {
+            DocumentService::prepareForCurrentStage($id);
+        } catch (\Throwable $e) {
+            \Toolbox::logInFile('php-errors', 'ReservaPlus automatic term #'.$id.': '.$e->getMessage()."\n");
+            try {
+                Store::update('bookings', $id, [
+                    'integration_status' => 'attention',
+                    'integration_error' => 'Termo automático pendente: '.mb_substr($e->getMessage(), 0, 900),
+                ]);
+            } catch (\Throwable) {
+                // Main operation is already committed.
+            }
+        }
         // Physical facts survive downstream failures. Never roll receipt back because a ticket followup failed.
         try { TicketBridge::deliverOutbox($id); }
         catch (\Throwable $e) {
