@@ -41,3 +41,7 @@
 @media(prefers-reduced-motion:reduce){.rp-workflow *{scroll-behavior:auto!important;transition:none!important}}
 .rp-workflow code{overflow-wrap:anywhere;word-break:break-word}.rp-workflow .rp-document-action{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;margin-top:12px;border:1px solid var(--rp-primary-200);border-radius:11px;background:var(--rp-primary-50)}.rp-document-action h3{margin:0 0 4px!important}.rp-document-action p{margin:0}.rp-document-action form{margin:0;flex-shrink:0}.rp-document-history>summary{cursor:pointer;font-weight:650;margin:16px 0}.rp-document-history table{margin-top:12px}@media(max-width:640px){.rp-workflow .rp-document-action{align-items:flex-start;flex-direction:column}.rp-document-action form,.rp-document-action button{width:100%}}
 .reservaplus-shell.rp-ticket-workflow{max-width:none;padding:10px 0}.rp-workflow .rp-approvers{list-style:none;margin:0;padding:0;min-width:150px}.rp-workflow .rp-approvers li{margin:0 0 5px;overflow-wrap:anywhere}.rp-workflow .rp-approvers i{color:var(--rp-muted);margin-right:3px}.rp-approval-panel>.rp-muted:last-child{margin:14px 0 0}
+.rp-table td .rp-quick-actions-inline { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; min-width: 150px; }
+.rp-table td .rp-quick-actions-inline form { margin: 0; }
+.rp-table td .rp-quick-actions-inline .rp-quick-reject[open] { flex-basis: 100%; }
+.rp-table td .rp-quick-actions-inline .rp-quick-reject[open] form { margin-top: 8px; }

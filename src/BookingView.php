@@ -318,7 +318,7 @@ final class BookingView
                 echo self::e(__('Pendente', 'reservaplus'));
             }
             echo '</td><td>';
-            self::renderListActions($row, $meta['lines']);
+            self::renderListActions($row, $meta['lines'], true);
             echo '</td></tr>';
         }
         echo '</tbody></table></div>';
