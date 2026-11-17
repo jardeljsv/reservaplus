@@ -1,9 +1,30 @@
-# Reserva Plus 0.7.0-rc3 — base de desenvolvimento
+# Reserva Plus — GLPI 11
 
-> **Atenção:** esta ramificação contém trabalho em andamento para a próxima versão.
-> A ação rápida de aprovação/rejeição na listagem foi adicionada, mas ainda não
-> passou por testes de integração em um GLPI instalado. As demais melhorias da
-> 0.8.0 permanecem planejadas e não devem ser tratadas como implementadas.
+> **Ramificação develop — em homologação.** A identificação instalada ainda é 0.7.0-rc3; a evolução seguinte não está concluída nem aprovada para produção. Consulte os [testes de homologação](docs/HOMOLOGACAO.md).
+
+## Documentação em português
+
+- [Instalação, atualização e reversão](docs/INSTALACAO.md)
+- [Guia do solicitante](docs/GUIA-USUARIO.md)
+- [Guia do aprovador](docs/GUIA-APROVADOR.md)
+- [Guia do administrador](docs/GUIA-ADMINISTRADOR.md)
+- [Checklist de homologação](docs/HOMOLOGACAO.md)
+- [Políticas de aprovação](docs/APPROVALS.md)
+- [Arquitetura](docs/ARCHITECTURE.md)
+- [Changelog](CHANGELOG.md)
+
+### Melhorias recentes em develop
+
+- Aprovar ou rejeitar diretamente no Painel, em Solicitações e na tela detalhada, com controle de permissão, confirmação e justificativa para rejeitar.
+- Botões compactos por função: Autorizar (verde), Rejeitar (vermelho), Alterar (azul), Cancelar (amarelo).
+- Atalhos do solicitante em Início e Minhas solicitações: Acompanhar (azul), Termos (roxo), Reservar novamente (verde-azulado) e Cancelar quando permitido.
+- Ações rápidas não substituem o fluxo de documentos, entrega, devolução ou inspeção.
+
+### Itens ainda pendentes para uma futura 0.8.0
+
+Formulário simplificado, disponibilidade detalhada no catálogo, aprovação em lote, alertas programados, modelos configuráveis de tickets, prorrogação de empréstimos ativos e indicadores gerenciais avançados. **Não estão concluídos.**
+
+---
 
 A GLPI resource reservation and custody workflow for equipment, rooms and other internal resources. This release extends the supplied 0.6.1 plugin with ticket-backed requests, group approvals, internal electronic acceptance and verified returns. It is a release candidate for staging validation; it has not been deployed to the production environment.
 

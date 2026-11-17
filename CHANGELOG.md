@@ -1,3 +1,18 @@
+# Histórico de alterações
+
+## Em desenvolvimento — após 0.7.0-rc3 (sem nova versão instalada)
+
+- Controles de aprovação e rejeição nas listas de solicitações, no painel operacional e no detalhe da reserva.
+- Correção da detecção das aprovações pendentes nas consultas de listagem; rechecagem de direitos e alvos elegíveis.
+- Ações rápidas adicionais Alterar período e Cancelar conforme perfil, situação e regras existentes; retorno à lista após operação.
+- Interface detalhada com botões maiores e cores funcionais. Botões menores nas filas e tabelas.
+- Interface do solicitante com atalhos Acompanhar, Termos e assinaturas, Reservar novamente e Cancelar quando permitido.
+- Padronização de cores e estados de foco nos atalhos do solicitante.
+- CI para sintaxe PHP 8.2/8.3 e testes independentes. Esses testes não certificam integração no GLPI real.
+- Documentação em português para instalação, perfis, ações e homologação.
+
+**Estado:** desenvolvimento em homologação; versão declarada em setup.php continua 0.7.0-rc3. Sem alteração de schema ou migração do banco nessas melhorias de interface.
+
 # Changes
 
 ## 0.7.0-rc3
