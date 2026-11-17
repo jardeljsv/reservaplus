@@ -118,6 +118,9 @@ foreach ($doc['signers'] as $signer) {
     }
 }
 echo '</ul>';
+if ($isRequesterInterface && $doc['is_current'] && $rolesPending === [] && in_array('borrower', (array) ($doc['roles'] ?? []), true)) {
+    echo '<div class="alert alert-success">Seu aceite foi registrado. A conferência técnica, quando necessária, será concluída pela equipe responsável.</div>';
+}
 if ($doc['is_current'] && $rolesPending !== []) {
     foreach ($rolesPending as $role) {
         echo '<div class="rp-signature-role card my-3 p-3">';
