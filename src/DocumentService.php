@@ -597,6 +597,9 @@ final class DocumentService
         if ($role === null && count($assigned) === 1) {
             $role = (string) $assigned[0]; // backward-compatible single-role API
         }
+        if ($assigned === []) {
+            throw new \DomainException('Este usuário não é um signatário designado.');
+        }
         if ($role === null || !in_array($role, $assigned, true)
             || !in_array($role, ['borrower', 'receiver', 'inspector'], true)) {
             throw new \DomainException('Selecione um papel de assinatura autorizado para sua conta.');
