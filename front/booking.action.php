@@ -76,7 +76,9 @@ try {
             throw new DomainException(__('Selecione os itens que deseja registrar nesta operação.', 'reservaplus'));
         }
         BookingService::act($id, $action, $_POST, $key);
-        if (($_POST['_return_list'] ?? '') === 'approvals' && in_array($action, ['approve', 'reject'], true) && $returnTicket === 0) {
+        if ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'requests') {
+            $target = BookingView::url('booking.php', ['scope' => 'team']);
+        } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'approvals' && in_array($action, ['approve', 'reject'], true)) {
             $target = BookingView::url('booking.php', ['queue' => 'approvals', 'scope' => 'team']);
         }
         Session::addMessageAfterRedirect(BookingView::e(__('Operação registrada. Confira a situação atual da solicitação.', 'reservaplus')));

@@ -351,7 +351,7 @@ final class TechnicianDashboard
             if (count($names) > 2) { $summary .= ' +' . (count($names) - 2); }
             echo '<a class="rp-dash-booking" href="' . BookingView::e(BookingView::url('booking.php', ['id' => (int) $booking['id']])) . '"><span class="rp-dash-booking-icon"><i class="ti ti-calendar-event" aria-hidden="true"></i></span><div><strong>' . BookingView::e($summary ?: __('Solicitação de reserva', 'reservaplus')) . '</strong><span>' . BookingView::e(BookingView::date($booking['begin']) . ' — ' . BookingView::date($booking['end'])) . '</span><small>' . __('Reserva', 'reservaplus') . ' #' . (int) $booking['id'] . ' · ' . count($names) . ' ' . __('recurso(s)', 'reservaplus') . '</small></div><span class="rp-dash-status">';
             BookingView::badge((string) $booking['status']); echo '</span></a>';
-            if (($booking['status'] ?? '') === 'submitted' && TicketBridge::pendingForActor($booking)) {
+            if (in_array(($booking['status'] ?? ''), ['submitted', 'approved', 'ready'], true)) {
                 echo '<div class="rp-dash-quick-actions">';
                 BookingView::renderListActions($booking, self::lines($booking), true);
                 echo '</div>';

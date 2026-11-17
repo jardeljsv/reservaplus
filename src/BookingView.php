@@ -346,32 +346,48 @@ final class BookingView
                 }
             }
         }
-        if ($eligible === []) {
+        $state = (string) ($booking['status'] ?? '');
+        $canExtend = in_array($state, ['submitted', 'approved', 'ready'], true) && Access::canReschedule($booking);
+        $canCancel = in_array($state, ['submitted', 'approved'], true)
+            && (Access::booking($booking, 'request') || Access::booking($booking, 'manage'));
+        if ($eligible === [] && !$canExtend && !$canCancel) {
             self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
             return;
         }
-        if ($dashboard) {
-            echo '<div class="rp-quick-actions rp-quick-actions-inline" aria-label="' . self::e(__('Decisões sobre a reserva', 'reservaplus')) . '">';
-        } else {
-            echo '<details class="rp-quick-actions"><summary class="btn btn-outline-primary btn-sm">' . self::e(__('Decidir', 'reservaplus')) . ' (' . count($eligible) . ')</summary>';
-            echo '<p class="rp-muted">' . self::e(__('A decisão se aplica somente aos recursos que você pode aprovar. Confira os detalhes antes de confirmar.', 'reservaplus')) . '</p>';
-        }
-        foreach (['approve' => __('Autorizar', 'reservaplus'), 'reject' => __('Rejeitar', 'reservaplus')] as $action => $label) {
-            if ($dashboard && $action === 'reject') {
-                echo '<details class="rp-quick-reject"><summary class="btn btn-outline-danger btn-sm">' . self::e($label) . '</summary>';
-            }
-            self::formStart($action, (int) $booking['id'], (int) $booking['revision']);
+        echo '<div class="rp-quick-actions rp-quick-actions-inline" aria-label="' . self::e(__('Ações da reserva', 'reservaplus')) . '">';
+        if ($eligible !== []) {
+            self::formStart('approve', (int) $booking['id'], (int) $booking['revision']);
             foreach ($eligible as $lineId) { self::hidden('lines_ids[]', $lineId); }
-            self::hidden('_return_list', 'approvals');
-            if ($action === 'reject') { self::textarea('reason', __('Motivo da rejeição', 'reservaplus'), '', true); }
-            echo '<button type="submit" class="btn btn-sm ' . ($action === 'reject' ? 'btn-outline-danger' : 'btn-success') . '" onclick="return confirm(' . self::e(json_encode(__('Confirma esta decisão sobre os recursos autorizados?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e($dashboard && $action === 'reject' ? __('Confirmar rejeição', 'reservaplus') : $label) . '</button>';
-            echo '</form>';
-            if ($dashboard && $action === 'reject') { echo '</details>'; }
+            self::hidden('_return_list', 'requests');
+            echo '<button type="submit" class="btn rp-mini-action rp-mini-approve" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar', 'reservaplus')) . '</button></form>';
+
+            echo '<details class="rp-quick-reject rp-mini-expand"><summary class="btn rp-mini-action rp-mini-reject">' . self::e(__('Rejeitar', 'reservaplus')) . '</summary>';
+            self::formStart('reject', (int) $booking['id'], (int) $booking['revision']);
+            foreach ($eligible as $lineId) { self::hidden('lines_ids[]', $lineId); }
+            self::hidden('_return_list', 'requests');
+            self::textarea('reason', __('Motivo da rejeição', 'reservaplus'), '', true);
+            self::submit(__('Confirmar rejeição', 'reservaplus'));
+            echo '</form></details>';
         }
-        if ($dashboard) {
-            self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
+        if ($canExtend) {
+            echo '<details class="rp-mini-expand"><summary class="btn rp-mini-action rp-mini-extend">' . self::e(__('Alterar', 'reservaplus')) . '</summary>';
+            self::formStart('extend', (int) $booking['id'], (int) $booking['revision']);
+            self::hidden('_return_list', 'requests');
+            self::input('begin', __('Novo início', 'reservaplus'), self::datetimeInput($booking['begin']), 'datetime-local', true);
+            self::input('end', __('Novo término', 'reservaplus'), self::datetimeInput($booking['end']), 'datetime-local', true);
+            self::submit(__('Validar período', 'reservaplus'));
+            echo '</form></details>';
         }
-        echo $dashboard ? '</div>' : '</details>';
+        if ($canCancel) {
+            echo '<details class="rp-mini-expand"><summary class="btn rp-mini-action rp-mini-cancel">' . self::e(__('Cancelar', 'reservaplus')) . '</summary>';
+            self::formStart('cancel', (int) $booking['id'], (int) $booking['revision']);
+            self::hidden('_return_list', 'requests');
+            self::textarea('reason', __('Motivo do cancelamento', 'reservaplus'), '', true);
+            self::submit(__('Confirmar cancelamento', 'reservaplus'));
+            echo '</form></details>';
+        }
+        self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
+        echo '</div>';
     }
 
     public static function pagination(string $file, array $query, int $page, bool $more): void

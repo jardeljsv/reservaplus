@@ -64,3 +64,18 @@
 .rp-workflow .rp-action-neutral { background:#475569; border-color:#475569; color:#fff; }
 .rp-workflow .rp-action-neutral:hover { background:#334155; border-color:#334155; color:#fff; }
 .rp-workflow .rp-detail-action-button:focus-visible { outline:3px solid #93c5fd; outline-offset:2px; }
+.rp-workflow .rp-mini-action { min-height:32px; padding:6px 10px; border-radius:7px; font-size:12px; font-weight:700; line-height:1.2; border:1px solid transparent; text-decoration:none; cursor:pointer; }
+.rp-workflow .rp-mini-approve { background:#15803d; border-color:#15803d; color:#fff; }
+.rp-workflow .rp-mini-approve:hover { background:#166534; color:#fff; }
+.rp-workflow .rp-mini-reject { background:#b91c1c; border-color:#b91c1c; color:#fff; }
+.rp-workflow .rp-mini-reject:hover { background:#991b1b; color:#fff; }
+.rp-workflow .rp-mini-extend { background:#1d4ed8; border-color:#1d4ed8; color:#fff; }
+.rp-workflow .rp-mini-extend:hover { background:#1e40af; color:#fff; }
+.rp-workflow .rp-mini-cancel { background:#facc15; border-color:#eab308; color:#422006; }
+.rp-workflow .rp-mini-cancel:hover { background:#eab308; color:#422006; }
+.rp-workflow .rp-mini-expand>summary { list-style:none; }
+.rp-workflow .rp-mini-expand>summary::-webkit-details-marker { display:none; }
+.rp-workflow .rp-mini-expand[open] { flex-basis:100%; min-width:min(260px,100%); background:var(--tblr-card-bg,#fff); padding:10px; border:1px solid var(--rp-line,#dce5eb); border-radius:8px; }
+.rp-workflow .rp-mini-expand[open] form { margin-top:10px; }
+.rp-workflow .rp-quick-actions-inline { display:flex; flex-wrap:wrap; align-items:flex-start; gap:7px; }
+.rp-workflow .rp-quick-actions-inline>form { margin:0; }
