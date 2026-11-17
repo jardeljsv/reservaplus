@@ -44,6 +44,17 @@ rp_test('signature requirements combine mandatory resource stages', static funct
     rp_same([], BookingService::signaturePurposes([$line('none')]));
 });
 
+rp_test('early delivery grace is bounded and never changes the approved period', static function (): void {
+    $begin = '2026-11-17 17:00:00';
+    $end = '2026-11-17 18:00:00';
+    rp_assert(BookingService::canIssueAt($begin, $end, '2026-11-17 16:45:00'));
+    rp_assert(BookingService::canIssueAt($begin, $end, '2026-11-17 16:59:59'));
+    rp_assert(BookingService::canIssueAt($begin, $end, '2026-11-17 17:00:00'));
+    rp_assert(!BookingService::canIssueAt($begin, $end, '2026-11-17 16:44:59'));
+    rp_assert(!BookingService::canIssueAt($begin, $end, '2026-11-17 18:00:00'));
+    rp_assert(!BookingService::canIssueAt($begin, $end, '2026-11-17 16:30:00', 30));
+});
+
 rp_test('command retry ignores fresh CSRF tokens but binds material receipt facts', static function (): void {
     $facts = ['expected_revision' => 3, 'lines_ids' => [8], 'received_at' => '2026-10-28 10:00:00', 'accessories' => [8 => [0 => 1]]];
     rp_same(BookingService::commandFingerprint(4, 'receive', $facts + ['_glpi_csrf_token' => 'first']), BookingService::commandFingerprint(4, 'receive', $facts + ['_glpi_csrf_token' => 'second']));
