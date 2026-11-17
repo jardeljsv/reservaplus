@@ -360,7 +360,8 @@ final class BookingView
             self::formStart('approve', (int) $booking['id'], (int) $booking['revision']);
             foreach ($eligible as $lineId) { self::hidden('lines_ids[]', $lineId); }
             self::hidden('_return_list', 'requests');
-            echo '<button type="submit" class="btn rp-mini-action rp-mini-approve" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar', 'reservaplus')) . '</button></form>';
+            echo '<button type="submit" class="btn rp-mini-action rp-mini-approve" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar', 'reservaplus')) . '</button>';
+            Html::closeForm();
 
             echo '<details class="rp-quick-reject rp-mini-expand"><summary class="btn rp-mini-action rp-mini-reject">' . self::e(__('Rejeitar', 'reservaplus')) . '</summary>';
             self::formStart('reject', (int) $booking['id'], (int) $booking['revision']);
@@ -368,7 +369,8 @@ final class BookingView
             self::hidden('_return_list', 'requests');
             self::textarea('reason', __('Motivo da rejeição', 'reservaplus'), '', true);
             self::submit(__('Confirmar rejeição', 'reservaplus'));
-            echo '</form></details>';
+            Html::closeForm();
+            echo '</details>';
         }
         if ($canExtend) {
             echo '<details class="rp-mini-expand"><summary class="btn rp-mini-action rp-mini-extend">' . self::e(__('Alterar', 'reservaplus')) . '</summary>';
@@ -377,7 +379,8 @@ final class BookingView
             self::input('begin', __('Novo início', 'reservaplus'), self::datetimeInput($booking['begin']), 'datetime-local', true);
             self::input('end', __('Novo término', 'reservaplus'), self::datetimeInput($booking['end']), 'datetime-local', true);
             self::submit(__('Validar período', 'reservaplus'));
-            echo '</form></details>';
+            Html::closeForm();
+            echo '</details>';
         }
         if ($canCancel) {
             echo '<details class="rp-mini-expand"><summary class="btn rp-mini-action rp-mini-cancel">' . self::e(__('Cancelar', 'reservaplus')) . '</summary>';
@@ -385,7 +388,8 @@ final class BookingView
             self::hidden('_return_list', 'requests');
             self::textarea('reason', __('Motivo do cancelamento', 'reservaplus'), '', true);
             self::submit(__('Confirmar cancelamento', 'reservaplus'));
-            echo '</form></details>';
+            Html::closeForm();
+            echo '</details>';
         }
         self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
         echo '</div>';
@@ -413,7 +417,8 @@ final class BookingView
             self::hidden('_return_list', 'mine');
             self::textarea('reason', __('Motivo do cancelamento', 'reservaplus'), '', true);
             self::submit(__('Confirmar cancelamento', 'reservaplus'));
-            echo '</form></details>';
+            Html::closeForm();
+            echo '</details>';
         }
         echo '</div>';
     }
@@ -796,7 +801,8 @@ final class BookingView
         if ($approveLines !== [] && $state === 'submitted') {
             self::formStart('approve', (int) $booking['id'], (int) $booking['revision']);
             foreach ($approveLines as $line) { self::hidden('lines_ids[]', (int) $line['id']); }
-            echo '<button type="submit" class="btn rp-detail-action-button rp-action-approve" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados nesta solicitação?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar recursos', 'reservaplus')) . ' (' . count($approveLines) . ')</button></form>';
+            echo '<button type="submit" class="btn rp-detail-action-button rp-action-approve" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados nesta solicitação?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar recursos', 'reservaplus')) . ' (' . count($approveLines) . ')</button>';
+            Html::closeForm();
             self::actionStart($booking, 'reject', __('Rejeitar solicitação', 'reservaplus'));
             self::chooseLines($approveLines, false, true);
             self::textarea('reason', __('Justificativa da rejeição', 'reservaplus'), '', true);
