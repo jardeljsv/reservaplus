@@ -119,7 +119,7 @@ final class DocumentService
         $rows = Store::find('agreements', ['bookings_id' => $bookingId], ['ORDER' => 'id DESC']);
         foreach ($rows as &$row) {
             $row['is_current'] = self::current($row, $booking);
-            $row['can_sign'] = $row['is_current'] && self::roles($row, Access::userId()) !== [];
+            $row['can_sign'] = $row['is_current'] && self::signableRoles($row, $booking, Access::userId()) !== [];
         }
         unset($row);
         return $rows;
@@ -135,37 +135,42 @@ final class DocumentService
         $row['acceptances'] = self::acceptances($id);
         $row['is_current'] = self::current($row, $booking);
         $row['roles'] = self::roles($row, Access::userId());
+        $row['pending_roles'] = self::pendingRoles($row, Access::userId());
+        $row['signable_roles'] = self::signableRoles($row, $booking, Access::userId());
         return $row;
     }
 
-    public static function consent(array $doc, int $userId): string
+    /**
+     * Each consent explicitly attests ONE role. A multi-role user must
+     * acknowledge each responsibility separately with the appropriate rights.
+     */
+    public static function consent(array $doc, int $userId, ?string $role = null): string
     {
-        $roles = self::roles($doc, $userId);
-        if ($roles === []) {
-            throw new \DomainException('Este usuário não é um signatário designado.');
-        }
+        $role = self::resolveRole($doc, $userId, $role);
         $text = (string) ($doc['consent_text'] ?? self::baseConsent());
         $snapshot = $doc['snapshot'] ?? Store::decode($doc['snapshot_json'] ?? null);
         $roomsOnly = self::roomsOnly((array) ($snapshot['scope'] ?? []));
-        foreach ($roles as $role) {
-            $text .= ' ' . match ($role) {
-                'borrower' => in_array($doc['purpose'], ['return_receipt', 'return_inspection'], true)
-                    ? ($roomsOnly ? 'Como beneficiário, confirmo ciência deste registro de encerramento do uso da sala. Posso contestar divergências no chamado; o aceite não atribui automaticamente culpa ou responsabilidade por danos.' : 'Como beneficiário, confirmo ciência deste registro de devolução. Posso contestar divergências no chamado; o aceite não atribui automaticamente culpa ou responsabilidade por danos.')
-                    : ($roomsOnly ? 'Como beneficiário, aceito a responsabilidade pelo uso e conservação das salas descritas, no período indicado. Este aceite prévio não declara que o uso já ocorreu.' : 'Como beneficiário, aceito a responsabilidade de uso e devolução dos recursos descritos, no período indicado. Este aceite prévio não declara que a retirada física já ocorreu.'),
-                'receiver' => 'Como recebedor, atesto os itens e quantidades que efetivamente recebi e os horários registrados, sem declarar aprovação de testes ainda não realizados.',
-                'inspector' => 'Como inspetor, atesto somente as verificações, resultados e destinações registrados neste documento.',
-                default => throw new \DomainException('Papel de assinatura inválido.'),
-            };
-        }
+        $text .= ' ' . match ($role) {
+            'borrower' => in_array($doc['purpose'], ['return_receipt', 'return_inspection'], true)
+                ? ($roomsOnly ? 'Como beneficiário, confirmo ciência deste registro de encerramento do uso da sala. Posso contestar divergências no chamado; o aceite não atribui automaticamente culpa ou responsabilidade por danos.' : 'Como beneficiário, confirmo ciência deste registro de devolução. Posso contestar divergências no chamado; o aceite não atribui automaticamente culpa ou responsabilidade por danos.')
+                : ($roomsOnly ? 'Como beneficiário, aceito a responsabilidade pelo uso e conservação das salas descritas, no período indicado. Este aceite prévio não declara que o uso já ocorreu.' : 'Como beneficiário, aceito a responsabilidade de uso e devolução dos recursos descritos, no período indicado. Este aceite prévio não declara que a retirada física já ocorreu.'),
+            'receiver' => 'Como recebedor, atesto os itens e quantidades que efetivamente recebi e os horários registrados, sem declarar aprovação de testes ainda não realizados.',
+            'inspector' => 'Como inspetor, atesto somente as verificações, resultados e destinações registrados neste documento.',
+            default => throw new \\DomainException('Papel de assinatura inválido.'),
+        };
         return $text;
     }
 
-    public static function issueChallenge(int $documentId): string
+    public static function issueChallenge(int $documentId, ?string $role = null): string
     {
         $doc = self::get($documentId);
-        self::assertSignable($doc);
+        $role = self::resolveRole($doc, Access::userId(), $role);
+        self::assertSignable($doc, null, $role);
+        if (!in_array($role, self::pendingRoles($doc, Access::userId()), true)) {
+            throw new \\DomainException('Este papel já possui aceite registrado.');
+        }
         $token = bin2hex(random_bytes(32));
-        $consent = self::consent($doc, Access::userId());
+        $consent = self::consent($doc, Access::userId(), $role);
         Store::insert('signing_challenges', [
             'agreements_id' => $documentId, 'users_id' => Access::userId(),
             'challenge_hash' => hash('sha256', $token), 'session_hash' => self::sessionHash(),
@@ -177,57 +182,64 @@ final class DocumentService
     }
 
     /** $consent is the exact displayed consent SHA-256, submitted only after an explicit checkbox. */
-    public static function accept(int $documentId, string $challenge, string $consent, string $key): array
+    public static function accept(int $documentId, string $challenge, string $consent, string $key, ?string $role = null): array
     {
         if (Store::inTransaction()) {
             throw new RuntimeException('O aceite precisa de uma transação própria.');
         }
+        if (!Schema::roleAcceptanceSchemaReady()) {
+            throw new \\DomainException('Atualize o banco do Reserva Plus para habilitar aceites separados por papel.');
+        }
         if (!preg_match('/^[a-zA-Z0-9_-]{16,128}$/D', $key) || !preg_match('/^[a-f0-9]{64}$/D', $challenge)) {
-            throw new \DomainException('Confirmação inválida. Abra novamente o documento.');
+            throw new \\DomainException('Confirmação inválida. Abra novamente o documento.');
         }
         $doc = self::get($documentId);
         self::assertActiveUser();
         $userId = Access::userId();
-        Store::transaction(function () use ($doc, $documentId, $challenge, $consent, $key, $userId): void {
+        $role = self::resolveRole($doc, $userId, $role);
+        Store::transaction(function () use ($doc, $documentId, $challenge, $consent, $key, $userId, $role): void {
             $booking = Store::lock('bookings', (int) $doc['bookings_id']);
             Access::assertBooking($booking, 'read');
             $locked = Store::lock('agreements', $documentId);
-            $prior = Store::find('acceptances', ['agreements_id' => $documentId, 'users_id' => $userId], ['LIMIT' => 1]);
-            if ($prior !== []) {
-                // The same authenticated signer cannot create another acceptance, even across retries.
+            if (self::roleAcceptedFromRows(
+                (array) ($role ? [$role] : []),
+                Store::find('acceptances', ['agreements_id' => $documentId, 'users_id' => $userId]),
+                (string) $locked['source_sha256']
+            )) {
+                // Idempotent retry for this role only; never consume another role.
                 return;
             }
-            self::assertSignable($locked, $booking);
+            self::assertSignable($locked, $booking, $role);
             $rows = Store::find('signing_challenges', ['challenge_hash' => hash('sha256', $challenge)], ['LIMIT' => 1]);
             if ($rows === []) {
-                throw new \DomainException('Confirmação inexistente ou expirada.');
+                throw new \\DomainException('Confirmação inexistente ou expirada.');
             }
             $c = Store::lock('signing_challenges', (int) $rows[0]['id']);
-            $expectedConsent = self::consent($locked, $userId);
+            $expectedConsent = self::consent($locked, $userId, $role);
             self::validateChallenge($c, $locked, $userId, self::sessionHash(), $consent, Store::now());
             if (!hash_equals(hash('sha256', $expectedConsent), $consent)) {
-                throw new \DomainException('A declaração de aceite mudou. Reabra o documento.');
+                throw new \\DomainException('A declaração de aceite mudou. Reabra o documento.');
             }
             $served = $_SESSION['reservaplus_document_served'][$documentId] ?? [];
             if ((int) ($served['users_id'] ?? 0) !== $userId || (int) ($served['at'] ?? 0) < time() - 1800
                 || !hash_equals((string) ($served['hash'] ?? ''), (string) $locked['source_sha256'])) {
-                throw new \DomainException('Abra o PDF original desta versão antes de confirmar o aceite.');
+                throw new \\DomainException('Abra o PDF original desta versão antes de confirmar o aceite.');
             }
             self::readVerified((string) $locked['source_path'], (string) $locked['source_sha256']);
             Store::insert('acceptances', [
-                'agreements_id' => $documentId, 'users_id' => $userId,
-                'roles_json' => Store::json(self::roles($locked, $userId)),
+                'agreements_id' => $documentId, 'users_id' => $userId, 'role' => $role,
+                'roles_json' => Store::json([$role]),
                 'consent_text' => $expectedConsent, 'consent_sha256' => hash('sha256', $expectedConsent),
                 'source_sha256' => $locked['source_sha256'], 'booking_revision' => (int) $locked['revision'],
                 'auth_method' => 'glpi_authenticated_explicit_consent_v1',
                 'identity_json' => Store::json(self::identity($userId)),
-                'accepted_at' => Store::now(), 'event_utc' => gmdate('Y-m-d\TH:i:s\Z'), 'operation_key' => $key,
+                'accepted_at' => Store::now(), 'event_utc' => gmdate('Y-m-d\\TH:i:s\\Z'), 'operation_key' => $key,
             ]);
             Store::update('signing_challenges', (int) $c['id'], ['consumed_at' => Store::now()]);
             $status = self::allAccepted($locked) ? 'accepted' : 'partially_signed';
             Store::update('agreements', $documentId, ['status' => $status, 'date_mod' => Store::now(), 'last_error' => null]);
             Store::event((int) $locked['bookings_id'], 'document.accepted', [
-                'agreements_id' => $documentId, 'users_id' => $userId, 'purpose' => $locked['purpose'],
+                'agreements_id' => $documentId, 'users_id' => $userId, 'role' => $role, 'purpose' => $locked['purpose'],
                 'source_sha256' => $locked['source_sha256'], 'consent_sha256' => hash('sha256', $expectedConsent),
             ]);
         });
