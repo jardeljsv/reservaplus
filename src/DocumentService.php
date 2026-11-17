@@ -595,11 +595,13 @@ final class DocumentService
             throw new \DomainException('Este usuário não é um signatário designado.');
         }
         if ($role === null) {
-            // A technical session logs its real technical role; a helpdesk
-            // session signs the same document as beneficiary.
-            $booking = Store::row('bookings', (int) $doc['bookings_id']);
-            $available = self::authorizedRoles($booking, $assigned);
-            $role = $available[0] ?? null;
+            if (count($assigned) === 1) {
+                $role = (string) $assigned[0];
+            } else {
+                // Multi-role consent must be explicitly bound to the active
+                // profile's authorized choice, never guessed by the client.
+                throw new \DomainException('Selecione o papel autorizado da sessão para este aceite.');
+            }
         }
         if ($role === null || !in_array($role, $assigned, true)
             || !in_array($role, ['borrower', 'receiver', 'inspector'], true)) {
