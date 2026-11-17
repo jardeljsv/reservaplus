@@ -13,7 +13,7 @@ final class TicketTab extends CommonGLPI
         if (!$item instanceof \Ticket || !Schema::ready() || !Access::right('read') || !$item->can((int) $item->getID(), READ)) {
             return '';
         }
-        return __('Reserva Plus', 'reservaplus');
+        return self::createTabEntry(__('Reserva Plus', 'reservaplus'), icon: Dashboard::getIcon());
     }
 
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
