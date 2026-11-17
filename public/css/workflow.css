@@ -79,3 +79,7 @@
 .rp-workflow .rp-mini-expand[open] form { margin-top:10px; }
 .rp-workflow .rp-quick-actions-inline { display:flex; flex-wrap:wrap; align-items:flex-start; gap:7px; }
 .rp-workflow .rp-quick-actions-inline>form { margin:0; }
+.rp-workflow .rp-requester-actions { display:flex; flex-wrap:wrap; align-items:flex-start; gap:7px; }
+.rp-workflow .rp-requester-actions>.btn { min-height:32px; padding:6px 10px; font-size:12px; font-weight:700; border-radius:7px; }
+.rp-workflow .rp-requester-actions .rp-mini-expand[open] { flex-basis:100%; }
+.rp-workflow .rp-requester-actions form { margin:0; }

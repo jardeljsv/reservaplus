@@ -318,7 +318,8 @@ final class BookingView
                 echo self::e(__('Pendente', 'reservaplus'));
             }
             echo '</td><td>';
-            self::renderListActions($row, $meta['lines'], true);
+            if (TechnicianDashboard::isStaff()) { self::renderListActions($row, $meta['lines'], true); }
+            else { self::renderRequesterActions($row); }
             echo '</td></tr>';
         }
         echo '</tbody></table></div>';
@@ -387,6 +388,33 @@ final class BookingView
             echo '</form></details>';
         }
         self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
+        echo '</div>';
+    }
+
+    /** Self-service shortcuts: never expose staff custody or approval commands. */
+    public static function renderRequesterActions(array $booking): void
+    {
+        $id = (int) $booking['id'];
+        $owner = in_array(Access::userId(), [(int) $booking['users_id_requester'], (int) $booking['users_id_borrower']], true);
+        if (!$owner || !Access::booking($booking, 'read')) { return; }
+        $status = (string) ($booking['status'] ?? '');
+        echo '<div class="rp-requester-actions" aria-label="' . self::e(__('Ações da minha reserva', 'reservaplus')) . '">';
+        self::link('booking.php', __('Acompanhar', 'reservaplus'), ['id' => $id], 'btn btn-outline-primary btn-sm');
+        if (!in_array($status, ['cancelled', 'rejected'], true)) {
+            echo '<a class="btn btn-outline-secondary btn-sm" href="' . self::e(self::url('booking.php', ['id' => $id]) . '#rp-booking-documents') . '">' . self::e(__('Termos e assinaturas', 'reservaplus')) . '</a>';
+        }
+        if (Access::right('request')) {
+            self::link('booking.form.php', __('Reservar novamente', 'reservaplus'), ['copy_booking_id' => $id], 'btn btn-outline-primary btn-sm');
+        }
+        if (in_array($status, ['submitted', 'approved'], true)
+            && (Access::booking($booking, 'request') || Access::booking($booking, 'manage'))) {
+            echo '<details class="rp-mini-expand"><summary class="btn rp-mini-action rp-mini-cancel">' . self::e(__('Cancelar', 'reservaplus')) . '</summary>';
+            self::formStart('cancel', $id, (int) $booking['revision']);
+            self::hidden('_return_list', 'mine');
+            self::textarea('reason', __('Motivo do cancelamento', 'reservaplus'), '', true);
+            self::submit(__('Confirmar cancelamento', 'reservaplus'));
+            echo '</form></details>';
+        }
         echo '</div>';
     }
 
@@ -647,7 +675,7 @@ final class BookingView
     private static function renderDocuments(array $booking): void
     {
         $id = (int) $booking['id'];
-        echo '<section class="rp-panel"><h2>' . self::e(__('Documentos e assinaturas', 'reservaplus')) . '</h2>';
+        echo '<section class="rp-panel" id="rp-booking-documents"><h2>' . self::e(__('Documentos e assinaturas', 'reservaplus')) . '</h2>';
         $documents = DocumentService::forBooking($id);
         $current = array_values(array_filter($documents, static fn(array $d): bool => !empty($d['is_current'])));
         $historical = array_values(array_filter($documents, static fn(array $d): bool => empty($d['is_current'])));
