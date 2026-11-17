@@ -7,7 +7,7 @@ namespace GlpiPlugin\Reservaplus;
 /** Additive workflow schema. Existing 0.6 requests are never rewritten here. */
 final class Schema
 {
-    public const VERSION = 2;
+    public const VERSION = 3;
     private static ?bool $ready = null;
 
     public static function definitions(): array
@@ -80,8 +80,8 @@ final class Schema
                 'keys'=>['PRIMARY KEY (`id`)','UNIQUE KEY `verification_token` (`verification_token`)','KEY `booking_purpose_revision` (`bookings_id`,`purpose`,`revision`)'],
             ],
             'acceptances'=>[
-                'columns'=>['id'=>$id,'agreements_id'=>$uint,'users_id'=>$uint,'roles_json'=>'TEXT NOT NULL','consent_text'=>'TEXT NOT NULL','consent_sha256'=>'CHAR(64) NOT NULL','source_sha256'=>'CHAR(64) NOT NULL','booking_revision'=>$uint,'auth_method'=>'VARCHAR(64) NOT NULL','identity_json'=>$text,'accepted_at'=>$date,'event_utc'=>'VARCHAR(32) NOT NULL','operation_key'=>'VARCHAR(128) NOT NULL'],
-                'keys'=>['PRIMARY KEY (`id`)','UNIQUE KEY `signer` (`agreements_id`,`users_id`)','UNIQUE KEY `operation_key` (`agreements_id`,`operation_key`)'],
+                'columns'=>['id'=>$id,'agreements_id'=>$uint,'users_id'=>$uint,'role'=>"VARCHAR(24) NOT NULL DEFAULT 'legacy'",'roles_json'=>'TEXT NOT NULL','consent_text'=>'TEXT NOT NULL','consent_sha256'=>'CHAR(64) NOT NULL','source_sha256'=>'CHAR(64) NOT NULL','booking_revision'=>$uint,'auth_method'=>'VARCHAR(64) NOT NULL','identity_json'=>$text,'accepted_at'=>$date,'event_utc'=>'VARCHAR(32) NOT NULL','operation_key'=>'VARCHAR(128) NOT NULL'],
+                'keys'=>['PRIMARY KEY (`id`)','UNIQUE KEY `signer` (`agreements_id`,`users_id`,`role`)','UNIQUE KEY `operation_key` (`agreements_id`,`operation_key`)'],
             ],
             'signing_challenges'=>[
                 'columns'=>['id'=>$id,'agreements_id'=>$uint,'users_id'=>$uint,'challenge_hash'=>'CHAR(64) NOT NULL','session_hash'=>'CHAR(64) NOT NULL','expires_at'=>$date,'consumed_at'=>$date,'source_sha256'=>'CHAR(64) NOT NULL','revision'=>$uint,'consent_sha256'=>'CHAR(64) NOT NULL','date_creation'=>$date],
@@ -111,7 +111,38 @@ final class Schema
                 }
             }
         }
+        // Migrate the former (agreement, user) unique index to
+        // (agreement, user, role). Existing rows remain 'legacy' and their
+        // original roles_json evidence stays untouched.
+        if (!self::migrateAcceptanceSignerIndex()) {
+            return false;
+        }
         return true;
+    }
+
+    public static function roleAcceptanceSchemaReady(): bool
+    {
+        global $DB;
+        $table = 'glpi_plugin_reservaplus_acceptances';
+        if (!$DB->tableExists($table) || !$DB->fieldExists($table, 'role')) { return false; }
+        $columns = [];
+        foreach ($DB->request("SHOW INDEX FROM `$table` WHERE Key_name = 'signer'") as $index) {
+            $columns[(int) $index['Seq_in_index']] = (string) $index['Column_name'];
+        }
+        ksort($columns);
+        return array_values($columns) === ['agreements_id', 'users_id', 'role'];
+    }
+
+    private static function migrateAcceptanceSignerIndex(): bool
+    {
+        global $DB;
+        if (self::roleAcceptanceSchemaReady()) { return true; }
+        $table = 'glpi_plugin_reservaplus_acceptances';
+        if (!$DB->fieldExists($table, 'role')) { return false; }
+        // One atomic ALTER; no deletion or modification of signed evidence.
+        return (bool) $DB->doQuery(
+            "ALTER TABLE `$table` DROP INDEX `signer`, ADD UNIQUE KEY `signer` (`agreements_id`,`users_id`,`role`)"
+        );
     }
 
     public static function ready(): bool
