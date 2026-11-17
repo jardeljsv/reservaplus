@@ -70,7 +70,7 @@ rp_test('new schema preserves optional inventory and immutable evidence keys',fu
     rp_assert(in_array('UNIQUE KEY `native_identity` (`native_itemtype`,`native_items_id`)',$schema['resources']['keys'],true));
     rp_assert(isset($schema['bookings']['columns']['scope_revision']));
     rp_assert(isset($schema['bookinglines']['columns']['calendar_mode']));
-    rp_assert(in_array('UNIQUE KEY `signer` (`agreements_id`,`users_id`)',$schema['acceptances']['keys'],true));
+    rp_assert(in_array('UNIQUE KEY `signer` (`agreements_id`,`users_id`,`role`)',$schema['acceptances']['keys'],true));
 });
 
 if ($standaloneResourceRights) {
