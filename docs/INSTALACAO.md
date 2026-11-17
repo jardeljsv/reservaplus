@@ -39,7 +39,7 @@ Executar também php -l nos arquivos atualizados. Quando houver alterações de 
 
 ## Migração obrigatória para aceites por papel (homologação)
 
-Esta etapa deve ser executada **antes de usar os novos formulários de assinatura**. Uma mesma conta GLPI poderá assinar como beneficiário e, posteriormente, como inspetor com a permissão de inspeção ativa.
+Esta etapa deve ser executada **antes de usar o novo formulário de assinatura**. O índice permite preservar os comprovantes já existentes e identificar o papel efetivo; o fluxo atual solicita apenas um aceite por conta GLPI e documento.
 
 1. Criar backup consistente do **banco GLPI inteiro** e do diretório privado dos termos, incluindo a chave de integridade. Guardar os backups fora do GitHub.
 2. Atualizar o clone de desenvolvimento e publicar os arquivos alterados na instalação ativa em uma janela controlada. **Não copiar somente o arquivo DocumentService.php**, pois a interface e o esquema precisam ser coerentes.
@@ -56,7 +56,7 @@ Esta etapa deve ser executada **antes de usar os novos formulários de assinatur
 
    O índice `signer` deve conter, nesta ordem, `agreements_id`, `users_id` e `role`. Registros históricos mantêm seus `roles_json` originais e recebem `role='legacy'`.
 
-5. Testar um mesmo usuário nos papéis Beneficiário e Inspetor: o primeiro aceite, com perfil solicitante, deve deixar o documento **parcialmente assinado**; o segundo exige o perfil de inspeção e somente então o documento pode ser finalizado.
+5. Testar um mesmo usuário nos papéis Beneficiário e Inspetor: deve existir apenas um botão **Assinar termo**. Se assinar como solicitante, registrar Beneficiário; se assinar no perfil técnico autorizado, registrar Inspetor. O mesmo usuário não deve assinar o mesmo documento novamente. Quando houver outros signatários, o documento aguarda o aceite dessas outras pessoas.
 
 **Reversão:** não basta restaurar PHP antigo após ter registrado dois aceites para a mesma conta/documento. Para voltar integralmente à versão anterior, restaurar em conjunto os backups de banco, plugin e documentos privados; não reduzir o índice em um banco que já contenha dois aceites independentes.
 
