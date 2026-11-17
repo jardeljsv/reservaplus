@@ -673,7 +673,7 @@ final class DocumentService
     /** Exactly one role is selected for signing, with the current profile's authority. */
     private static function authorizedRoles(array $booking, array $assigned): array
     {
-        $order = Session::getCurrentInterface() === 'helpdesk'
+        $order = \Session::getCurrentInterface() === 'helpdesk'
             ? ['borrower', 'inspector', 'receiver']
             : ['inspector', 'receiver', 'borrower'];
         $available = [];
