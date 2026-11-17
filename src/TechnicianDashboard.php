@@ -353,7 +353,7 @@ final class TechnicianDashboard
             BookingView::badge((string) $booking['status']); echo '</span></a>';
             if (($booking['status'] ?? '') === 'submitted' && TicketBridge::pendingForActor($booking)) {
                 echo '<div class="rp-dash-quick-actions">';
-                BookingView::renderListActions($booking, self::lines($booking));
+                BookingView::renderListActions($booking, self::lines($booking), true);
                 echo '</div>';
             }
         }

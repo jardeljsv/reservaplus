@@ -3,3 +3,8 @@
 .rp-dash-quick-actions { margin: 0 0 12px 48px; }
 .rp-dash-quick-actions details { display: inline-block; }
 .rp-dash-quick-actions form { margin: 8px 0; }
+.rp-quick-actions-inline { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+.rp-quick-actions-inline form { margin: 0; }
+.rp-quick-actions-inline .rp-quick-reject { position: relative; }
+.rp-quick-actions-inline .rp-quick-reject[open] { flex-basis: 100%; }
+.rp-quick-actions-inline .rp-quick-reject[open] form { margin-top: 8px; }

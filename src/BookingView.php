@@ -325,7 +325,7 @@ final class BookingView
     }
 
     /** Shortcuts never bypass BookingService's locks, revision checks or native GLPI validation. */
-    public static function renderListActions(array $booking, array $lines): void
+    public static function renderListActions(array $booking, array $lines, bool $dashboard = false): void
     {
         $eligible = [];
         if (($booking['status'] ?? '') === 'submitted') {
@@ -350,17 +350,25 @@ final class BookingView
             self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
             return;
         }
-        echo '<details class="rp-quick-actions"><summary class="btn btn-outline-primary btn-sm">' . self::e(__('Decidir', 'reservaplus')) . ' (' . count($eligible) . ')</summary>';
-        echo '<p class="rp-muted">' . self::e(__('A decisão se aplica somente aos recursos que você pode aprovar. Confira os detalhes antes de confirmar.', 'reservaplus')) . '</p>';
+        if ($dashboard) {
+            echo '<div class="rp-quick-actions rp-quick-actions-inline" aria-label="' . self::e(__('Decisões sobre a reserva', 'reservaplus')) . '">';
+        } else {
+            echo '<details class="rp-quick-actions"><summary class="btn btn-outline-primary btn-sm">' . self::e(__('Decidir', 'reservaplus')) . ' (' . count($eligible) . ')</summary>';
+            echo '<p class="rp-muted">' . self::e(__('A decisão se aplica somente aos recursos que você pode aprovar. Confira os detalhes antes de confirmar.', 'reservaplus')) . '</p>';
+        }
         foreach (['approve' => __('Autorizar', 'reservaplus'), 'reject' => __('Rejeitar', 'reservaplus')] as $action => $label) {
+            if ($dashboard && $action === 'reject') {
+                echo '<details class="rp-quick-reject"><summary class="btn btn-outline-danger btn-sm">' . self::e($label) . '</summary>';
+            }
             self::formStart($action, (int) $booking['id'], (int) $booking['revision']);
             foreach ($eligible as $lineId) { self::hidden('lines_ids[]', $lineId); }
             self::hidden('_return_list', 'approvals');
             if ($action === 'reject') { self::textarea('reason', __('Motivo da rejeição', 'reservaplus'), '', true); }
-            echo '<button type="submit" class="btn btn-sm ' . ($action === 'reject' ? 'btn-outline-danger' : 'btn-success') . '" onclick="return confirm(' . self::e(json_encode(__('Confirma esta decisão sobre os recursos autorizados?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e($label) . '</button>';
+            echo '<button type="submit" class="btn btn-sm ' . ($action === 'reject' ? 'btn-outline-danger' : 'btn-success') . '" onclick="return confirm(' . self::e(json_encode(__('Confirma esta decisão sobre os recursos autorizados?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e($dashboard && $action === 'reject' ? __('Confirmar rejeição', 'reservaplus') : $label) . '</button>';
             echo '</form>';
+            if ($dashboard && $action === 'reject') { echo '</details>'; }
         }
-        echo '</details>';
+        echo $dashboard ? '</div>' : '</details>';
     }
 
     public static function pagination(string $file, array $query, int $page, bool $more): void
