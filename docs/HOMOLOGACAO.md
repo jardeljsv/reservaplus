@@ -26,11 +26,11 @@ Estado: checklist de execução, não certificado de aprovação. Ambiente obser
 - [ ] Reservar novamente não copia ticket, datas, aprovações e assinaturas
 - [ ] Assinatura abre documento correto e mantém exigências de aceite
 - [ ] Migração de banco aplicada: coluna `role` e índice único `agreements_id, users_id, role`; aceites históricos `legacy` preservados
-- [ ] Mesmo usuário como Beneficiário e Inspetor: no perfil solicitante pode assinar apenas como Beneficiário
-- [ ] Após aceite do Beneficiário, documento permanece parcialmente assinado e o laudo continua pendente
-- [ ] No perfil sem direito de inspeção, a assinatura técnica permanece bloqueada
-- [ ] Com perfil autorizado de Inspetor, o mesmo usuário registra um segundo aceite e completa o termo
-- [ ] O PDF final lista separadamente os dois papéis, horários e declarações, sem duplicação ou perda de evidência
+- [ ] Mesmo usuário como Beneficiário e Inspetor/Recebedor: existe apenas um botão Assinar termo em qualquer perfil autorizado
+- [ ] Após o aceite do beneficiário, não é solicitado segundo aceite à mesma conta; se houver outras pessoas signatárias, o documento permanece pendente até seus aceites
+- [ ] Perfil sem direito de inspeção/recebimento não pode assinar declarando o papel técnico; pode assinar como Beneficiário quando designado
+- [ ] Com perfil de Inspetor/Recebedor autorizado, se ainda não assinou, o mesmo usuário registra um único aceite com seu papel técnico; após assinar, o botão desaparece em ambos os perfis
+- [ ] O PDF final apresenta um único comprovante para o signatário, com papel efetivamente utilizado, sem perder registros técnicos de devolução e conferência
 - [ ] Uma assinatura já registrada não é repetida ao recarregar ou tentar novamente
 - [ ] Documento histórico assinado antes da migração continua verificável e válido
 
