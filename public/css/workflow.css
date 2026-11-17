@@ -83,3 +83,10 @@
 .rp-workflow .rp-requester-actions>.btn { min-height:32px; padding:6px 10px; font-size:12px; font-weight:700; border-radius:7px; }
 .rp-workflow .rp-requester-actions .rp-mini-expand[open] { flex-basis:100%; }
 .rp-workflow .rp-requester-actions form { margin:0; }
+.rp-workflow .rp-requester-actions .rp-requester-follow { background:#1d4ed8; border-color:#1d4ed8; color:#fff; }
+.rp-workflow .rp-requester-actions .rp-requester-follow:hover { background:#1e40af; border-color:#1e40af; color:#fff; }
+.rp-workflow .rp-requester-actions .rp-requester-sign { background:#7c3aed; border-color:#7c3aed; color:#fff; }
+.rp-workflow .rp-requester-actions .rp-requester-sign:hover { background:#6d28d9; border-color:#6d28d9; color:#fff; }
+.rp-workflow .rp-requester-actions .rp-requester-repeat { background:#0f766e; border-color:#0f766e; color:#fff; }
+.rp-workflow .rp-requester-actions .rp-requester-repeat:hover { background:#115e59; border-color:#115e59; color:#fff; }
+.rp-workflow .rp-requester-actions .btn:focus-visible { outline:3px solid #93c5fd; outline-offset:2px; }

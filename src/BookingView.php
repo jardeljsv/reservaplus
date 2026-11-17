@@ -399,12 +399,12 @@ final class BookingView
         if (!$owner || !Access::booking($booking, 'read')) { return; }
         $status = (string) ($booking['status'] ?? '');
         echo '<div class="rp-requester-actions" aria-label="' . self::e(__('Ações da minha reserva', 'reservaplus')) . '">';
-        self::link('booking.php', __('Acompanhar', 'reservaplus'), ['id' => $id], 'btn btn-outline-primary btn-sm');
+        self::link('booking.php', __('Acompanhar', 'reservaplus'), ['id' => $id], 'rp-requester-follow btn-sm');
         if (!in_array($status, ['cancelled', 'rejected'], true)) {
-            echo '<a class="btn btn-outline-secondary btn-sm" href="' . self::e(self::url('booking.php', ['id' => $id]) . '#rp-booking-documents') . '">' . self::e(__('Termos e assinaturas', 'reservaplus')) . '</a>';
+            echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('booking.php', ['id' => $id]) . '#rp-booking-documents') . '">' . self::e(__('Termos e assinaturas', 'reservaplus')) . '</a>';
         }
         if (Access::right('request')) {
-            self::link('booking.form.php', __('Reservar novamente', 'reservaplus'), ['copy_booking_id' => $id], 'btn btn-outline-primary btn-sm');
+            self::link('booking.form.php', __('Reservar novamente', 'reservaplus'), ['copy_booking_id' => $id], 'rp-requester-repeat btn-sm');
         }
         if (in_array($status, ['submitted', 'approved'], true)
             && (Access::booking($booking, 'request') || Access::booking($booking, 'manage'))) {
