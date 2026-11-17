@@ -156,7 +156,7 @@ final class DocumentService
                 : ($roomsOnly ? 'Como beneficiário, aceito a responsabilidade pelo uso e conservação das salas descritas, no período indicado. Este aceite prévio não declara que o uso já ocorreu.' : 'Como beneficiário, aceito a responsabilidade de uso e devolução dos recursos descritos, no período indicado. Este aceite prévio não declara que a retirada física já ocorreu.'),
             'receiver' => 'Como recebedor, atesto os itens e quantidades que efetivamente recebi e os horários registrados, sem declarar aprovação de testes ainda não realizados.',
             'inspector' => 'Como inspetor, atesto somente as verificações, resultados e destinações registrados neste documento.',
-            default => throw new \\DomainException('Papel de assinatura inválido.'),
+            default => throw new \DomainException('Papel de assinatura inválido.'),
         };
         return $text;
     }
@@ -167,7 +167,7 @@ final class DocumentService
         $role = self::resolveRole($doc, Access::userId(), $role);
         self::assertSignable($doc, null, $role);
         if (!in_array($role, self::pendingRoles($doc, Access::userId()), true)) {
-            throw new \\DomainException('Este papel já possui aceite registrado.');
+            throw new \DomainException('Este papel já possui aceite registrado.');
         }
         $token = bin2hex(random_bytes(32));
         $consent = self::consent($doc, Access::userId(), $role);
@@ -188,10 +188,10 @@ final class DocumentService
             throw new RuntimeException('O aceite precisa de uma transação própria.');
         }
         if (!Schema::roleAcceptanceSchemaReady()) {
-            throw new \\DomainException('Atualize o banco do Reserva Plus para habilitar aceites separados por papel.');
+            throw new \DomainException('Atualize o banco do Reserva Plus para habilitar aceites separados por papel.');
         }
         if (!preg_match('/^[a-zA-Z0-9_-]{16,128}$/D', $key) || !preg_match('/^[a-f0-9]{64}$/D', $challenge)) {
-            throw new \\DomainException('Confirmação inválida. Abra novamente o documento.');
+            throw new \DomainException('Confirmação inválida. Abra novamente o documento.');
         }
         $doc = self::get($documentId);
         self::assertActiveUser();
@@ -212,18 +212,18 @@ final class DocumentService
             self::assertSignable($locked, $booking, $role);
             $rows = Store::find('signing_challenges', ['challenge_hash' => hash('sha256', $challenge)], ['LIMIT' => 1]);
             if ($rows === []) {
-                throw new \\DomainException('Confirmação inexistente ou expirada.');
+                throw new \DomainException('Confirmação inexistente ou expirada.');
             }
             $c = Store::lock('signing_challenges', (int) $rows[0]['id']);
             $expectedConsent = self::consent($locked, $userId, $role);
             self::validateChallenge($c, $locked, $userId, self::sessionHash(), $consent, Store::now());
             if (!hash_equals(hash('sha256', $expectedConsent), $consent)) {
-                throw new \\DomainException('A declaração de aceite mudou. Reabra o documento.');
+                throw new \DomainException('A declaração de aceite mudou. Reabra o documento.');
             }
             $served = $_SESSION['reservaplus_document_served'][$documentId] ?? [];
             if ((int) ($served['users_id'] ?? 0) !== $userId || (int) ($served['at'] ?? 0) < time() - 1800
                 || !hash_equals((string) ($served['hash'] ?? ''), (string) $locked['source_sha256'])) {
-                throw new \\DomainException('Abra o PDF original desta versão antes de confirmar o aceite.');
+                throw new \DomainException('Abra o PDF original desta versão antes de confirmar o aceite.');
             }
             self::readVerified((string) $locked['source_path'], (string) $locked['source_sha256']);
             Store::insert('acceptances', [
@@ -599,7 +599,7 @@ final class DocumentService
         }
         if ($role === null || !in_array($role, $assigned, true)
             || !in_array($role, ['borrower', 'receiver', 'inspector'], true)) {
-            throw new \\DomainException('Selecione um papel de assinatura autorizado para sua conta.');
+            throw new \DomainException('Selecione um papel de assinatura autorizado para sua conta.');
         }
         return $role;
     }
@@ -670,10 +670,10 @@ final class DocumentService
         self::assertHold($booking);
         $role = self::resolveRole($doc, Access::userId(), $role);
         if (!self::current($doc, $booking) || in_array((string) $booking['status'], ['cancelled', 'rejected'], true)) {
-            throw new \\DomainException('O documento não está vigente ou este usuário não é um signatário autorizado.');
+            throw new \DomainException('O documento não está vigente ou este usuário não é um signatário autorizado.');
         }
         if (!self::rolePermitted($booking, $role)) {
-            throw new \\DomainException(match ($role) {
+            throw new \DomainException(match ($role) {
                 'receiver' => 'A permissão atual de recebimento é necessária para atestar o registro.',
                 'inspector' => 'A permissão atual de inspeção é necessária para atestar o laudo.',
                 default => 'Sem permissão para este papel.',
