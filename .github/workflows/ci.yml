@@ -1,0 +1,23 @@
+name: Reserva Plus checks
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+jobs:
+  static-and-unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, mysqli
+          coverage: none
+      - name: PHP syntax checks
+        run: |
+          find . -type f -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - name: Standalone regression checks
+        run: bash tools/run-tests.sh
