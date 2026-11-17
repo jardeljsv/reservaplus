@@ -37,6 +37,8 @@ final class DocumentService
             'consent_text' => self::baseConsent(), 'template_version' => PdfRenderer::TEMPLATE_VERSION,
             'prepared_at' => Store::now(), 'timezone' => date_default_timezone_get(),
             'tickets_id' => (int) ($booking['tickets_id'] ?? 0), 'verification_token' => $token,
+            // Login GLPI/AD congelado no documento, sem alterar hashes de termos antigos.
+            'borrower_login' => self::identity((int) $booking['users_id_borrower'])['login'],
         ];
         $signers = self::signers($booking, $purpose, $scope);
         $bytes = PdfRenderer::render($snapshot);
@@ -79,6 +81,35 @@ final class DocumentService
             @unlink(self::path($sourceName));
         }
         return $id;
+    }
+
+    /** Prepare applicable terms after the booking command commits (idempotent per scope). */
+    public static function prepareForCurrentStage(int $bookingId): array
+    {
+        $booking = Store::row('bookings', $bookingId);
+        Access::assertBooking($booking, 'read');
+        $state = (string) ($booking['status'] ?? '');
+        if (in_array($state, ['completed', 'cancelled', 'rejected'], true)) { return []; }
+        $lines = Store::find('bookinglines', ['bookings_id' => $bookingId]);
+        $required = BookingService::signaturePurposes($lines);
+        $purposes = [];
+        if ($state === 'submitted' && in_array('request', $required, true)) {
+            $purposes[] = 'request';
+        }
+        if (in_array($state, ['approved', 'ready'], true)) {
+            $purposes = $required;
+        }
+        if ($state === 'returning') {
+            foreach ($lines as $line) {
+                if (!empty($line['received_at'])) { $purposes[] = 'return_receipt'; }
+                if (!empty($line['inspection_at'])) { $purposes[] = 'return_inspection'; }
+            }
+        }
+        $ids = [];
+        foreach (array_unique($purposes) as $purpose) {
+            $ids[] = self::prepare($bookingId, $purpose);
+        }
+        return $ids;
     }
 
     public static function forBooking(int $bookingId): array
