@@ -202,31 +202,31 @@ rp_test('inspection needs actual findings and separate inspector attestation; co
     rp_same(2, count(Store::find('acceptances', ['agreements_id' => $id])), 'Correction preserves earlier acceptance evidence');
 });
 
-rp_test('beneficiary and inspector same GLPI account sign independently under different rights', function () use ($bookingId, $lineId, $borrower): void {
+rp_test('same GLPI user signs the document once, with account and active role recorded', function () use ($bookingId, $lineId, $borrower): void {
     rp_doc_login('glpi', Access::ADMIN);
     Store::update('bookinglines', $lineId, [
         'inspector_users_id' => $borrower,
         'inspection_at' => Store::now(),
-        'inspection_json' => Store::json(['result' => 'pass', 'findings' => 'Conferência realizada pelo beneficiário inspetor.']),
+        'inspection_json' => Store::json(['result' => 'pass', 'findings' => 'Conferência realizada pelo responsável técnico.']),
     ]);
     Store::update('bookings', $bookingId, ['status' => 'returning']);
     $document = DocumentService::prepare($bookingId, 'return_inspection');
     $doc = DocumentService::get($document);
     rp_same(['borrower', 'inspector'], $doc['roles']);
 
+    // Even with two assigned roles, one authenticated acceptance is sufficient
+    // for the same account. Inspection facts remain recorded independently.
     rp_doc_login('glpi', READ);
     $doc = rp_doc_accept($document, 'borrower');
-    rp_same('partially_signed', $doc['status']);
+    rp_same('complete', $doc['status']);
+    rp_same(1, count($doc['acceptances']));
     rp_same(['borrower'], $doc['acceptances'][0]['roles']);
-    rp_throws(static fn() => DocumentService::issueChallenge($document, 'inspector'), DomainException::class, 'permissão');
-    rp_assert(!DocumentService::isSatisfied($bookingId, 'return_inspection'));
+    rp_assert(DocumentService::isSatisfied($bookingId, 'return_inspection'));
 
     rp_doc_login('glpi', Access::ADMIN);
-    $doc = rp_doc_accept($document, 'inspector');
-    rp_same('complete', $doc['status']);
-    rp_same(2, count($doc['acceptances']));
-    rp_same(['inspector'], $doc['acceptances'][1]['roles']);
-    rp_assert(DocumentService::isSatisfied($bookingId, 'return_inspection'));
+    rp_throws(static fn() => DocumentService::issueChallenge($document, 'inspector'),
+        DomainException::class, 'já foi registrado');
+    rp_same(1, count(Store::find('acceptances', ['agreements_id' => $document])));
 });
 
 rp_test('expired approval hold blocks fresh signature even before cron', function () use ($bookingId): void {
