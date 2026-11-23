@@ -44,6 +44,16 @@ rp_test('signature requirements combine mandatory resource stages', static funct
     rp_same([], BookingService::signaturePurposes([$line('none')]));
 });
 
+rp_test('two-document return workflow is opt-in per new equipment booking snapshot', static function (): void {
+    rp_assert(BookingService::simplifiedReturn([
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'two_terms_v1']),
+    ]));
+    rp_assert(!BookingService::simplifiedReturn(['policy_snapshot_json' => null]));
+    rp_assert(!BookingService::simplifiedReturn([
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'legacy']),
+    ]));
+});
+
 rp_test('early delivery grace is bounded and never changes the approved period', static function (): void {
     $begin = '2026-11-17 17:00:00';
     $end = '2026-11-17 18:00:00';
