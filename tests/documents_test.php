@@ -43,6 +43,24 @@ rp_test('new equipment cession template follows approved institutional sections 
     rp_assert(!PdfRenderer::isCessionTerm($sample));
 });
 
+rp_test('equipment receiving terms require drawing without changing historic or inspection forms', static function (): void {
+    $scope = ['lines' => [['resource' => ['kind' => 'equipment', 'name' => 'Notebook']]]];
+    $current = ['template_version' => PdfRenderer::TEMPLATE_VERSION,
+        'purpose' => 'return_receipt', 'scope' => $scope];
+    rp_assert(PdfRenderer::requiresHandwrittenSignature($current));
+    rp_assert(!PdfRenderer::isCessionTerm($current));
+    $current['purpose'] = 'return_inspection';
+    rp_assert(!PdfRenderer::requiresHandwrittenSignature($current));
+    $current['purpose'] = 'return_receipt';
+    $current['template_version'] = 'reservaplus-terms-v1';
+    rp_assert(!PdfRenderer::requiresHandwrittenSignature($current));
+    $current['template_version'] = PdfRenderer::TEMPLATE_VERSION;
+    $current['scope']['lines'][0]['resource']['kind'] = 'room';
+    rp_assert(!PdfRenderer::requiresHandwrittenSignature($current));
+    $current['scope'] = ['lines' => []];
+    rp_assert(!PdfRenderer::requiresHandwrittenSignature($current));
+});
+
 rp_test('handwritten signature validates normalized points, size and shape', static function (): void {
     $good = [[[100, 200], [150, 220], [200, 260], [250, 210]]];
     rp_same($good, DocumentService::validateHandwrittenStrokes(json_encode($good)));
