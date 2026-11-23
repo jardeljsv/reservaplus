@@ -131,8 +131,7 @@ final class BookingService
                 // approval. Freeze the policy on this booking; historical bookings
                 // and room policies remain untouched.
                 $frozenPolicy = Store::decode($resource['policy_json'] ?? null);
-                if (($resource['kind'] ?? '') === 'equipment'
-                    && ($frozenPolicy['signature_stage'] ?? 'none') !== 'none') {
+                if (($resource['kind'] ?? '') === 'equipment') {
                     $frozenPolicy['signature_stage'] = 'submission';
                     $resource['policy_json'] = Store::json($frozenPolicy);
                 }
