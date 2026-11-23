@@ -493,7 +493,7 @@ final class BookingView
         }
         $policy = ResourceService::policy($resource);
         $signature = ['submission' => __('Assinatura na solicitação', 'reservaplus'), 'approval' => __('Assinatura após aprovação', 'reservaplus'), 'handover' => __('Assinatura antes da retirada / uso', 'reservaplus'), 'none' => __('Sem assinatura de retirada obrigatória', 'reservaplus')];
-        echo '<p class="rp-muted">' . self::e(!empty($policy['approval_required']) ? __('Exige aprovação da equipe.', 'reservaplus') : __('Confirmação sujeita à disponibilidade.', 'reservaplus')) . ' ' . self::e($signature[$policy['signature_stage'] ?? 'none'] ?? '') . '.</p>';
+        echo '<p class="rp-muted">' . self::e(!empty($policy['approval_required']) ? __('Exige aprovação da equipe.', 'reservaplus') : __('Confirmação sujeita à disponibilidade.', 'reservaplus')) . ' ' . self::e((($resource['kind'] ?? '') === 'equipment' ? __('Termo obrigatório antes da aprovação e entrega', 'reservaplus') : ($signature[$policy['signature_stage'] ?? 'none'] ?? ''))) . '.</p>';
         if (!empty($policy['return_signature_required'])) {
             echo '<p class="rp-muted">' . self::e(__('Exige termo assinado na devolução / término de uso.', 'reservaplus')) . '</p>';
         }
