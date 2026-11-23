@@ -180,7 +180,7 @@ final class DocumentService
     }
 
     /** $consent is the exact displayed consent SHA-256, submitted only after an explicit checkbox. */
-    public static function accept(int $documentId, string $challenge, string $consent, string $key, ?string $role = null): array
+    public static function accept(int $documentId, string $challenge, string $consent, string $key, ?string $role = null, ?string $signature = null): array
     {
         if (Store::inTransaction()) {
             throw new RuntimeException('O aceite precisa de uma transação própria.');
@@ -195,7 +195,10 @@ final class DocumentService
         self::assertActiveUser();
         $userId = Access::userId();
         $role = self::resolveRole($doc, $userId, $role);
-        Store::transaction(function () use ($doc, $documentId, $challenge, $consent, $key, $userId, $role): void {
+        $snapshot = Store::decode($doc['snapshot_json'] ?? null);
+        $requiresDrawing = PdfRenderer::isCessionTerm($snapshot);
+        $strokes = $requiresDrawing ? self::validateHandwrittenStrokes($signature) : [];
+        Store::transaction(function () use ($doc, $documentId, $challenge, $consent, $key, $userId, $role, $strokes): void {
             $booking = Store::lock('bookings', (int) $doc['bookings_id']);
             Access::assertBooking($booking, 'read');
             $locked = Store::lock('agreements', $documentId);
@@ -229,7 +232,7 @@ final class DocumentService
                 'consent_text' => $expectedConsent, 'consent_sha256' => hash('sha256', $expectedConsent),
                 'source_sha256' => $locked['source_sha256'], 'booking_revision' => (int) $locked['revision'],
                 'auth_method' => 'glpi_authenticated_explicit_consent_v1',
-                'identity_json' => Store::json(self::identity($userId)),
+                'identity_json' => Store::json(self::identity($userId) + ($strokes !== [] ? ['handwritten_strokes' => $strokes, 'handwritten_method' => 'glpi_canvas_pointer_v1'] : [])),
                 'accepted_at' => Store::now(), 'event_utc' => gmdate('Y-m-d\\TH:i:s\\Z'), 'operation_key' => $key,
             ]);
             Store::update('signing_challenges', (int) $c['id'], ['consumed_at' => Store::now()]);
@@ -242,6 +245,42 @@ final class DocumentService
         });
         self::finalize($documentId);
         return self::get($documentId);
+    }
+
+    /** Strict normalized coordinate representation, not arbitrary image or HTML input. */
+    public static function validateHandwrittenStrokes(?string $raw): array
+    {
+        if ($raw === null || strlen($raw) > 150000 || $raw === '') {
+            throw new \DomainException('Desenhe sua assinatura antes de confirmar o termo.');
+        }
+        try {
+            $strokes = json_decode($raw, true, 16, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new \DomainException('O desenho da assinatura é inválido.');
+        }
+        if (!is_array($strokes) || !array_is_list($strokes) || count($strokes) < 1 || count($strokes) > 120) {
+            throw new \DomainException('A assinatura deve conter de 1 a 120 traços.');
+        }
+        $total = 0; $minX = 1000; $maxX = 0; $minY = 1000; $maxY = 0;
+        foreach ($strokes as $stroke) {
+            if (!is_array($stroke) || !array_is_list($stroke) || count($stroke) < 2 || count($stroke) > 400) {
+                throw new \DomainException('Traço de assinatura inválido.');
+            }
+            $total += count($stroke);
+            foreach ($stroke as $point) {
+                if (!is_array($point) || !array_is_list($point) || count($point) !== 2
+                    || !is_int($point[0]) || !is_int($point[1])
+                    || $point[0] < 0 || $point[0] > 1000 || $point[1] < 0 || $point[1] > 1000) {
+                    throw new \DomainException('Coordenada de assinatura inválida.');
+                }
+                $minX = min($minX, $point[0]); $maxX = max($maxX, $point[0]);
+                $minY = min($minY, $point[1]); $maxY = max($maxY, $point[1]);
+            }
+        }
+        if ($total < 4 || ($maxX - $minX) < 25 || ($maxY - $minY) < 10) {
+            throw new \DomainException('Assinatura muito curta. Desenhe sua assinatura no quadro.');
+        }
+        return $strokes;
     }
 
     /** Pure validator shared with regression tests. Times use the GLPI application timezone. */
