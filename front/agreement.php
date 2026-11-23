@@ -42,6 +42,15 @@ try {
                 + BookingView::ticketContextQuery($returnTicket)));
         } elseif ($action === 'retry') {
             DocumentService::finalize($id);
+            $finalizedDoc = DocumentService::get($id);
+            if (($finalizedDoc['purpose'] ?? '') === 'return_inspection'
+                && ($finalizedDoc['status'] ?? '') === 'complete') {
+                try {
+                    \GlpiPlugin\Reservaplus\BookingService::completeAfterFinalSignature((int) $finalizedDoc['bookings_id']);
+                } catch (Throwable $completionError) {
+                    \Toolbox::logInFile('reservaplus', 'Return completion retry #'.$id.': '.$completionError->getMessage()."\n");
+                }
+            }
         } else {
             throw new DomainException('Ação inválida.');
         }
