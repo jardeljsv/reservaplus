@@ -2,15 +2,22 @@
 
 ## Em desenvolvimento — após 0.7.0-rc3 (sem nova versão instalada)
 
+### Cessão e assinatura antes da aprovação (novembro de 2026)
+- Novas reservas de equipamentos exigem termo de responsabilidade antes da aprovação e entrega; política congelada por reserva. Reservas históricas não são alteradas.
+- Aprovação pela aba Reserva Plus permanece bloqueada até o termo da solicitação estar assinado e finalizado. Notificações de aprovação são adiadas até esse momento.
+- Novo modelo de PDF de cessão com identificação do equipamento, patrimônio, acessórios, requerente, matrícula, setor/unidade, período e responsabilidade condicionada à entrega.
+- Assinatura manuscrita via mouse ou toque como coordenadas validadas e vinculadas ao aceite autenticado. Desenho incorporado ao PDF final, sem PNG isolado nem certificado ICP-Brasil.
+- Manter testes e homologação; versão do plugin não foi incrementada.
+
 - Assinatura simplificada: apenas **um botão "Assinar termo" por conta GLPI e documento**. Se a mesma pessoa é beneficiário e recebedor/inspetor, uma confirmação registra o papel autorizado do perfil utilizado; não solicita segundo aceite para a mesma pessoa. Recebimento e conferência técnicos continuam sendo operações independentes e auditadas.
 - O PDF de comprovante registra o papel efetivamente utilizado na assinatura; aceites históricos permanecem preservados e não são reescritos.
 
-- Interface simplificada (solicitante): apresenta apenas o próprio aceite do beneficiário; não mostra ações ou avisos de assinatura do inspetor e oculta identificação técnica do PDF. A assinatura técnica continua obrigatória no backend quando prevista.
+- Interface simplificada (solicitante): apresenta apenas o próprio aceite do beneficiário; não mostra ações ou avisos de assinatura do inspetor e oculta identificação técnica do PDF. A conferência técnica física continua obrigatória; não é exigido segundo aceite da mesma pessoa no mesmo documento.
 - Mensagem amigável de indisponibilidade ao solicitante se a migração obrigatória do esquema de aceites ainda não foi aplicada.
 
 - **Aceites por papel:** a estrutura admite comprovantes por papel, mas o fluxo atual solicita **um aceite por usuário e documento**; o papel efetivo é escolhido conforme a interface e as permissões.
 - Migração aditiva e controlada: coluna `role` na tabela de aceites e índice único por documento, usuário e papel. Aceites antigos preservados como `legacy`, mantendo os papéis previamente confirmados.
-- O desafio de assinatura e o texto de aceite são específicos por papel; o PDF e as evidências registram cada aceite isoladamente. Um aceite de beneficiário não completa a assinatura de inspeção.
+- O desafio de assinatura e o texto de aceite são específicos por papel; o PDF e as evidências registram cada aceite isoladamente. O papel efetivamente utilizado fica registrado; as ações de inspeção física continuam independentes.
 - **Atenção:** executar a migração `tools/migrate_role_acceptances.php --apply` após backup e antes de habilitar o novo código em homologação. Sem ela, os novos aceites são bloqueados de forma explícita.
 
 - Retirada antecipada em até 15 minutos, com reserva aprovada, termo válido e verificação de conflitos no intervalo efetivo; o horário real é registrado sem alterar o período aprovado.
