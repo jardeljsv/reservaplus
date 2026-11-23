@@ -18,6 +18,43 @@ rp_test('document scope hashes preserve exact material identity and ignore assoc
     }
 });
 
+rp_test('new equipment cession template follows approved institutional sections and escapes input', static function (): void {
+    $sample = ['template_version' => PdfRenderer::TEMPLATE_VERSION, 'purpose' => 'request',
+        'title' => 'Termo de responsabilidade', 'tickets_id' => 10, 'borrower_login' => '12345',
+        'scope' => ['bookings_id' => 12, 'scope_revision' => 1,
+            'borrower' => ['name' => 'Teste <script>alert(1)</script>', 'matricula' => '', 'unit' => 'SETIS'],
+            'begin' => '2026-11-17 18:15:00', 'end' => '2026-11-17 19:15:00', 'purpose_text' => 'Teste',
+            'lines' => [['resource' => ['kind' => 'equipment', 'name' => 'PC-01769678', 'manufacturer' => 'Dell',
+                'model' => 'Latitude', 'inventory_number' => 'PC-01769678'],
+                'accessories' => [['name' => 'Carregador', 'quantity' => 1]]]]]];
+    rp_assert(PdfRenderer::isCessionTerm($sample));
+    $html = PdfRenderer::html($sample);
+    foreach (['TERMO DE CESSÃO DE EQUIPAMENTO', '1. IDENTIFICAÇÃO DO EQUIPAMENTO',
+        '2. REQUERENTE', '3. PERÍODO DA CESSÃO', '4. RESPONSABILIDADE',
+        '5. ASSINATURA', 'Carregador', 'não comprova a entrega física'] as $needle) {
+        rp_assert(str_contains($html, $needle), $needle);
+    }
+    rp_assert(!str_contains($html, '<script>'));
+    rp_assert(str_contains($html, '&lt;script&gt;'));
+    $sample['scope']['lines'][0]['resource']['kind'] = 'room';
+    rp_assert(!PdfRenderer::isCessionTerm($sample));
+    $sample['scope']['lines'][0]['resource']['kind'] = 'equipment';
+    $sample['template_version'] = 'reservaplus-terms-v1';
+    rp_assert(!PdfRenderer::isCessionTerm($sample));
+});
+
+rp_test('handwritten signature validates normalized points, size and shape', static function (): void {
+    $good = [[[100, 200], [150, 220], [200, 260], [250, 210]]];
+    rp_same($good, DocumentService::validateHandwrittenStrokes(json_encode($good)));
+    foreach ([null, '', 'null', '{}', '[]', '[[]]', '[[[1,2],[2,3]]]',
+        '[[[10,10],[1001,10],[100,50],[50,100]]]',
+        '[[[10,10],[20,20],[30,30],[40,40]]]',
+        '[[[10,10],[80,20],[80,"30"],[90,40]]]',
+        str_repeat('0', 150001)] as $bad) {
+        rp_throws(static fn() => DocumentService::validateHandwrittenStrokes($bad), DomainException::class);
+    }
+});
+
 rp_test('document signing challenge binds session, signer, exact bytes, consent and revision', static function (): void {
     $doc = ['id' => 10, 'revision' => 3, 'source_sha256' => str_repeat('a', 64)];
     $challenge = ['agreements_id' => 10, 'users_id' => 12, 'revision' => 3, 'source_sha256' => str_repeat('a', 64),
