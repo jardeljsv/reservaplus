@@ -598,7 +598,12 @@ final class BookingView
         if (!in_array($status, ['cancelled', 'rejected'], true)) {
             $doc = self::signatureActionDocument($id);
             if ($doc !== null) {
-                echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('agreement.php', ['id' => (int) $doc['id']])) . '"><i class="ti ti-file-pencil" aria-hidden="true"></i> ' . self::e(__('Ler e assinar termo', 'reservaplus')) . '</a>';
+                $signLabel = match ((string) ($doc['purpose'] ?? '')) {
+                    'return_receipt' => __('Assinar termo de recebimento', 'reservaplus'),
+                    'return_inspection' => __('Assinar termo de devolução', 'reservaplus'),
+                    default => __('Ler e assinar termo', 'reservaplus'),
+                };
+                echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('agreement.php', ['id' => (int) $doc['id']])) . '"><i class="ti ti-file-pencil" aria-hidden="true"></i> ' . self::e($signLabel) . '</a>';
             } else {
                 echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('booking.php', ['id' => $id]) . '#rp-booking-documents') . '">' . self::e(__('Termos e assinaturas', 'reservaplus')) . '</a>';
             }
