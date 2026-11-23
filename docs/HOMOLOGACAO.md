@@ -13,6 +13,16 @@ Estado: checklist de execução, não certificado de aprovação. Ambiente obser
 
 ## Cenários
 
+### Envio integrado com assinatura antes da aprovação
+- [ ] Novo equipamento: botão final mostra Continuar para assinatura; envio cria reserva técnica provisória, chamado e documento sem duplicar registros.
+- [ ] Após o envio, a tela abre diretamente o termo do solicitante beneficiário, incluindo PDF original e campo de desenho.
+- [ ] Enquanto o termo estiver pendente, lista e detalhe mostram Aguardando assinatura, e a fila de aprovação não apresenta o pedido.
+- [ ] O aprovador não vê a opção Autorizar antes da assinatura; tentativa direta na API de ação permanece bloqueada.
+- [ ] Depois do aceite e finalização do PDF, redireciona à reserva com mensagem de encaminhamento e status Aguardando aprovação.
+- [ ] Reserva feita em nome de outra pessoa: registra a reserva e informa que o beneficiário precisa assinar, sem permitir assinatura pelo solicitante intermediário.
+- [ ] Reserva de sala sem exigência antecipada: preserva Enviar solicitação e processo anterior.
+- [ ] Recarregar a tela ou repetir a solicitação não duplica chamado, documento ou assinatura.
+
 ### Nova assinatura de equipamento — ordem obrigatória
 - [ ] Nova reserva de equipamento gera termo de cessão antes da aprovação (mesmo se o recurso tinha configuração anterior de assinatura após aprovação).
 - [ ] Aprovação na aba Reserva Plus fica bloqueada até assinatura e finalização do termo da solicitação.
