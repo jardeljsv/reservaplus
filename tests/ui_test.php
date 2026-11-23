@@ -78,6 +78,37 @@ rp_test('return shortcuts only offer real physical receipt and subsequent inspec
     rp_assert(!BookingView::inspectionLineEligible(['state' => 'allocated'], false));
 });
 
+rp_test('return list differentiates physical receipt, signing and PDF finalization', function (): void {
+    $booking = ['id' => 22, 'status' => 'returning'];
+    $lines = [['received_at' => '2026-11-23 18:15:00', 'inspection_at' => null]];
+    $alerts = BookingView::returnTermAlertsForList($booking, $lines, []);
+    rp_same(1, count($alerts));
+    rp_same('return_receipt', $alerts[0]['purpose']);
+    rp_assert(str_contains($alerts[0]['label'], 'emissão'));
+    $docs = [
+        ['id' => 25, 'purpose' => 'return_receipt', 'status' => 'partially_signed', 'is_current' => true, 'can_sign' => true],
+    ];
+    $alerts = BookingView::returnTermAlertsForList($booking, $lines, $docs);
+    rp_same(25, $alerts[0]['document_id']);
+    rp_assert($alerts[0]['can_sign']);
+    rp_assert(str_contains($alerts[0]['label'], 'assinatura'));
+    $docs[0]['status'] = 'complete';
+    rp_same([], BookingView::returnTermAlertsForList($booking, $lines, $docs));
+    $lines[0]['inspection_at'] = '2026-11-23 18:20:00';
+    $docs[] = ['id' => 26, 'purpose' => 'return_inspection', 'status' => 'prepared', 'is_current' => true, 'can_sign' => false];
+    $alerts = BookingView::returnTermAlertsForList($booking, $lines, $docs);
+    rp_same(1, count($alerts));
+    rp_same('return_inspection', $alerts[0]['purpose']);
+    rp_assert(str_contains($alerts[0]['label'], 'assinatura'));
+    rp_assert(!$alerts[0]['can_sign']);
+    $docs[1]['status'] = 'artifact_error';
+    $alerts = BookingView::returnTermAlertsForList($booking, $lines, $docs);
+    rp_assert(str_contains($alerts[0]['label'], 'finalização'));
+    $docs[1]['status'] = 'complete';
+    rp_same([], BookingView::returnTermAlertsForList($booking, $lines, $docs));
+    rp_same([], BookingView::returnTermAlertsForList(['status' => 'completed'], $lines, $docs));
+});
+
 rp_test('workflow links honor GLPI subdirectory and errors do not reveal runtime internals', function (): void {
     global $CFG_GLPI;
     $CFG_GLPI['root_doc'] = '/support';
