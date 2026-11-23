@@ -52,6 +52,9 @@ final class PdfRenderer
         if (self::isEquipmentReceiptTerm($s)) {
             return self::equipmentReceiptHtml($s);
         }
+        if (self::isEquipmentInspectionTerm($s)) {
+            return self::equipmentInspectionHtml($s);
+        }
         $html = '<h1>' . $e((string) ($s['title'] ?? 'Termo de reserva')) . '</h1>';
         $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
             . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
@@ -140,7 +143,8 @@ final class PdfRenderer
      * signature. Existing completed PDFs and old template versions stay intact. */
     public static function requiresHandwrittenSignature(array $snapshot): bool
     {
-        return self::isCessionTerm($snapshot) || self::isEquipmentReceiptTerm($snapshot);
+        return self::isCessionTerm($snapshot) || self::isEquipmentReceiptTerm($snapshot)
+            || self::isEquipmentInspectionTerm($snapshot);
     }
 
     /** Institutional-style receiving form for newly prepared equipment documents. */
@@ -158,6 +162,61 @@ final class PdfRenderer
         return true;
     }
 
+    /** Only new three-term equipment reservations use the technical inspection PDF. */
+    public static function isEquipmentInspectionTerm(array $snapshot): bool
+    {
+        if (($snapshot['template_version'] ?? '') !== self::TEMPLATE_VERSION
+            || ($snapshot['purpose'] ?? '') !== 'return_inspection'
+            || ($snapshot['return_workflow'] ?? '') !== 'three_terms_v1') {
+            return false;
+        }
+        $lines = (array) ($snapshot['scope']['lines'] ?? []);
+        if ($lines === []) { return false; }
+        foreach ($lines as $line) {
+            if (($line['resource']['kind'] ?? '') !== 'equipment') { return false; }
+        }
+        return true;
+    }
+
+    /** Technical findings are distinct from the beneficiary's handback declaration. */
+    private static function equipmentInspectionHtml(array $s): string
+    {
+        $e = self::escape(...);
+        $scope = (array) ($s['scope'] ?? []);
+        $html = '<h1 style="text-align:center;font-size:15pt">TERMO DE CONFERÊNCIA TÉCNICA</h1>';
+        $html .= '<p>O técnico responsável registra o resultado da verificação do equipamento após a devolução física. Este termo não substitui a declaração de devolução assinada pelo beneficiário.</p>';
+        $html .= '<h3>1. EQUIPAMENTOS E CONFERÊNCIA</h3>';
+        foreach ((array) ($scope['lines'] ?? []) as $line) {
+            $resource = (array) ($line['resource'] ?? []);
+            $inspection = (array) ($line['inspection'] ?? []);
+            $html .= '<p><b>Equipamento:</b> ' . $e((string) ($resource['name'] ?? 'Não informado'))
+                . '<br><b>Patrimônio:</b> ' . $e((string) ($resource['inventory_number'] ?? 'Não informado'))
+                . '<br><b>Série:</b> ' . $e((string) ($resource['serial'] ?? 'Não informado'))
+                . '<br><b>Recebido em:</b> ' . $e((string) ($line['received_at'] ?? 'Não informado'))
+                . '<br><b>Conferido em:</b> ' . $e((string) ($line['inspection_at'] ?? 'Não informado'))
+                . '<br><b>Resultado:</b> ' . $e((string) ($inspection['result'] ?? 'Não informado'))
+                . '<br><b>Verificações e constatações:</b> ' . $e((string) ($inspection['findings'] ?? $inspection['note'] ?? 'Não informado')) . '</p>';
+            $accessories = (array) ($line['accessories'] ?? []);
+            if ($accessories !== []) {
+                $html .= '<table border="1" cellpadding="4" width="100%"><tr><th>Acessório</th><th>Entregue</th><th>Recebido</th></tr>';
+                foreach ($accessories as $item) {
+                    $html .= '<tr><td>' . $e((string) ($item['name'] ?? ''))
+                        . '</td><td>' . (int) ($item['issued'] ?? 0)
+                        . '</td><td>' . (int) ($item['received'] ?? 0) . '</td></tr>';
+                }
+                $html .= '</table>';
+            }
+        }
+        $html .= '<h3>2. DECLARAÇÃO DO TÉCNICO</h3>'
+            . '<p>Atesto apenas os testes, resultados, condições e divergências que registrei. Pendências de manutenção ou quarentena continuam sob acompanhamento no GLPI.</p>';
+        $html .= '<h3>3. ASSINATURA DO TÉCNICO RESPONSÁVEL</h3>'
+            . '<p>O técnico inspetor assina este registro com sua conta autenticada no GLPI. A assinatura manuscrita será integrada ao PDF final.</p>';
+        $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
+            . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
+            . ' | <b>Versão:</b> ' . (int) ($scope['scope_revision'] ?? 1) . '</p>';
+        return $html;
+    }
+
     /** A physical receipt is not a technical inspection or release certificate.
      * Render only the frozen quantities/facts the operator actually recorded. */
     private static function equipmentReceiptHtml(array $s): string
@@ -166,8 +225,9 @@ final class PdfRenderer
         $scope = (array) ($s['scope'] ?? []);
         $borrower = (array) ($scope['borrower'] ?? []);
         $simpleReturn = ($s['return_workflow'] ?? '') === 'two_terms_v1';
+        $borrowerReturn = ($s['return_workflow'] ?? '') === 'three_terms_v1';
         $html = '<h1 style="text-align:center;font-size:15pt">'
-            . ($simpleReturn ? 'TERMO DE DEVOLUÇÃO DE EQUIPAMENTO' : 'TERMO DE RECEBIMENTO DE EQUIPAMENTO') . '</h1>';
+            . (($simpleReturn || $borrowerReturn) ? 'TERMO DE DEVOLUÇÃO DE EQUIPAMENTO' : 'TERMO DE RECEBIMENTO DE EQUIPAMENTO') . '</h1>';
         $html .= '<p>Este termo registra o recebimento físico dos equipamentos e acessórios efetivamente devolvidos, conforme as quantidades e horários informados. <b>O recebimento não comprova o funcionamento, a ausência de danos nem a aprovação da conferência técnica.</b></p>';
         $html .= '<h3>1. IDENTIFICAÇÃO DO EQUIPAMENTO RECEBIDO</h3>';
         foreach ((array) ($scope['lines'] ?? []) as $line) {
@@ -199,16 +259,21 @@ final class PdfRenderer
             . '<p><b>Início previsto:</b> ' . $e((string) ($scope['begin'] ?? ''))
             . '<br><b>Devolução prevista:</b> ' . $e((string) ($scope['end'] ?? ''))
             . '<br><b>Fuso da instalação:</b> ' . $e((string) ($s['timezone'] ?? '')) . '</p>';
-        $html .= '<h3>4. DECLARAÇÃO DE RECEBIMENTO E CIÊNCIA</h3>'
-            . '<p>Declaro ciência de que os itens e quantidades descritos neste documento foram registrados como recebidos fisicamente. '
+        $html .= '<h3>4. ' . ($borrowerReturn ? 'DECLARAÇÃO DO BENEFICIÁRIO' : 'DECLARAÇÃO DE RECEBIMENTO E CIÊNCIA') . '</h3>'
+            . '<p>' . ($borrowerReturn
+                ? 'Como beneficiário, declaro que devolvi os equipamentos e acessórios identificados neste termo, conforme o registro de recebimento físico. Estou ciente das quantidades, divergências e pendências e posso contestá-las no chamado. '
+                : 'Declaro ciência de que os itens e quantidades descritos neste documento foram registrados como recebidos fisicamente. ')
             . 'O recebimento não substitui a conferência técnica posterior, a avaliação de funcionamento, a apuração de divergências ou a liberação para novo uso. '
             . 'Acessórios não recebidos e eventuais pendências permanecem registrados no GLPI. A assinatura não implica '
             . 'atribuição automática de responsabilidade por danos nem impede contestação no chamado.</p>';
         $html .= '<p><b>Finalidade da reserva:</b> ' . $e((string) ($scope['purpose_text'] ?? '')) . '</p>';
-        $html .= '<h3>5. ' . ($simpleReturn ? 'ASSINATURA DO TÉCNICO RECEBEDOR' : 'ASSINATURAS E REGISTRO ELETRÔNICO') . '</h3>'
-            . '<p>' . ($simpleReturn
-                ? 'O técnico que registrou o recebimento físico assina este documento com sua conta autenticada no GLPI. A conferência técnica é registrada separadamente no histórico da reserva, sem emissão de outro termo.'
-                : 'Cada signatário autorizado registra seu próprio aceite vinculado à conta GLPI e ao papel exercido. A assinatura desenhada integra o documento final, acompanhada das evidências de identificação e data/hora.')
+        $html .= '<h3>5. ' . ($borrowerReturn ? 'ASSINATURA DO BENEFICIÁRIO'
+            : ($simpleReturn ? 'ASSINATURA DO TÉCNICO RECEBEDOR' : 'ASSINATURAS E REGISTRO ELETRÔNICO')) . '</h3>'
+            . '<p>' . ($borrowerReturn
+                ? 'O beneficiário assina a declaração de devolução após o registro de recebimento físico. A inspeção posterior será atestada pelo técnico em termo distinto.'
+                : ($simpleReturn
+                    ? 'O técnico que registrou o recebimento físico assina este documento com sua conta autenticada no GLPI. A conferência técnica é registrada separadamente no histórico da reserva, sem emissão de outro termo.'
+                    : 'Cada signatário autorizado registra seu próprio aceite vinculado à conta GLPI e ao papel exercido. A assinatura desenhada integra o documento final, acompanhada das evidências de identificação e data/hora.'))
             . '</p>';
         $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
             . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
