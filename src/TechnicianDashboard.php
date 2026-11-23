@@ -363,14 +363,6 @@ final class TechnicianDashboard
             if (!self::isStaff()) {
                 echo '<div class="rp-dash-quick-actions">';
                 BookingView::renderRequesterActions($booking);
-                foreach ($returnTerms as $term) {
-                    if (empty($term['document_id']) || empty($term['can_sign'])) { continue; }
-                    BookingView::link('agreement.php',
-                        ($term['purpose'] ?? '') === 'return_receipt'
-                            ? __('Assinar termo de recebimento', 'reservaplus')
-                            : __('Assinar termo de devolução', 'reservaplus'),
-                        ['id' => (int) $term['document_id']], 'btn-primary btn-sm');
-                }
                 echo '</div>';
             } elseif (in_array(($booking['status'] ?? ''), ['submitted', 'approved', 'ready'], true)) {
                 echo '<div class="rp-dash-quick-actions">';
