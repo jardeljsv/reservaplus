@@ -174,7 +174,7 @@ final class PdfRenderer
             $strokes = $acceptance['identity']['handwritten_strokes'] ?? [];
             if (!is_array($strokes) || $strokes === []) { continue; }
             $y = $pdf->GetY() + 5;
-            if ($y > 232) { $pdf->AddPage(); $y = 28; }
+            if ($y > 220) { $pdf->AddPage(); $y = 28; }
             $pdf->SetFont('dejavusans', '', 9);
             $pdf->SetXY(18, $y);
             $pdf->Cell(0, 6, 'Assinatura manuscrita eletrônica — ' . (string) ($acceptance['identity']['name'] ?? 'Usuário GLPI'), 0, 1);
