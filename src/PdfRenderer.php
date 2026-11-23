@@ -49,6 +49,9 @@ final class PdfRenderer
         if (self::isCessionTerm($s)) {
             return self::cessionHtml($s);
         }
+        if (self::isEquipmentReceiptTerm($s)) {
+            return self::equipmentReceiptHtml($s);
+        }
         $html = '<h1>' . $e((string) ($s['title'] ?? 'Termo de reserva')) . '</h1>';
         $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
             . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
@@ -137,7 +140,12 @@ final class PdfRenderer
      * signature. Existing completed PDFs and old template versions stay intact. */
     public static function requiresHandwrittenSignature(array $snapshot): bool
     {
-        if (self::isCessionTerm($snapshot)) { return true; }
+        return self::isCessionTerm($snapshot) || self::isEquipmentReceiptTerm($snapshot);
+    }
+
+    /** Institutional-style receiving form for newly prepared equipment documents. */
+    public static function isEquipmentReceiptTerm(array $snapshot): bool
+    {
         if (($snapshot['template_version'] ?? '') !== self::TEMPLATE_VERSION
             || ($snapshot['purpose'] ?? '') !== 'return_receipt') {
             return false;
@@ -148,6 +156,60 @@ final class PdfRenderer
             if (($line['resource']['kind'] ?? '') !== 'equipment') { return false; }
         }
         return true;
+    }
+
+    /** A physical receipt is not a technical inspection or release certificate.
+     * Render only the frozen quantities/facts the operator actually recorded. */
+    private static function equipmentReceiptHtml(array $s): string
+    {
+        $e = self::escape(...);
+        $scope = (array) ($s['scope'] ?? []);
+        $borrower = (array) ($scope['borrower'] ?? []);
+        $html = '<h1 style="text-align:center;font-size:15pt">TERMO DE RECEBIMENTO DE EQUIPAMENTO</h1>';
+        $html .= '<p>Este termo registra o recebimento físico dos equipamentos e acessórios efetivamente devolvidos, conforme as quantidades e horários informados. <b>O recebimento não comprova o funcionamento, a ausência de danos nem a aprovação da conferência técnica.</b></p>';
+        $html .= '<h3>1. IDENTIFICAÇÃO DO EQUIPAMENTO RECEBIDO</h3>';
+        foreach ((array) ($scope['lines'] ?? []) as $line) {
+            $resource = (array) ($line['resource'] ?? []);
+            $html .= '<p><b>Equipamento:</b> ' . $e((string) ($resource['name'] ?? 'Não informado'))
+                . '<br><b>Marca / modelo:</b> ' . $e(trim((string) ($resource['manufacturer'] ?? '') . ' ' . (string) ($resource['model'] ?? '')))
+                . '<br><b>Patrimônio:</b> ' . $e((string) ($resource['inventory_number'] ?? 'Não informado'))
+                . '<br><b>Número de série:</b> ' . $e((string) ($resource['serial'] ?? 'Não informado'))
+                . '<br><b>Recebimento registrado:</b> ' . $e((string) ($line['received_at'] ?? 'Não informado')) . '</p>';
+            $accessories = (array) ($line['accessories'] ?? []);
+            if ($accessories !== []) {
+                $html .= '<table border="1" cellpadding="4" width="100%"><tr><th width="60%"><b>Acessório</b></th>'
+                    . '<th width="20%"><b>Entregue</b></th><th width="20%"><b>Recebido</b></th></tr>';
+                foreach ($accessories as $item) {
+                    $html .= '<tr><td width="60%">' . $e((string) ($item['name'] ?? ''))
+                        . '</td><td width="20%">' . (int) ($item['issued'] ?? $item['quantity'] ?? 0)
+                        . '</td><td width="20%">' . (int) ($item['received'] ?? $item['returned'] ?? 0)
+                        . '</td></tr>';
+                }
+                $html .= '</table>';
+            }
+        }
+        $html .= '<h3>2. IDENTIFICAÇÃO DO RESPONSÁVEL PELO USO</h3>'
+            . '<p><b>Nome:</b> ' . $e((string) ($borrower['name'] ?? 'Não informado'))
+            . '<br><b>Matrícula / usuário GLPI:</b> '
+            . $e(trim((string) ($borrower['matricula'] ?? '')) !== '' ? (string) $borrower['matricula'] : (string) ($s['borrower_login'] ?? 'Não informada'))
+            . '<br><b>Setor / unidade:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada')) . '</p>';
+        $html .= '<h3>3. PERÍODO DA RESERVA E DEVOLUÇÃO</h3>'
+            . '<p><b>Início previsto:</b> ' . $e((string) ($scope['begin'] ?? ''))
+            . '<br><b>Devolução prevista:</b> ' . $e((string) ($scope['end'] ?? ''))
+            . '<br><b>Fuso da instalação:</b> ' . $e((string) ($s['timezone'] ?? '')) . '</p>';
+        $html .= '<h3>4. DECLARAÇÃO DE RECEBIMENTO E CIÊNCIA</h3>'
+            . '<p>Declaro ciência de que os itens e quantidades descritos neste documento foram registrados como recebidos fisicamente. '
+            . 'O recebimento não substitui a conferência técnica posterior, a avaliação de funcionamento, a apuração de divergências ou a liberação para novo uso. '
+            . 'Acessórios não recebidos e eventuais pendências permanecem registrados no GLPI. A assinatura não implica '
+            . 'atribuição automática de responsabilidade por danos nem impede contestação no chamado.</p>';
+        $html .= '<p><b>Finalidade da reserva:</b> ' . $e((string) ($scope['purpose_text'] ?? '')) . '</p>';
+        $html .= '<h3>5. ASSINATURAS E REGISTRO ELETRÔNICO</h3>'
+            . '<p>Cada signatário autorizado registra seu próprio aceite vinculado à conta GLPI e ao papel exercido. '
+            . 'A assinatura desenhada integra o documento final, acompanhada das evidências de identificação e data/hora.</p>';
+        $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
+            . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
+            . ' | <b>Versão:</b> ' . (int) ($scope['scope_revision'] ?? 1) . '</p>';
+        return $html;
     }
 
     private static function cessionHtml(array $s): string
