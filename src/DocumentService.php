@@ -33,12 +33,14 @@ final class DocumentService
         $token = bin2hex(random_bytes(32));
         $snapshot = [
             'scope' => $scope, 'scope_hash' => $scopeHash, 'purpose' => $purpose,
-            'title' => ($purpose === 'return_receipt'
+            'title' => ($purpose === 'request' && BookingService::threeTermReturn($booking))
+                ? 'Termo de responsabilidade pelo uso'
+                : (($purpose === 'return_receipt'
                 && (BookingService::simplifiedReturn($booking) || BookingService::threeTermReturn($booking)))
                 ? 'Termo de devolução de equipamento'
                 : ($purpose === 'return_inspection' && BookingService::threeTermReturn($booking)
                     ? 'Termo de conferência técnica de equipamento'
-                    : self::title($purpose, self::roomsOnly($scope))),
+                    : self::title($purpose, self::roomsOnly($scope)))),
             'statement' => self::statement($purpose, self::roomsOnly($scope)),
             'consent_text' => self::baseConsent(), 'template_version' => PdfRenderer::TEMPLATE_VERSION,
             'return_workflow' => BookingService::threeTermReturn($booking) ? 'three_terms_v1'
@@ -257,7 +259,15 @@ final class DocumentService
         $finished = self::get($documentId);
         if (($finished['status'] ?? '') === 'complete'
             && ($finished['purpose'] ?? '') === 'return_inspection') {
-            BookingService::completeAfterFinalSignature((int) $finished['bookings_id']);
+            try {
+                BookingService::completeAfterFinalSignature((int) $finished['bookings_id']);
+            } catch (\Throwable $error) {
+                // Signature and immutable evidence are already committed.
+                // A GLPI ticket-solution failure must never tell the signer
+                // that their valid signature was rejected.
+                \Toolbox::logInFile('reservaplus', 'Automatic return completion #'
+                    . (int) $finished['bookings_id'] . ': ' . $error->getMessage() . "\n");
+            }
         }
         return $finished;
     }
