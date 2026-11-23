@@ -127,6 +127,15 @@ final class BookingService
             foreach ($resources as $resourceId => $resource) {
                 Access::assertResource($resource, 'request');
                 $resource = ApprovalPolicy::snapshot($resource);
+                // New equipment requests require the responsibility term before
+                // approval. Freeze the policy on this booking; historical bookings
+                // and room policies remain untouched.
+                $frozenPolicy = Store::decode($resource['policy_json'] ?? null);
+                if (($resource['kind'] ?? '') === 'equipment'
+                    && ($frozenPolicy['signature_stage'] ?? 'none') !== 'none') {
+                    $frozenPolicy['signature_stage'] = 'submission';
+                    $resource['policy_json'] = Store::json($frozenPolicy);
+                }
                 $resources[$resourceId] = $resource;
                 if ($borrowerId !== Access::userId()) { Access::assertResource($resource, 'on_behalf'); }
                 if ($entity !== null && $entity !== (int) $resource['entities_id']) { throw new \DomainException('Não combine recursos de entidades diferentes.'); }
@@ -305,10 +314,9 @@ final class BookingService
                     if ($booking['status'] !== 'submitted') { throw new \DomainException('A solicitação não está aguardando aprovação.'); }
                     if ($action === 'reject' && $reason === '') { throw new \DomainException('Informe o motivo da recusa.'); }
                     if ($action === 'approve') {
-                        foreach ($lines as $line) {
-                            $snap = Store::decode($line['snapshot_json']); $policy = Store::decode(($snap['resource'] ?? $snap)['policy_json'] ?? null);
-                            if (($policy['signature_stage'] ?? '') === 'submission' && !DocumentService::isSatisfied($id, 'request')) {
-                                throw new \DomainException('O aceite inicial deve ser concluído antes da aprovação.');
+                        foreach (self::signaturePurposes($lines) as $requiredPurpose) {
+                            if ($requiredPurpose === 'request' && !DocumentService::isSatisfied($id, 'request')) {
+                                throw new \DomainException('O termo de responsabilidade precisa ser assinado antes da aprovação da reserva.');
                             }
                         }
                     }
