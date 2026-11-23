@@ -33,7 +33,9 @@ final class DocumentService
         $token = bin2hex(random_bytes(32));
         $snapshot = [
             'scope' => $scope, 'scope_hash' => $scopeHash, 'purpose' => $purpose,
-            'title' => self::title($purpose, self::roomsOnly($scope)), 'statement' => self::statement($purpose, self::roomsOnly($scope)),
+            'title' => ($purpose === 'return_receipt' && BookingService::simplifiedReturn($booking))
+                ? 'Termo de devolução de equipamento' : self::title($purpose, self::roomsOnly($scope)),
+            'statement' => self::statement($purpose, self::roomsOnly($scope)),
             'consent_text' => self::baseConsent(), 'template_version' => PdfRenderer::TEMPLATE_VERSION,
             'return_workflow' => BookingService::simplifiedReturn($booking) ? 'two_terms_v1' : 'legacy',
             'prepared_at' => Store::now(), 'timezone' => date_default_timezone_get(),
