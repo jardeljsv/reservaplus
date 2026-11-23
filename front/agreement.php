@@ -35,7 +35,14 @@ try {
             if (($_POST['accept_statement'] ?? '') !== '1') {
                 throw new DomainException('Marque a declaração para registrar um aceite explícito.');
             }
-            DocumentService::accept($id, (string) ($_POST['challenge'] ?? ''), (string) ($_POST['consent_sha256'] ?? ''), (string) ($_POST['operation_key'] ?? ''), (string) ($_POST['role'] ?? ''), is_string($_POST['signature_strokes'] ?? null) ? $_POST['signature_strokes'] : null);
+            $signedDocument = DocumentService::accept($id, (string) ($_POST['challenge'] ?? ''), (string) ($_POST['consent_sha256'] ?? ''), (string) ($_POST['operation_key'] ?? ''), (string) ($_POST['role'] ?? ''), is_string($_POST['signature_strokes'] ?? null) ? $_POST['signature_strokes'] : null);
+            // The requester signed the provisional equipment request: the
+            // same submission now advances to the approval stage.
+            if (($signedDocument['purpose'] ?? '') === 'request'
+                && DocumentService::isSatisfied((int) $signedDocument['bookings_id'], 'request')) {
+                Session::addMessageAfterRedirect(__('Termo assinado. Sua reserva foi encaminhada para aprovação.', 'reservaplus'));
+                Html::redirect(BookingView::url('booking.php', ['id' => (int) $signedDocument['bookings_id']]));
+            }
         } elseif ($action === 'retry') {
             DocumentService::finalize($id);
         } else {
