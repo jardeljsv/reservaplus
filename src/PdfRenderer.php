@@ -165,7 +165,9 @@ final class PdfRenderer
         $e = self::escape(...);
         $scope = (array) ($s['scope'] ?? []);
         $borrower = (array) ($scope['borrower'] ?? []);
-        $html = '<h1 style="text-align:center;font-size:15pt">TERMO DE RECEBIMENTO DE EQUIPAMENTO</h1>';
+        $simpleReturn = ($s['return_workflow'] ?? '') === 'two_terms_v1';
+        $html = '<h1 style="text-align:center;font-size:15pt">'
+            . ($simpleReturn ? 'TERMO DE DEVOLUÇÃO DE EQUIPAMENTO' : 'TERMO DE RECEBIMENTO DE EQUIPAMENTO') . '</h1>';
         $html .= '<p>Este termo registra o recebimento físico dos equipamentos e acessórios efetivamente devolvidos, conforme as quantidades e horários informados. <b>O recebimento não comprova o funcionamento, a ausência de danos nem a aprovação da conferência técnica.</b></p>';
         $html .= '<h3>1. IDENTIFICAÇÃO DO EQUIPAMENTO RECEBIDO</h3>';
         foreach ((array) ($scope['lines'] ?? []) as $line) {
@@ -203,9 +205,11 @@ final class PdfRenderer
             . 'Acessórios não recebidos e eventuais pendências permanecem registrados no GLPI. A assinatura não implica '
             . 'atribuição automática de responsabilidade por danos nem impede contestação no chamado.</p>';
         $html .= '<p><b>Finalidade da reserva:</b> ' . $e((string) ($scope['purpose_text'] ?? '')) . '</p>';
-        $html .= '<h3>5. ASSINATURAS E REGISTRO ELETRÔNICO</h3>'
-            . '<p>Cada signatário autorizado registra seu próprio aceite vinculado à conta GLPI e ao papel exercido. '
-            . 'A assinatura desenhada integra o documento final, acompanhada das evidências de identificação e data/hora.</p>';
+        $html .= '<h3>5. ' . ($simpleReturn ? 'ASSINATURA DO TÉCNICO RECEBEDOR' : 'ASSINATURAS E REGISTRO ELETRÔNICO') . '</h3>'
+            . '<p>' . ($simpleReturn
+                ? 'O técnico que registrou o recebimento físico assina este documento com sua conta autenticada no GLPI. A conferência técnica é registrada separadamente no histórico da reserva, sem emissão de outro termo.'
+                : 'Cada signatário autorizado registra seu próprio aceite vinculado à conta GLPI e ao papel exercido. A assinatura desenhada integra o documento final, acompanhada das evidências de identificação e data/hora.')
+            . '</p>';
         $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
             . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
             . ' | <b>Versão:</b> ' . (int) ($scope['scope_revision'] ?? 1) . '</p>';
