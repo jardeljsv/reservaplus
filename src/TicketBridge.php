@@ -315,6 +315,16 @@ final class TicketBridge
         $touched = [];
         foreach (Store::find('bookingoutbox', $where, ['ORDER' => ['id ASC'], 'LIMIT' => 100]) as $candidate) {
             if (!empty($candidate['next_attempt_at']) && $candidate['next_attempt_at'] > Store::now()) { continue; }
+            // Native GLPI approval notification must not precede the signed
+            // responsibility term. Leave it pending until the document seals.
+            if ($candidate['kind'] === 'approval') {
+                $approvalBooking = Store::row('bookings', (int) $candidate['bookings_id']);
+                if (in_array('request', BookingService::signaturePurposes(
+                    Store::find('bookinglines', ['bookings_id' => (int) $approvalBooking['id']])
+                ), true) && !DocumentService::isSatisfied((int) $approvalBooking['id'], 'request')) {
+                    continue;
+                }
+            }
             if (!\Session::isCron() && !Access::booking(Store::row('bookings', (int) $candidate['bookings_id']))) { continue; }
             $touched[(int) $candidate['bookings_id']] = true;
             try {
