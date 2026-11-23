@@ -342,7 +342,10 @@ final class BookingView
             foreach ($returnTerms as $term) {
                 if ((int) ($term['document_id'] ?? 0) < 1) { continue; }
                 self::link('agreement.php',
-                    !empty($term['can_sign']) ? __('Assinar termo de devolução', 'reservaplus')
+                    !empty($term['can_sign'])
+                        ? (($term['purpose'] ?? '') === 'return_receipt'
+                            ? __('Assinar termo de recebimento', 'reservaplus')
+                            : __('Assinar termo de devolução', 'reservaplus'))
                         : __('Consultar termo pendente', 'reservaplus'),
                     ['id' => (int) $term['document_id']], 'btn-outline-primary btn-sm');
             }
