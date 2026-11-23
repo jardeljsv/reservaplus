@@ -366,8 +366,13 @@ final class BookingView
             $hasInspection = $hasInspection || !empty($line['inspection_at']);
         }
         $purposes = [];
-        if ($hasReceiving) { $purposes['return_receipt'] = __('termo de recebimento', 'reservaplus'); }
-        if ($hasInspection) { $purposes['return_inspection'] = __('termo de devolução / conferência', 'reservaplus'); }
+        if ($hasReceiving) {
+            $purposes['return_receipt'] = BookingService::simplifiedReturn($booking)
+                ? __('termo de devolução', 'reservaplus') : __('termo de recebimento', 'reservaplus');
+        }
+        if ($hasInspection && !BookingService::simplifiedReturn($booking)) {
+            $purposes['return_inspection'] = __('termo de devolução / conferência', 'reservaplus');
+        }
         $current = [];
         foreach ($documents as $doc) {
             $purpose = (string) ($doc['purpose'] ?? '');
@@ -446,7 +451,9 @@ final class BookingView
             return self::inspectionLineEligible($line, ($resource['kind'] ?? '') === 'room');
         }));
         $canReceive = in_array($state, ['issued', 'returning'], true) && $receiveLines !== [];
-        $canInspect = in_array($state, ['approved', 'issued', 'returning'], true) && $inspectLines !== [];
+        $canInspect = in_array($state, ['approved', 'issued', 'returning'], true) && $inspectLines !== []
+            && (!BookingService::simplifiedReturn($booking)
+                || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'));
         if ($eligible === [] && !$canExtend && !$canCancel && !$canIssue && !$canReceive && !$canInspect) {
             self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
             return;
@@ -866,7 +873,12 @@ final class BookingView
     {
         echo '<div class="rp-table-wrap"><table class="rp-table"><thead><tr><th>Documento</th><th>Situação</th><th>Acesso</th></tr></thead><tbody>';
         foreach ($documents as $document) {
-            echo '<tr><td>' . self::e(self::purposeLabel((string) $document['purpose'])) . '<span class="rp-row-meta">Documento #' . (int) $document['id'] . ' · Versão ' . (int) $document['revision'] . '</span></td><td>';
+            $documentSnapshot = Store::decode($document['snapshot_json'] ?? null);
+            $displayPurpose = ($document['purpose'] ?? '') === 'return_receipt'
+                && ($documentSnapshot['return_workflow'] ?? '') === 'two_terms_v1'
+                ? __('Termo de devolução de equipamento', 'reservaplus')
+                : self::purposeLabel((string) $document['purpose']);
+            echo '<tr><td>' . self::e($displayPurpose) . '<span class="rp-row-meta">Documento #' . (int) $document['id'] . ' · Versão ' . (int) $document['revision'] . '</span></td><td>';
             self::badge((string) $document['status']);
             if ($document['status'] === 'complete' && $document['attachment_status'] !== 'attached') { echo '<span class="rp-row-meta">Anexo do chamado pendente</span>'; }
             echo '</td><td>';
@@ -901,9 +913,12 @@ final class BookingView
         if (in_array($state, ['approved','ready'], true)) {
             foreach (BookingService::signaturePurposes($booking['lines'] ?? []) as $purpose) { $purposes[$purpose] = true; }
         }
+        $simplifiedReturn = BookingService::simplifiedReturn($booking);
         foreach ($booking['lines'] ?? [] as $line) {
-            if (!empty($line['received_at'])) { $purposes['return_receipt'] = false; }
-            if (!empty($line['inspection_at'])) { $purposes['return_inspection'] = true; }
+            if (!empty($line['received_at'])) { $purposes['return_receipt'] = $simplifiedReturn; }
+            if (!$simplifiedReturn && !empty($line['inspection_at'])) {
+                $purposes['return_inspection'] = true;
+            }
         }
         if (in_array($state, ['completed','cancelled','rejected'], true)) { $purposes = []; }
         $owner = in_array(Access::userId(), [(int) $booking['users_id_requester'], (int) $booking['users_id_borrower']], true);
@@ -912,7 +927,9 @@ final class BookingView
         $existing = array_column($current, 'purpose');
         $missing = array_diff(array_keys($purposes), $existing);
         foreach ($missing as $purpose) {
-            echo '<div class="rp-document-action"><div><h3>' . self::e(self::purposeLabel($purpose)) . '</h3><p class="rp-muted">' . self::e($purposes[$purpose] ? __('Prepare o documento desta etapa para os signatários conferirem e aceitarem.', 'reservaplus') : __('Emita um recibo dos itens recebidos, mesmo antes da conferência final.', 'reservaplus')) . '</p></div>';
+            $missingLabel = $simplifiedReturn && $purpose === 'return_receipt'
+                ? __('Termo de devolução de equipamento', 'reservaplus') : self::purposeLabel($purpose);
+            echo '<div class="rp-document-action"><div><h3>' . self::e($missingLabel) . '</h3><p class="rp-muted">' . self::e($purposes[$purpose] ? __('Prepare o documento desta etapa para os signatários conferirem e aceitarem.', 'reservaplus') : __('Emita um recibo dos itens recebidos, mesmo antes da conferência final.', 'reservaplus')) . '</p></div>';
             if ($canPrepare) {
                 self::formStart('prepare_document', $id, (int) $booking['revision']);
                 self::hidden('purpose', $purpose);
@@ -1006,7 +1023,7 @@ final class BookingView
         if (in_array($state, ['completed', 'rejected', 'cancelled'], true)) {
             return;
         }
-        echo '<section class="rp-panel"><h2>' . self::e(__('Próximas ações', 'reservaplus')) . '</h2><div class="rp-detail-action-grid">';
+        echo '<section class="rp-panel" id="rp-booking-actions"><h2>' . self::e(__('Próximas ações', 'reservaplus')) . '</h2><div class="rp-detail-action-grid">';
         $approveLines = self::actionLines($booking, 'approve', ['requested']);
         if ($approveLines !== [] && $state === 'submitted'
             && !BookingService::awaitsInitialSignature($booking, $booking['lines'] ?? null)) {
@@ -1033,7 +1050,9 @@ final class BookingView
             self::actionEnd(__('Registrar recebimento agora', 'reservaplus'));
         }
         $inspectLines = array_values(array_filter(self::actionLines($booking, 'inspect', ['received', 'quarantine', 'maintenance', 'allocated', 'issued']), static fn(array $line): bool => in_array($line['state'], ['received', 'quarantine', 'maintenance'], true) || (self::lineSnapshot($line)['kind'] ?? '') === 'room'));
-        if ($inspectLines !== [] && in_array($state, ['approved', 'issued', 'returning'], true)) {
+        if ($inspectLines !== [] && in_array($state, ['approved', 'issued', 'returning'], true)
+            && (!BookingService::simplifiedReturn($booking)
+                || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'))) {
             self::actionStart($booking, 'inspect', __('Conferir devolução / término de uso', 'reservaplus'), __('Registre a conferência dos equipamentos recebidos ou das salas após o uso. Aponte faltas, avarias e testes realizados; nenhuma verificação é aprovada automaticamente.', 'reservaplus'));
             self::chooseLines($inspectLines);
             self::select('result', __('Resultado da conferência', 'reservaplus'), ['' => __('Selecione o resultado', 'reservaplus'), 'pass' => __('Aprovado para novo uso', 'reservaplus'), 'quarantine' => __('Reter para avaliação', 'reservaplus'), 'maintenance' => __('Encaminhar para manutenção', 'reservaplus')]);
@@ -1044,7 +1063,8 @@ final class BookingView
         foreach ($booking['lines'] ?? [] as $line) {
             $allReady = $allReady && ($line['state'] ?? '') === 'ready' && !empty($line['inspection_at']);
         }
-        if ($allReady && Access::booking($booking, 'inspect') && $state === 'returning') {
+        if ($allReady && Access::booking($booking, 'inspect') && $state === 'returning'
+            && !BookingService::simplifiedReturn($booking)) {
             self::actionStart($booking, 'complete', __('Concluir solicitação', 'reservaplus'), __('A conclusão exige os registros de devolução ou término de uso e os documentos obrigatórios. Encerrar não substitui os registros físicos.', 'reservaplus'));
             self::actionEnd(__('Verificar requisitos e concluir', 'reservaplus'));
         }
