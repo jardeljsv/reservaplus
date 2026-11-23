@@ -23,6 +23,21 @@ Estado: checklist de execução, não certificado de aprovação. Ambiente obser
 - [ ] Reserva de sala sem exigência antecipada: preserva Enviar solicitação e processo anterior.
 - [ ] Recarregar a tela ou repetir a solicitação não duplica chamado, documento ou assinatura.
 
+### Devolução simplificada — dois termos para novas reservas de equipamentos
+- [ ] Uma nova reserva de equipamento grava o marcador congelado `two_terms_v1`; reservas históricas e salas continuam com o fluxo anterior.
+- [ ] A abertura exige assinatura do beneficiário em um único termo de responsabilidade, antes da aprovação.
+- [ ] Receber devolução registra o fato físico e gera automaticamente um termo de devolução, sem exigir que o técnico procure a ação de preparação.
+- [ ] Após registrar o recebimento, a interface direciona o técnico recebedor diretamente à assinatura com mouse ou toque, sem aprovar automaticamente a inspeção.
+- [ ] O termo de devolução exige assinatura do(s) técnico(s) que efetivamente registraram recebimentos; não exige outra assinatura do beneficiário por política antiga.
+- [ ] O PDF de devolução apresenta patrimônio, acessórios e quantidades efetivamente recebidas; deixa claro que a conferência técnica é posterior.
+- [ ] Sem PDF de devolução assinado e íntegro, nem a interface nem o backend deixam registrar inspeção na nova modalidade.
+- [ ] A conferência técnica registra inspetor, testes, constatações, avarias e acessórios no histórico GLPI, sem criar termo `return_inspection`.
+- [ ] Com todos os equipamentos conferidos e acessórios conciliados, a última inspeção aprovada conclui automaticamente a reserva e soluciona o chamado.
+- [ ] Com acessórios faltantes, quarentena, manutenção, inspeção parcial ou erro de assinatura, a reserva permanece em andamento.
+- [ ] Recebimento complementar altera os fatos e exige termo de devolução vigente assinado antes da conferência.
+- [ ] Documento e aceite históricos permanecem imutáveis, sem migração ou reescrita de hashes.
+- [ ] Executar o teste integrado com banco descartável autorizado; GitHub Actions apenas comprova os testes independentes.
+
 ### Nova assinatura de equipamento — ordem obrigatória
 - [ ] Nova reserva de equipamento gera termo de cessão antes da aprovação (mesmo se o recurso tinha configuração anterior de assinatura após aprovação).
 - [ ] Aprovação na aba Reserva Plus fica bloqueada até assinatura e finalização do termo da solicitação.
