@@ -236,6 +236,7 @@ final class BookingView
     public static function statuses(): array
     {
         return [
+            'awaiting_initial_signature' => __('Aguardando assinatura', 'reservaplus'),
             'submitted' => __('Aguardando aprovação', 'reservaplus'), 'approved' => __('Aprovada', 'reservaplus'),
             'ready' => __('Conferido e liberado', 'reservaplus'), 'issued' => __('Em uso', 'reservaplus'),
             'returning' => __('Devolução em andamento', 'reservaplus'), 'completed' => __('Concluída', 'reservaplus'),
@@ -255,6 +256,15 @@ final class BookingView
             'artifact_error' => __('Aceites registrados; documento precisa de atenção', 'reservaplus'),
             'superseded' => __('Substituído por nova versão', 'reservaplus'), 'artifact_pending' => __('Assinatura registrada; documento em processamento', 'reservaplus'),
         ];
+    }
+
+    public static function bookingBadge(array $booking, ?array $lines = null): void
+    {
+        $status = (string) ($booking['status'] ?? '');
+        if (BookingService::awaitsInitialSignature($booking, $lines)) {
+            $status = 'awaiting_initial_signature';
+        }
+        self::badge($status);
     }
 
     public static function badge(string $status): void
@@ -306,7 +316,7 @@ final class BookingView
                 echo '<span class="rp-row-meta rp-row-purpose">' . self::e(mb_strimwidth((string) $row['purpose'], 0, 120, '…', 'UTF-8')) . '</span>';
             }
             echo '</td><td>';
-            self::badge((string) ($row['status'] ?? ''));
+            self::bookingBadge($row, $meta['lines']);
             $physical = TechnicianDashboard::physicalFlags($row, $meta['lines'], Store::now());
             if ($physical['overdue']) { echo '<br>'; self::badge('overdue'); }
             echo '</td><td><span class="rp-row-meta">' . self::e(__('Início', 'reservaplus')) . '</span>' . self::e(self::date($row['begin'] ?? '')) . '<span class="rp-row-meta">' . self::e(__('Devolução / término', 'reservaplus')) . '</span>' . self::e(self::date($row['end'] ?? '')) . '</td>';
@@ -356,7 +366,7 @@ final class BookingView
             return;
         }
         echo '<div class="rp-quick-actions rp-quick-actions-inline" aria-label="' . self::e(__('Ações da reserva', 'reservaplus')) . '">';
-        if ($eligible !== []) {
+        if ($eligible !== [] && !BookingService::awaitsInitialSignature($booking, $lines)) {
             self::formStart('approve', (int) $booking['id'], (int) $booking['revision']);
             foreach ($eligible as $lineId) { self::hidden('lines_ids[]', $lineId); }
             self::hidden('_return_list', 'requests');
@@ -530,13 +540,13 @@ final class BookingView
         if (!in_array($state, ['cancelled', 'rejected'], true)) {
             $phase = ['submitted'=>0,'approved'=>1,'issued'=>2,'returning'=>3,'completed'=>4][$state] ?? 0;
             echo '<ol class="rp-progress" aria-label="' . self::e(__('Andamento da reserva', 'reservaplus')) . '">';
-            foreach (['Solicitação', 'Aprovação e termos', 'Uso dos recursos', 'Devolução e conferência', 'Concluída'] as $index => $label) {
+            foreach (['Solicitação e assinatura', 'Aprovação', 'Uso dos recursos', 'Devolução e conferência', 'Concluída'] as $index => $label) {
                 echo '<li class="' . ($index < $phase ? 'is-done' : ($index === $phase ? 'is-current' : '')) . '"' . ($index === $phase ? ' aria-current="step"' : '') . '>' . ($index+1) . '. ' . self::e(__($label, 'reservaplus')) . '</li>';
             }
             echo '</ol>';
         }
         echo '<section class="rp-panel"><div class="rp-heading"><h2>' . self::e(sprintf(__('Solicitação #%d', 'reservaplus'), $id)) . '</h2>';
-        self::badge((string) $booking['status']);
+        self::bookingBadge($booking, $booking['lines'] ?? null);
         echo '</div><dl class="rp-meta">';
         $snapshot = Store::decode($booking['borrower_snapshot_json'] ?? null);
         $values = [
@@ -825,7 +835,8 @@ final class BookingView
         }
         echo '<section class="rp-panel"><h2>' . self::e(__('Próximas ações', 'reservaplus')) . '</h2><div class="rp-detail-action-grid">';
         $approveLines = self::actionLines($booking, 'approve', ['requested']);
-        if ($approveLines !== [] && $state === 'submitted') {
+        if ($approveLines !== [] && $state === 'submitted'
+            && !BookingService::awaitsInitialSignature($booking, $booking['lines'] ?? null)) {
             self::formStart('approve', (int) $booking['id'], (int) $booking['revision']);
             foreach ($approveLines as $line) { self::hidden('lines_ids[]', (int) $line['id']); }
             echo '<button type="submit" class="btn rp-detail-action-button rp-action-approve" onclick="return confirm(' . self::e(json_encode(__('Confirma a aprovação dos recursos autorizados nesta solicitação?', 'reservaplus'), JSON_HEX_APOS | JSON_HEX_QUOT)) . ')">' . self::e(__('Autorizar recursos', 'reservaplus')) . ' (' . count($approveLines) . ')</button>';
