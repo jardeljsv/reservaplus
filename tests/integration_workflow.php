@@ -80,7 +80,7 @@ rp_throws(static fn()=>rp_action($bookingId,'approve'),DomainException::class);
 rp_test('self-service request creates one ticket and rejects unauthorized approval and altered retries',static function()use($booking):void{
     rp_same(1,count($booking['approvals']),'One approval per resource');
 });
-rp_assert(BookingService::simplifiedReturn($booking));
+rp_assert(BookingService::threeTermReturn($booking));
 rp_sign($bookingId,'request');
 rp_login($adminName,Access::ADMIN);
 $approval=$booking['approvals'][0];$nativeApproval=new TicketValidation();
@@ -114,12 +114,23 @@ rp_same('returning',$booking['status']);rp_same('inspection',Store::row('resourc
 rp_throws(static fn()=>rp_action($bookingId,'inspect',['result'=>'pass','findings'=>'Function tested.']),DomainException::class);
 rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
 $booking=rp_action($bookingId,'receive',['accessories'=>[(int)$line['id']=>[0=>1]],'note'=>'Charger now returned.']);
+$returnDoc = DocumentService::prepare($bookingId,'return_receipt');
+rp_same(['borrower'],DocumentService::get($returnDoc)['signers'][0]['roles']);
+rp_same(1,count(DocumentService::get($returnDoc)['signers']),'Only beneficiary signs return');
+rp_throws(static fn()=>rp_action($bookingId,'inspect',['result'=>'pass','findings'=>'Testing']),DomainException::class);
+rp_login($employeeName,READ|CREATE);
 $documentId=rp_sign($bookingId,'return_receipt');
-rp_same(1,count(DocumentService::get($documentId)['signers']),'Only the receiving technician signs the return document');
-rp_same(['receiver'],DocumentService::get($documentId)['signers'][0]['roles']);
+rp_login($adminName,Access::ADMIN);
 $booking=rp_action($bookingId,'inspect',['result'=>'pass','findings'=>'Equipment and charger tested, all functions normal.']);
-rp_same('completed',$booking['status'],'All items checked: automatically complete without third document');
+rp_same('returning',$booking['status'],'Wait for inspector signature before completion');
 rp_same('ready',$booking['lines'][0]['state']);rp_same('available',Store::row('resources',$resourceId)['operational_state']);
+rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
+$inspectionDoc=DocumentService::prepare($bookingId,'return_inspection');
+rp_same(['inspector'],DocumentService::get($inspectionDoc)['signers'][0]['roles']);
+rp_same(1,count(DocumentService::get($inspectionDoc)['signers']),'Only inspecting technician signs technical term');
+rp_sign($bookingId,'return_inspection');
+rp_same('completed',Store::row('bookings',$bookingId)['status'],'Last signed term automatically closes the booking');
+$booking=BookingService::get($bookingId);
 rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
 rp_test('physical receipt, accessory reconciliation and inspection gates',static function()use($booking):void{rp_same(1,(int)Store::decode($booking['lines'][0]['accessories_json'])[0]['received']);});
 
@@ -131,12 +142,13 @@ rp_test('native aggregate models cannot bypass service state or immutable eviden
     }
     rp_same('completed',Store::row('bookings',$bookingId)['status']);rp_same('complete',Store::row('agreements',$documentId)['status']);
 });
-rp_same([],Store::find('agreements',['bookings_id'=>$bookingId,'purpose'=>'return_inspection']),
-    'Simplified return must not generate a third document');
+rp_same(1,count(Store::find('agreements',['bookings_id'=>$bookingId,'purpose'=>'return_inspection'])),
+    'Technical inspection has its own signed immutable document');
 $ticket=new Ticket();rp_assert($ticket->getFromDB((int)$booking['tickets_id']));rp_same(CommonITILObject::SOLVED,(int)$ticket->fields['status']);
-rp_test('signed return receipt and audited inspection permit native ticket solution',static function()use($bookingId):void{
+rp_test('three signatures verify beneficiary responsibility and return plus technical inspection',static function()use($bookingId):void{
+    rp_assert(DocumentService::isSatisfied($bookingId,'request'));
     rp_assert(DocumentService::isSatisfied($bookingId,'return_receipt'));
-    rp_assert(!DocumentService::isSatisfied($bookingId,'return_inspection'));
+    rp_assert(DocumentService::isSatisfied($bookingId,'return_inspection'));
 });
 
 // Public internal rooms project to GLPI even when the requesting profile has no
