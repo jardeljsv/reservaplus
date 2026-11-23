@@ -196,7 +196,7 @@ final class DocumentService
         $userId = Access::userId();
         $role = self::resolveRole($doc, $userId, $role);
         $snapshot = Store::decode($doc['snapshot_json'] ?? null);
-        $requiresDrawing = PdfRenderer::isCessionTerm($snapshot);
+        $requiresDrawing = PdfRenderer::requiresHandwrittenSignature($snapshot);
         $strokes = $requiresDrawing ? self::validateHandwrittenStrokes($signature) : [];
         Store::transaction(function () use ($doc, $documentId, $challenge, $consent, $key, $userId, $role, $strokes): void {
             $booking = Store::lock('bookings', (int) $doc['bookings_id']);
