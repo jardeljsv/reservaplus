@@ -234,7 +234,10 @@ final class BookingService
     private static function allocate(array $booking, array $lines, array $resources): void
     {
         foreach ($lines as $line) { CalendarBridge::allocate($booking, $line, $resources[(int) $line['resources_id']]); }
-        $needsSignature = self::signaturePurposes($lines) !== [];
+        // A submission-stage term may already be sealed before approval.
+        // Do not start a new 24-hour signing hold for an already signed scope.
+        $needsSignature = self::signaturePurposes($lines) !== []
+            && !self::signaturesSatisfied((int) $booking['id'], $lines);
         Store::update('bookings', (int) $booking['id'], [
             'status' => 'approved', 'approved_revision' => (int) $booking['scope_revision'],
             'hold_expires_at' => $needsSignature ? date('Y-m-d H:i:s', time() + 86400) : null,
