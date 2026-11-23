@@ -13,6 +13,19 @@ Estado: checklist de execução, não certificado de aprovação. Ambiente obser
 
 ## Cenários
 
+### Nova assinatura de equipamento — ordem obrigatória
+- [ ] Nova reserva de equipamento gera termo de cessão antes da aprovação (mesmo se o recurso tinha configuração anterior de assinatura após aprovação).
+- [ ] Aprovação na aba Reserva Plus fica bloqueada até assinatura e finalização do termo da solicitação.
+- [ ] Notificação de aprovação nativa não é enviada antes do termo concluído.
+- [ ] Após assinar, a aprovação é liberada e a entrega continua exigindo disponibilidade, autorização e janela de horário.
+- [ ] PDF original mostra seções equipamento, requerente, período e responsabilidade e não afirma recebimento físico anterior à entrega.
+- [ ] Formulário exige assinatura manuscrita de mouse ou toque para novos termos de equipamento e impede desenho vazio.
+- [ ] PDF final contém assinatura desenhada e comprovante eletrônico autenticado, preservando PDF original e SHA-256.
+- [ ] Mesma pessoa só assina uma vez por documento; mudança de perfil não repete o aceite.
+- [ ] Salas, termos históricos e devoluções mantêm seus fluxos anteriores.
+- [ ] Mudança de datas cria revisão válida e exige novo termo, sem perder a evidência histórica.
+- [ ] Validar também no celular e no Firefox, Chrome e Edge.
+
 - [ ] Solicitação nova cria uma reserva e um ticket nativo
 - [ ] Catálogo e seleção não criam ticket antes de enviar
 - [ ] Aprovador elegível vê Autorizar/Rejeitar no Painel, Solicitações e detalhe
