@@ -190,8 +190,14 @@ final class PdfRenderer
                         18 + (float) $p2[0] * 0.16, $y + (float) $p2[1] * 0.04);
                 }
             }
+            $pdf->SetDrawColor(125, 125, 125);
+            $pdf->Line(18, $y + 42, 178, $y + 42);
             $pdf->SetDrawColor(0, 0, 0);
-            $pdf->SetY($y + 46);
+            $pdf->SetFont('dejavusans', '', 7);
+            $pdf->SetXY(18, $y + 43);
+            $pdf->Cell(0, 5, 'Registrada em UTC: ' . (string) ($acceptance['event_utc'] ?? '')
+                . ' | Conta GLPI: #' . (int) ($acceptance['users_id'] ?? 0), 0, 1);
+            $pdf->SetY($y + 49);
         }
     }
 
