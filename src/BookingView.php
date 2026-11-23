@@ -899,11 +899,20 @@ final class BookingView
         $historical = array_values(array_filter($documents, static fn(array $d): bool => empty($d['is_current'])));
         $signature = self::signatureActionDocument($id, $current);
         if ($signature !== null) {
+            $returnSigning = ($signature['purpose'] ?? '') === 'return_receipt'
+                && BookingService::simplifiedReturn($booking);
             echo '<div class="rp-signature-highlight" role="status">';
-            echo '<div><strong>' . self::e(__('Termo de responsabilidade', 'reservaplus')) . '</strong>';
+            echo '<div><strong>' . self::e($returnSigning
+                ? __('Termo de devolução de equipamento', 'reservaplus')
+                : __('Termo de responsabilidade', 'reservaplus')) . '</strong>';
             echo '<span class="rp-signature-state">' . self::e(__('Aguardando assinatura', 'reservaplus')) . '</span>';
-            echo '<p>' . self::e(__('Assinatura necessária antes da próxima etapa. Confira o documento e registre seu aceite.', 'reservaplus')) . '</p></div>';
-            self::link('agreement.php', __('Ler e assinar termo', 'reservaplus'), ['id' => (int) $signature['id']] + self::ticketContextQuery(self::$ticketContext), 'rp-signature-cta');
+            echo '<p>' . self::e($returnSigning
+                ? __('O recebimento físico foi registrado. O técnico recebedor deve assinar antes da conferência.', 'reservaplus')
+                : __('Assinatura necessária antes da próxima etapa. Confira o documento e registre seu aceite.', 'reservaplus')) . '</p></div>';
+            self::link('agreement.php', $returnSigning
+                ? __('Assinar termo de devolução', 'reservaplus')
+                : __('Ler e assinar termo', 'reservaplus'),
+                ['id' => (int) $signature['id']] + self::ticketContextQuery(self::$ticketContext), 'rp-signature-cta');
             echo '</div>';
         }
         if ($current !== []) { self::documentTable($current); }
