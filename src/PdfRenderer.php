@@ -153,7 +153,7 @@ final class PdfRenderer
             $html .= '<br><b>Acessório(s):</b> ' . $e($acc !== [] ? implode(', ', $acc) : 'Nenhum informado') . '</p>';
         }
         $html .= '<h3>2. REQUERENTE</h3><p><b>Nome:</b> ' . $e((string) ($borrower['name'] ?? ''))
-            . '<br><b>Matrícula / usuário:</b> ' . $e((string) ($borrower['matricula'] ?? $s['borrower_login'] ?? 'Não informada'))
+            . '<br><b>Matrícula / usuário:</b> ' . $e(trim((string) ($borrower['matricula'] ?? '')) !== '' ? (string) $borrower['matricula'] : (string) ($s['borrower_login'] ?? 'Não informada'))
             . '<br><b>Setor / unidade:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada')) . '</p>';
         $html .= '<h3>3. PERÍODO DA CESSÃO</h3><p><b>Retirada prevista:</b> '
             . $e((string) ($scope['begin'] ?? '')) . '<br><b>Devolução prevista:</b> '
