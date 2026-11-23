@@ -170,7 +170,9 @@ final class TicketBridge
 
     public static function pendingForActor(array $booking): bool
     {
-        if (!Access::booking($booking, 'approve')) { return false; }
+        if (!Access::booking($booking, 'approve') || BookingService::awaitsInitialSignature($booking)) {
+            return false;
+        }
         foreach (Store::find('bookinglines', ['bookings_id' => (int) $booking['id']]) as $line) {
             if (!Access::canApproveLine($booking, $line)) { continue; }
             foreach (Store::find('bookingapprovals', ['bookings_id' => (int) $booking['id'], 'lines_id' => (int) $line['id'], 'status' => 'pending']) as $approval) {
