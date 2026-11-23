@@ -157,11 +157,13 @@ final class BookingService
             self::assertApprovalDisclosure($resources);
             self::assertBorrowerEntity($borrowerId, (int) $entity);
             $now = Store::now();
+            $equipmentOnly = $resources !== [] && count(array_filter($resources,
+                static fn(array $r): bool => ($r['kind'] ?? '') === 'equipment')) === count($resources);
             $id = Store::insert('bookings', [
                 'entities_id' => $entity, 'users_id_requester' => Access::userId(), 'users_id_borrower' => $borrowerId,
                 'tickets_id' => null, 'begin' => $begin, 'end' => $end, 'status' => 'submitted', 'revision' => 1, 'scope_revision' => 1,
                 'approved_revision' => 0, 'people_count' => $people, 'purpose' => $purpose,
-                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources)]),
+                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources), 'return_workflow' => $equipmentOnly ? 'two_terms_v1' : 'legacy']),
                 'operation_key' => $operation, 'integration_status' => 'synced', 'date_creation' => $now, 'date_mod' => $now,
             ]);
             foreach ($resources as $resource) {
@@ -262,6 +264,27 @@ final class BookingService
     {
         foreach (self::signaturePurposes($lines ?? self::lines($id)) as $purpose) {
             if (!DocumentService::isSatisfied($id, $purpose)) { return false; }
+        }
+        return true;
+    }
+
+    /** Frozen per new equipment booking: legacy and room workflows are untouched. */
+    public static function simplifiedReturn(array $booking): bool
+    {
+        return (Store::decode($booking['policy_snapshot_json'] ?? null)['return_workflow'] ?? '')
+            === 'two_terms_v1';
+    }
+
+    /** Complete only after actual inspection and reconciliation. */
+    private static function allPhysicalReturnsComplete(int $bookingId): bool
+    {
+        $lines = self::lines($bookingId);
+        if ($lines === []) { return false; }
+        foreach ($lines as $line) {
+            if (($line['state'] ?? '') !== 'ready' || empty($line['inspection_at'])
+                || !Booking::accessoriesComplete(Store::decode($line['accessories_json'] ?? null))) {
+                return false;
+            }
         }
         return true;
     }
@@ -409,6 +432,9 @@ final class BookingService
                     Store::update('bookings', $id, ['status' => 'returning']);
                     break;
                 case 'inspect':
+                    if (self::simplifiedReturn($booking) && !DocumentService::isSatisfied($id, 'return_receipt')) {
+                        throw new \DomainException('Confirme a assinatura do termo de devolução antes da conferência técnica.');
+                    }
                     $result = (string) ($input['result'] ?? '');
                     if (!in_array($result, ['pass', 'quarantine', 'maintenance'], true)) { throw new \DomainException('Selecione o resultado da conferência.'); }
                     $findings = mb_substr(trim((string) ($input['findings'] ?? '')), 0, 10000);
@@ -431,6 +457,11 @@ final class BookingService
                         Store::event($id, 'inspected', $inspection, (int) $line['id']);
                     }
                     Store::update('bookings', $id, ['status' => 'returning', 'hold_expires_at' => null]);
+                    if (self::simplifiedReturn($booking) && self::allPhysicalReturnsComplete($id)) {
+                        Store::update('bookings', $id, ['status' => 'completed']);
+                        Store::event($id, 'completed', ['method' => 'automatic_after_inspection']);
+                        TicketBridge::solve($booking);
+                    }
                     break;
                 case 'complete':
                     foreach ($lines as $line) {
@@ -438,7 +469,13 @@ final class BookingService
                             throw new \DomainException('Há recebimentos, acessórios, conferências ou reparos pendentes. Libere cada recurso por nova conferência antes de concluir.');
                         }
                     }
-                    if (!DocumentService::isSatisfied($id, 'return_inspection')) { throw new \DomainException('Conclua as assinaturas obrigatórias do termo de conferência.'); }
+                    if (self::simplifiedReturn($booking)) {
+                        if (!DocumentService::isSatisfied($id, 'return_receipt')) {
+                            throw new \DomainException('Conclua a assinatura do termo de devolução.');
+                        }
+                    } elseif (!DocumentService::isSatisfied($id, 'return_inspection')) {
+                        throw new \DomainException('Conclua as assinaturas obrigatórias do termo de conferência.');
+                    }
                     Store::update('bookings', $id, ['status' => 'completed', 'hold_expires_at' => null]);
                     TicketBridge::solve($booking);
                     break;
