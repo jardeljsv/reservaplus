@@ -365,7 +365,25 @@ final class BookingView
         // only a form shortcut; BookingService::act('issue') still checks
         // custody, source-backed signatures, schedule and actual conflicts.
         $canIssue = self::issueListShortcutEligible($booking, $lines, Access::booking($booking, 'issue'));
-        if ($eligible === [] && !$canExtend && !$canCancel && !$canIssue) {
+        // Build the same candidate sets used on the detail screen. Lists use
+        // read-only booking projections with lines supplied separately.
+        $withLines = $booking;
+        $withLines['lines'] = $lines;
+        $receiveLines = self::actionLines($withLines, 'receive',
+            ['issued', 'received', 'quarantine', 'maintenance']);
+        $receiveLines = array_values(array_filter($receiveLines, static function (array $line): bool {
+            $resource = self::lineSnapshot($line);
+            return ($resource['kind'] ?? '') !== 'room' && self::returnReceiptLineEligible($line);
+        }));
+        $inspectLines = self::actionLines($withLines, 'inspect',
+            ['received', 'quarantine', 'maintenance', 'allocated', 'issued']);
+        $inspectLines = array_values(array_filter($inspectLines, static function (array $line): bool {
+            $resource = self::lineSnapshot($line);
+            return self::inspectionLineEligible($line, ($resource['kind'] ?? '') === 'room');
+        }));
+        $canReceive = in_array($state, ['issued', 'returning'], true) && $receiveLines !== [];
+        $canInspect = in_array($state, ['approved', 'issued', 'returning'], true) && $inspectLines !== [];
+        if ($eligible === [] && !$canExtend && !$canCancel && !$canIssue && !$canReceive && !$canInspect) {
             self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
             return;
         }
@@ -394,6 +412,37 @@ final class BookingView
             self::hidden('_return_list', 'requests');
             self::textarea('condition', __('Condição na entrega e conferência dos acessórios', 'reservaplus'), '', true);
             self::submit(__('Confirmar entrega', 'reservaplus'));
+            Html::closeForm();
+            echo '</details>';
+        }
+        if ($canReceive) {
+            echo '<details class="rp-mini-expand rp-mini-receive"><summary class="btn rp-mini-action rp-mini-extend">'
+                . self::e(__('Receber devolução', 'reservaplus')) . '</summary>';
+            echo '<p class="rp-muted">' . self::e(__('Registre os equipamentos efetivamente recebidos e a quantidade de cada acessório. A conferência será realizada separadamente.', 'reservaplus')) . '</p>';
+            self::formStart('receive', (int) $booking['id'], (int) $booking['revision']);
+            self::hidden('_return_list', 'requests');
+            self::chooseLines($receiveLines, true, count($receiveLines) === 1);
+            self::input('deliverer', __('Nome de quem entregou os itens', 'reservaplus'), '', 'text', true, 'maxlength="255"');
+            self::textarea('note', __('Observações do recebimento', 'reservaplus'));
+            self::submit(__('Registrar recebimento agora', 'reservaplus'));
+            Html::closeForm();
+            echo '</details>';
+        }
+        if ($canInspect) {
+            echo '<details class="rp-mini-expand rp-mini-inspect"><summary class="btn rp-mini-action rp-mini-approve">'
+                . self::e(__('Conferir devolução / término de uso', 'reservaplus')) . '</summary>';
+            echo '<p class="rp-muted">' . self::e(__('Descreva a conferência, os testes, as faltas e as avarias. Equipamentos exigem recebimento físico prévio.', 'reservaplus')) . '</p>';
+            self::formStart('inspect', (int) $booking['id'], (int) $booking['revision']);
+            self::hidden('_return_list', 'requests');
+            self::chooseLines($inspectLines, false, count($inspectLines) === 1);
+            self::select('result', __('Resultado da conferência', 'reservaplus'), [
+                '' => __('Selecione o resultado', 'reservaplus'),
+                'pass' => __('Aprovado para novo uso', 'reservaplus'),
+                'quarantine' => __('Reter para avaliação', 'reservaplus'),
+                'maintenance' => __('Encaminhar para manutenção', 'reservaplus'),
+            ]);
+            self::textarea('findings', __('Verificações, condição e pendências', 'reservaplus'), '', true);
+            self::submit(__('Registrar conferência', 'reservaplus'));
             Html::closeForm();
             echo '</details>';
         }
@@ -432,6 +481,32 @@ final class BookingView
             }
         }
         return true;
+    }
+
+    /** One physical return may be recorded after issue. Later visits must
+     * actually reconcile outstanding accessories; never offer no-op receipts. */
+    public static function returnReceiptLineEligible(array $line): bool
+    {
+        $state = (string) ($line['state'] ?? '');
+        if ($state === 'issued') { return true; }
+        if (!in_array($state, ['received', 'quarantine', 'maintenance'], true)) { return false; }
+        foreach (Store::decode($line['accessories_json'] ?? null) as $accessory) {
+            if ((int) ($accessory['issued'] ?? 0) > (int) ($accessory['received'] ?? 0)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Rooms are inspected at the end of use. Equipment is inspected only
+     * after physical receipt, including follow-ups for quarantine/repair. */
+    public static function inspectionLineEligible(array $line, bool $room): bool
+    {
+        if ($room) {
+            return in_array((string) ($line['state'] ?? ''), ['allocated', 'issued'], true);
+        }
+        return !empty($line['received_at'])
+            && in_array((string) ($line['state'] ?? ''), ['received', 'quarantine', 'maintenance'], true);
     }
 
     /** Link only to a current document the logged-in beneficiary can sign. */
