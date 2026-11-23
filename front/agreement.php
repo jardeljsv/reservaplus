@@ -35,7 +35,7 @@ try {
             if (($_POST['accept_statement'] ?? '') !== '1') {
                 throw new DomainException('Marque a declaração para registrar um aceite explícito.');
             }
-            DocumentService::accept($id, (string) ($_POST['challenge'] ?? ''), (string) ($_POST['consent_sha256'] ?? ''), (string) ($_POST['operation_key'] ?? ''), (string) ($_POST['role'] ?? ''));
+            DocumentService::accept($id, (string) ($_POST['challenge'] ?? ''), (string) ($_POST['consent_sha256'] ?? ''), (string) ($_POST['operation_key'] ?? ''), (string) ($_POST['role'] ?? ''), is_string($_POST['signature_strokes'] ?? null) ? $_POST['signature_strokes'] : null);
         } elseif ($action === 'retry') {
             DocumentService::finalize($id);
         } else {
@@ -133,6 +133,16 @@ if ($doc['is_current'] && !$mySigned && $chosenRole !== '') {
         }
         if ($returnTicket > 0) { BookingView::hidden('_return_ticket', $returnTicket); }
         echo '<p><strong>Leia o documento e confirme seu aceite.</strong> O sistema registra a conta GLPI e o perfil autorizado utilizado nesta assinatura.</p>';
+        if (PdfRenderer::isCessionTerm((array) ($doc['snapshot'] ?? []))) {
+            echo '<div class="rp-handwritten-panel my-3" data-rp-handwritten>';
+            echo '<label class="form-label"><strong>Assinatura do(a) requerente (mouse ou toque)</strong></label>';
+            echo '<div style="max-width:680px;border:1px solid #9aaabc;border-radius:8px;background:#fff;overflow:hidden">';
+            echo '<canvas width="680" height="170" style="display:block;width:100%;height:170px;touch-action:none;cursor:crosshair" aria-label="Área de desenho da assinatura"></canvas></div>';
+            echo '<p class="rp-muted">Desenhe sua assinatura. Ela será vinculada à sua conta GLPI e incorporada ao PDF final.</p>';
+            echo Html::hidden('signature_strokes', ['value' => '']);
+            echo '<button type="button" class="btn btn-outline-secondary btn-sm" data-rp-clear>Limpar assinatura</button>';
+            echo '</div>';
+        }
         echo '<label class="form-check"><input class="form-check-input" type="checkbox" name="accept_statement" value="1" required><span class="form-check-label">' . $e($consent) . '</span></label>';
         echo '<button type="submit" class="btn btn-primary mt-3">Assinar termo</button>';
         Html::closeForm();
@@ -143,6 +153,68 @@ if ($doc['is_current'] && !$mySigned && $chosenRole !== '') {
     }
     echo '</div>';
 }
+// Each submitted point is an integer on a fixed 1000x1000 grid.
+// No image upload or arbitrary SVG/HTML reaches the server.
+echo <<<'RPSIGNATURE'
+<script>
+(function () {
+  for (const box of document.querySelectorAll('[data-rp-handwritten]')) {
+    const canvas = box.querySelector('canvas');
+    const input = box.querySelector('input[name="signature_strokes"]');
+    const clear = box.querySelector('[data-rp-clear]');
+    const ctx = canvas.getContext('2d');
+    if (!ctx || !input) { continue; }
+    const strokes = [];
+    let stroke = null;
+    ctx.strokeStyle = '#182f48';
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    function point(e) {
+      const r = canvas.getBoundingClientRect();
+      return [Math.max(0, Math.min(1000, Math.round((e.clientX-r.left) * 1000/r.width))),
+              Math.max(0, Math.min(1000, Math.round((e.clientY-r.top) * 1000/r.height)))];
+    }
+    function draw(p, move) {
+      const x=p[0]*canvas.width/1000, y=p[1]*canvas.height/1000;
+      if(move) {ctx.beginPath();ctx.moveTo(x,y);}
+      else {ctx.lineTo(x,y);ctx.stroke();}
+    }
+    canvas.addEventListener('pointerdown', function(e) {
+      if(strokes.length>=120) return;
+      stroke=[point(e)]; strokes.push(stroke); draw(stroke[0],true);
+      canvas.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    canvas.addEventListener('pointermove', function(e) {
+      if(!stroke || stroke.length>=400) return;
+      const p=point(e),last=stroke[stroke.length-1];
+      if(p[0]===last[0]&&p[1]===last[1])return;
+      stroke.push(p);draw(p,false);e.preventDefault();
+    });
+    function finish() {
+      if (stroke && stroke.length===1) {strokes.pop();}
+      stroke=null;
+      input.value=JSON.stringify(strokes);
+    }
+    canvas.addEventListener('pointerup',finish);
+    canvas.addEventListener('pointercancel',finish);
+    clear.addEventListener('click',function(){
+      strokes.length=0;stroke=null;input.value='';
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    });
+    const form=box.closest('form');
+    form.addEventListener('submit',function(e){
+      finish();
+      const points=strokes.reduce((n,a)=>n+a.length,0);
+      if(points<4){
+        e.preventDefault();
+        window.alert('Desenhe sua assinatura no quadro antes de confirmar.');
+      }
+    });
+  }
+})();
+</script>
+RPSIGNATURE;
 if (in_array($doc['status'], ['accepted', 'artifact_error'], true) || ($doc['status'] === 'complete' && $doc['attachment_status'] !== 'attached')) {
     echo '<div class="alert alert-info">Os aceites já registrados estão preservados. A publicação do arquivo ou anexo precisa ser concluída.</div>';
     if (!empty($doc['last_error']) && $canAudit) {
