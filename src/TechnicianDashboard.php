@@ -343,17 +343,34 @@ final class TechnicianDashboard
         echo '<div class="rp-dash-bookings">';
         foreach ($bucket['rows'] as $booking) {
             $names = [];
-            foreach (self::lines($booking) as $line) {
+            $bookingLines = self::lines($booking);
+            foreach ($bookingLines as $line) {
                 $snapshot = Store::decode($line['snapshot_json'] ?? null); $resource = $snapshot['resource'] ?? $snapshot;
                 $names[] = (string) ($resource['name'] ?? __('Recurso', 'reservaplus'));
             }
             $summary = implode(', ', array_slice($names, 0, 2));
             if (count($names) > 2) { $summary .= ' +' . (count($names) - 2); }
             echo '<a class="rp-dash-booking" href="' . BookingView::e(BookingView::url('booking.php', ['id' => (int) $booking['id']])) . '"><span class="rp-dash-booking-icon"><i class="ti ti-calendar-event" aria-hidden="true"></i></span><div><strong>' . BookingView::e($summary ?: __('Solicitação de reserva', 'reservaplus')) . '</strong><span>' . BookingView::e(BookingView::date($booking['begin']) . ' — ' . BookingView::date($booking['end'])) . '</span><small>' . __('Reserva', 'reservaplus') . ' #' . (int) $booking['id'] . ' · ' . count($names) . ' ' . __('recurso(s)', 'reservaplus') . '</small></div><span class="rp-dash-status">';
-            BookingView::badge((string) $booking['status']); echo '</span></a>';
+            BookingView::bookingBadge($booking, $bookingLines); echo '</span></a>';
+            $returnTerms = ($booking['status'] ?? '') === 'returning'
+                ? BookingView::returnTermAlertsForList($booking, $bookingLines,
+                    DocumentService::forBooking((int) $booking['id']))
+                : [];
+            foreach ($returnTerms as $term) {
+                echo '<p class="rp-dash-return-pending" style="margin:4px 12px;color:#9a5800;font-weight:600;font-size:12px">'
+                    . BookingView::e((string) $term['label']) . '</p>';
+            }
             if (!self::isStaff()) {
                 echo '<div class="rp-dash-quick-actions">';
                 BookingView::renderRequesterActions($booking);
+                foreach ($returnTerms as $term) {
+                    if (empty($term['document_id']) || empty($term['can_sign'])) { continue; }
+                    BookingView::link('agreement.php',
+                        ($term['purpose'] ?? '') === 'return_receipt'
+                            ? __('Assinar termo de recebimento', 'reservaplus')
+                            : __('Assinar termo de devolução', 'reservaplus'),
+                        ['id' => (int) $term['document_id']], 'btn-primary btn-sm');
+                }
                 echo '</div>';
             } elseif (in_array(($booking['status'] ?? ''), ['submitted', 'approved', 'ready'], true)) {
                 echo '<div class="rp-dash-quick-actions">';
