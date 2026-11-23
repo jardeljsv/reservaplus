@@ -9,7 +9,7 @@ use RuntimeException;
 /** Renders only our escaped, frozen snapshot; never executes uploaded HTML. */
 final class PdfRenderer
 {
-    public const TEMPLATE_VERSION = 'reservaplus-terms-v1';
+    public const TEMPLATE_VERSION = 'reservaplus-terms-v2';
 
     public static function render(array $snapshot, array $acceptances = []): string
     {
@@ -27,6 +27,9 @@ final class PdfRenderer
         $pdf->SetFont('dejavusans', '', 9);
         $pdf->AddPage();
         $pdf->writeHTML(self::html($snapshot), true, false, true, false, '');
+        if ($acceptances !== [] && self::isCessionTerm($snapshot)) {
+            self::drawSignature($pdf, $acceptances);
+        }
         if ($acceptances !== []) {
             $pdf->AddPage();
             $pdf->writeHTML(self::receiptHtml($snapshot, $acceptances), true, false, true, false, '');
@@ -43,6 +46,9 @@ final class PdfRenderer
         $e = self::escape(...);
         $scope = (array) ($s['scope'] ?? []);
         $borrower = (array) ($scope['borrower'] ?? []);
+        if (self::isCessionTerm($s)) {
+            return self::cessionHtml($s);
+        }
         $html = '<h1>' . $e((string) ($s['title'] ?? 'Termo de reserva')) . '</h1>';
         $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
             . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
@@ -112,6 +118,81 @@ final class PdfRenderer
             . '<br><b>Referência de verificação interna:</b> ' . $e((string) ($s['verification_token'] ?? '')) . '</p>';
         $html .= '<p>Documento preparado para aceite eletrônico dentro do GLPI. A presença deste PDF, isoladamente, não comprova assinatura. Consulte os eventos de aceite e os hashes na verificação autenticada do ReservaPlus.</p>';
         return $html;
+    }
+
+    /** New single-page cession form, based on the institutional equipment model. */
+    public static function isCessionTerm(array $snapshot): bool
+    {
+        if (($snapshot['template_version'] ?? '') !== self::TEMPLATE_VERSION) { return false; }
+        if (!in_array((string) ($snapshot['purpose'] ?? ''), ['request', 'handover'], true)) { return false; }
+        $lines = (array) ($snapshot['scope']['lines'] ?? []);
+        if ($lines === []) { return false; }
+        foreach ($lines as $line) {
+            if (($line['resource']['kind'] ?? '') !== 'equipment') { return false; }
+        }
+        return true;
+    }
+
+    private static function cessionHtml(array $s): string
+    {
+        $e = self::escape(...);
+        $scope = (array) ($s['scope'] ?? []);
+        $borrower = (array) ($scope['borrower'] ?? []);
+        $html = '<h1 style="text-align:center;font-size:15pt">TERMO DE CESSÃO DE EQUIPAMENTO</h1>';
+        $html .= '<p>Pelo presente termo, o(a) requerente manifesta ciência das condições de cessão temporária do(s) equipamento(s) abaixo relacionado(s). A assinatura antecede a aprovação e <b>não comprova a entrega física</b> nem garante disponibilidade.</p>';
+        $html .= '<h3>1. IDENTIFICAÇÃO DO EQUIPAMENTO</h3>';
+        foreach ((array) ($scope['lines'] ?? []) as $line) {
+            $r = (array) ($line['resource'] ?? []);
+            $html .= '<p><b>Equipamento:</b> ' . $e((string) ($r['name'] ?? ''))
+                . '<br><b>Marca / modelo:</b> ' . $e(trim((string) ($r['manufacturer'] ?? '') . ' ' . (string) ($r['model'] ?? '')))
+                . '<br><b>Patrimônio:</b> ' . $e((string) ($r['inventory_number'] ?? 'Não informado'));
+            $acc = [];
+            foreach ((array) ($line['accessories'] ?? []) as $item) {
+                $acc[] = (string) ($item['name'] ?? '') . ' (' . (int) ($item['quantity'] ?? 1) . ')';
+            }
+            $html .= '<br><b>Acessório(s):</b> ' . $e($acc !== [] ? implode(', ', $acc) : 'Nenhum informado') . '</p>';
+        }
+        $html .= '<h3>2. REQUERENTE</h3><p><b>Nome:</b> ' . $e((string) ($borrower['name'] ?? ''))
+            . '<br><b>Matrícula / usuário:</b> ' . $e((string) ($borrower['matricula'] ?? $s['borrower_login'] ?? 'Não informada'))
+            . '<br><b>Setor / unidade:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada')) . '</p>';
+        $html .= '<h3>3. PERÍODO DA CESSÃO</h3><p><b>Retirada prevista:</b> '
+            . $e((string) ($scope['begin'] ?? '')) . '<br><b>Devolução prevista:</b> '
+            . $e((string) ($scope['end'] ?? '')) . '</p>';
+        $html .= '<h3>4. RESPONSABILIDADE</h3><p>Declaro ciência das responsabilidades relacionadas ao uso do equipamento solicitado. Caso a cessão seja aprovada e a entrega efetivada, comprometo-me a utilizá-lo exclusivamente para as atividades autorizadas, zelando por sua guarda, conservação e uso adequado durante todo o período, e a devolvê-lo com os acessórios nas condições registradas no ato da entrega, ressalvado o desgaste normal de uso.</p>';
+        $html .= '<p><b>Finalidade declarada:</b> ' . $e((string) ($scope['purpose_text'] ?? '')) . '</p>';
+        $html .= '<h3>5. ASSINATURA DO(A) REQUERENTE</h3><p>A assinatura eletrônica será vinculada à conta autenticada do GLPI e à versão deste documento. O registro manuscrito, quando utilizado, integra o comprovante final.</p>';
+        $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
+            . ' | <b>Chamado:</b> #' . (int) ($s['tickets_id'] ?? 0)
+            . ' | <b>Versão:</b> ' . (int) ($scope['scope_revision'] ?? 1) . '</p>';
+        return $html;
+    }
+
+    /** Render only validated normalized strokes; never trust user-controlled SVG/HTML. */
+    private static function drawSignature(\TCPDF $pdf, array $acceptances): void
+    {
+        foreach ($acceptances as $acceptance) {
+            $strokes = $acceptance['identity']['handwritten_strokes'] ?? [];
+            if (!is_array($strokes) || $strokes === []) { continue; }
+            $y = $pdf->GetY() + 5;
+            if ($y > 232) { $pdf->AddPage(); $y = 28; }
+            $pdf->SetFont('dejavusans', '', 9);
+            $pdf->SetXY(18, $y);
+            $pdf->Cell(0, 6, 'Assinatura manuscrita eletrônica — ' . (string) ($acceptance['identity']['name'] ?? 'Usuário GLPI'), 0, 1);
+            $y += 8;
+            $pdf->SetDrawColor(28, 47, 72);
+            $pdf->SetLineWidth(0.35);
+            foreach ($strokes as $stroke) {
+                if (!is_array($stroke) || count($stroke) < 2) { continue; }
+                for ($i = 1, $n = count($stroke); $i < $n; $i++) {
+                    $p1 = $stroke[$i - 1]; $p2 = $stroke[$i];
+                    if (!is_array($p1) || !is_array($p2) || count($p1) !== 2 || count($p2) !== 2) { continue; }
+                    $pdf->Line(18 + (float) $p1[0] * 0.16, $y + (float) $p1[1] * 0.04,
+                        18 + (float) $p2[0] * 0.16, $y + (float) $p2[1] * 0.04);
+                }
+            }
+            $pdf->SetDrawColor(0, 0, 0);
+            $pdf->SetY($y + 46);
+        }
     }
 
     private static function receiptHtml(array $s, array $acceptances): string
