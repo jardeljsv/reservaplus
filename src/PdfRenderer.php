@@ -286,7 +286,10 @@ final class PdfRenderer
         $e = self::escape(...);
         $scope = (array) ($s['scope'] ?? []);
         $borrower = (array) ($scope['borrower'] ?? []);
-        $html = '<h1 style="text-align:center;font-size:15pt">TERMO DE CESSÃO DE EQUIPAMENTO</h1>';
+        $header = ($s['return_workflow'] ?? '') === 'three_terms_v1'
+            ? 'TERMO DE RESPONSABILIDADE PELO USO'
+            : 'TERMO DE CESSÃO DE EQUIPAMENTO';
+        $html = '<h1 style="text-align:center;font-size:15pt">' . $header . '</h1>';
         $html .= '<p>Pelo presente termo, o(a) requerente manifesta ciência das condições de cessão temporária do(s) equipamento(s) abaixo relacionado(s). A assinatura antecede a aprovação e <b>não comprova a entrega física</b> nem garante disponibilidade.</p>';
         $html .= '<h3>1. IDENTIFICAÇÃO DO EQUIPAMENTO</h3>';
         foreach ((array) ($scope['lines'] ?? []) as $line) {
