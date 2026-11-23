@@ -109,6 +109,23 @@ rp_test('return list differentiates physical receipt, signing and PDF finalizati
     rp_same([], BookingView::returnTermAlertsForList(['status' => 'completed'], $lines, $docs));
 });
 
+rp_test('new simplified returns only flag receipt signing, never a third inspection document', function (): void {
+    $booking = ['id' => 34, 'status' => 'returning',
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'two_terms_v1'])];
+    $lines = [[
+        'received_at' => '2026-11-23 18:10:00',
+        'inspection_at' => '2026-11-23 18:35:00',
+    ]];
+    $docs = [['id' => 40, 'purpose' => 'return_receipt', 'status' => 'prepared',
+        'is_current' => true, 'can_sign' => true]];
+    $alerts = BookingView::returnTermAlertsForList($booking, $lines, $docs);
+    rp_same(1, count($alerts));
+    rp_same('return_receipt', $alerts[0]['purpose']);
+    rp_assert(str_contains($alerts[0]['label'], 'termo de devolução'));
+    $docs[0]['status'] = 'complete';
+    rp_same([], BookingView::returnTermAlertsForList($booking, $lines, $docs));
+});
+
 rp_test('workflow links honor GLPI subdirectory and errors do not reveal runtime internals', function (): void {
     global $CFG_GLPI;
     $CFG_GLPI['root_doc'] = '/support';
