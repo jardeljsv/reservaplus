@@ -160,9 +160,12 @@ if ($doc['is_current'] && !$mySigned && $chosenRole !== '') {
         }
         if ($returnTicket > 0) { BookingView::hidden('_return_ticket', $returnTicket); }
         echo '<p><strong>Leia o documento e confirme seu aceite.</strong> O sistema registra a conta GLPI e o perfil autorizado utilizado nesta assinatura.</p>';
-        if (PdfRenderer::isCessionTerm((array) ($doc['snapshot'] ?? []))) {
+        if (PdfRenderer::requiresHandwrittenSignature((array) ($doc['snapshot'] ?? []))) {
             echo '<div class="rp-handwritten-panel my-3" data-rp-handwritten>';
-            echo '<label class="form-label"><strong>Assinatura do(a) requerente (mouse ou toque)</strong></label>';
+            $drawingLabel = ($doc['purpose'] ?? '') === 'return_receipt'
+                ? 'Assinatura de ciência do recebimento (mouse ou toque)'
+                : 'Assinatura do(a) requerente (mouse ou toque)';
+            echo '<label class="form-label"><strong>' . $e($drawingLabel) . '</strong></label>';
             echo '<div style="max-width:680px;border:1px solid #9aaabc;border-radius:8px;background:#fff;overflow:hidden">';
             echo '<canvas width="680" height="170" style="display:block;width:100%;height:170px;touch-action:none;cursor:crosshair" aria-label="Área de desenho da assinatura"></canvas></div>';
             echo '<p class="rp-muted">Desenhe sua assinatura. Ela será vinculada à sua conta GLPI e incorporada ao PDF final.</p>';
