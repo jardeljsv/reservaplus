@@ -163,7 +163,7 @@ final class BookingService
                 'entities_id' => $entity, 'users_id_requester' => Access::userId(), 'users_id_borrower' => $borrowerId,
                 'tickets_id' => null, 'begin' => $begin, 'end' => $end, 'status' => 'submitted', 'revision' => 1, 'scope_revision' => 1,
                 'approved_revision' => 0, 'people_count' => $people, 'purpose' => $purpose,
-                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources), 'return_workflow' => $equipmentOnly ? 'two_terms_v1' : 'legacy']),
+                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources), 'return_workflow' => $equipmentOnly ? 'three_terms_v1' : 'legacy']),
                 'operation_key' => $operation, 'integration_status' => 'synced', 'date_creation' => $now, 'date_mod' => $now,
             ]);
             foreach ($resources as $resource) {
@@ -273,6 +273,13 @@ final class BookingService
     {
         return (Store::decode($booking['policy_snapshot_json'] ?? null)['return_workflow'] ?? '')
             === 'two_terms_v1';
+    }
+
+    /** Three separately accountable terms: borrower at request/return, inspector at inspection. */
+    public static function threeTermReturn(array $booking): bool
+    {
+        return (Store::decode($booking['policy_snapshot_json'] ?? null)['return_workflow'] ?? '')
+            === 'three_terms_v1';
     }
 
     /** Complete only after actual inspection and reconciliation. */
@@ -432,7 +439,8 @@ final class BookingService
                     Store::update('bookings', $id, ['status' => 'returning']);
                     break;
                 case 'inspect':
-                    if (self::simplifiedReturn($booking) && !DocumentService::isSatisfied($id, 'return_receipt')) {
+                    if ((self::simplifiedReturn($booking) || self::threeTermReturn($booking))
+                        && !DocumentService::isSatisfied($id, 'return_receipt')) {
                         throw new \DomainException('Confirme a assinatura do termo de devolução antes da conferência técnica.');
                     }
                     $result = (string) ($input['result'] ?? '');
@@ -472,6 +480,11 @@ final class BookingService
                     if (self::simplifiedReturn($booking)) {
                         if (!DocumentService::isSatisfied($id, 'return_receipt')) {
                             throw new \DomainException('Conclua a assinatura do termo de devolução.');
+                        }
+                    } elseif (self::threeTermReturn($booking)) {
+                        if (!DocumentService::isSatisfied($id, 'return_receipt')
+                            || !DocumentService::isSatisfied($id, 'return_inspection')) {
+                            throw new \DomainException('Conclua as assinaturas do beneficiário na devolução e do técnico na conferência.');
                         }
                     } elseif (!DocumentService::isSatisfied($id, 'return_inspection')) {
                         throw new \DomainException('Conclua as assinaturas obrigatórias do termo de conferência.');
@@ -522,6 +535,23 @@ final class BookingService
         });
         if ($changed) { self::afterCommit($id, 'ReservaPlus #' . $id . ': ' . self::actionLabel($action) . '.'); }
         return self::get($id);
+    }
+
+    /** Final signature automatically closes eligible new three-term equipment returns.
+     * Calls the same guarded command used by the detail view, never skips
+     * ticket permissions, inventory checks or idempotency. */
+    public static function completeAfterFinalSignature(int $bookingId): void
+    {
+        $booking = self::get($bookingId);
+        if (!self::threeTermReturn($booking) || ($booking['status'] ?? '') !== 'returning'
+            || !self::allPhysicalReturnsComplete($bookingId)
+            || !DocumentService::isSatisfied($bookingId, 'return_receipt')
+            || !DocumentService::isSatisfied($bookingId, 'return_inspection')) {
+            return;
+        }
+        if (!Access::booking($booking, 'inspect')) { return; }
+        self::act($bookingId, 'complete', ['expected_revision' => (int) $booking['revision']],
+            'signed-return-complete-' . $bookingId . '-' . (int) $booking['revision']);
     }
 
     private static function selectedLines(array $lines, mixed $ids): array
