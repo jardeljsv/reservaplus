@@ -361,7 +361,11 @@ final class BookingView
         $canExtend = in_array($state, ['submitted', 'approved', 'ready'], true) && Access::canReschedule($booking);
         $canCancel = in_array($state, ['submitted', 'approved'], true)
             && (Access::booking($booking, 'request') || Access::booking($booking, 'manage'));
-        if ($eligible === [] && !$canExtend && !$canCancel) {
+        // Surface the next operational step in the same team list. This is
+        // only a form shortcut; BookingService::act('issue') still checks
+        // custody, source-backed signatures, schedule and actual conflicts.
+        $canIssue = self::issueListShortcutEligible($booking, $lines, Access::booking($booking, 'issue'));
+        if ($eligible === [] && !$canExtend && !$canCancel && !$canIssue) {
             self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
             return;
         }
@@ -379,6 +383,17 @@ final class BookingView
             self::hidden('_return_list', 'requests');
             self::textarea('reason', __('Motivo da rejeição', 'reservaplus'), '', true);
             self::submit(__('Confirmar rejeição', 'reservaplus'));
+            Html::closeForm();
+            echo '</details>';
+        }
+        if ($canIssue) {
+            echo '<details class="rp-mini-expand rp-mini-issue"><summary class="btn rp-mini-action rp-mini-approve">'
+                . self::e(__('Registrar entrega', 'reservaplus')) . '</summary>';
+            echo '<p class="rp-muted">' . self::e(__('Confira o recurso e a condição na entrega. A confirmação respeita o termo assinado, a janela de retirada e a disponibilidade.', 'reservaplus')) . '</p>';
+            self::formStart('issue', (int) $booking['id'], (int) $booking['revision']);
+            self::hidden('_return_list', 'requests');
+            self::textarea('condition', __('Condição na entrega e conferência dos acessórios', 'reservaplus'), '', true);
+            self::submit(__('Confirmar entrega', 'reservaplus'));
             Html::closeForm();
             echo '</details>';
         }
@@ -403,6 +418,20 @@ final class BookingView
         }
         self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
         echo '</div>';
+    }
+
+    /** Pure rendering gate; actual delivery authorization stays in BookingService. */
+    public static function issueListShortcutEligible(array $booking, array $lines, bool $canIssue): bool
+    {
+        if (!$canIssue || ($booking['status'] ?? '') !== 'approved' || $lines === []) {
+            return false;
+        }
+        foreach ($lines as $line) {
+            if (($line['state'] ?? '') !== 'allocated') {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Link only to a current document the logged-in beneficiary can sign. */
