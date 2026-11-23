@@ -95,15 +95,42 @@ try {
         if (in_array($action, ['approve', 'reject', 'receive', 'inspect'], true) && (!is_array($_POST['lines_ids'] ?? null) || $_POST['lines_ids'] === [])) {
             throw new DomainException(__('Selecione os itens que deseja registrar nesta operação.', 'reservaplus'));
         }
-        BookingService::act($id, $action, $_POST, $key);
-        if ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'mine') {
+        $actedBooking = BookingService::act($id, $action, $_POST, $key);
+        $goToReturnTerm = false;
+        if ($action === 'receive' && BookingService::simplifiedReturn($actedBooking)) {
+            // The physical receipt has already committed. Redirect its actual
+            // receiver directly to the immutable document generated afterward.
+            try {
+                foreach (DocumentService::forBooking($id) as $document) {
+                    if (($document['purpose'] ?? '') !== 'return_receipt' || empty($document['is_current'])
+                        || empty($document['can_sign']) || ($document['status'] ?? '') === 'complete') {
+                        continue;
+                    }
+                    $target = BookingView::url('agreement.php', ['id' => (int) $document['id']]
+                        + BookingView::ticketContextQuery($returnTicket));
+                    $goToReturnTerm = true;
+                    break;
+                }
+            } catch (Throwable $error) {
+                \Toolbox::logInFile('reservaplus', 'Return document redirect #'.$id.': '.$error->getMessage()."\n");
+            }
+        }
+        if ($goToReturnTerm) {
+            Session::addMessageAfterRedirect(__('Recebimento registrado. Assine o termo de devolução para liberar a conferência técnica.', 'reservaplus'));
+        } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'mine') {
             $target = BookingView::url('booking.php', ['scope' => 'mine']);
         } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'requests') {
             $target = BookingView::url('booking.php', ['scope' => 'team']);
         } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'approvals' && in_array($action, ['approve', 'reject'], true)) {
             $target = BookingView::url('booking.php', ['queue' => 'approvals', 'scope' => 'team']);
         }
-        Session::addMessageAfterRedirect(BookingView::e(__('Operação registrada. Confira a situação atual da solicitação.', 'reservaplus')));
+        if (!$goToReturnTerm) {
+            Session::addMessageAfterRedirect(BookingView::e(
+                $action === 'inspect' && ($actedBooking['status'] ?? '') === 'completed'
+                    ? __('Conferência aprovada. Reserva concluída automaticamente, sem terceiro termo.', 'reservaplus')
+                    : __('Operação registrada. Confira a situação atual da solicitação.', 'reservaplus')
+            ));
+        }
     } else {
         throw new DomainException(__('Operação inválida.', 'reservaplus'));
     }
