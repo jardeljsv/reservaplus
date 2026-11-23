@@ -108,6 +108,13 @@ rp_test('actual PDF acceptance finalizes and attaches through native Document; r
     $source = DocumentService::artifact($documentId, 'source');
     $challenge = DocumentService::issueChallenge($documentId);
     $consent = hash('sha256', DocumentService::consent(DocumentService::get($documentId), Access::userId()));
+    $snapshot = Store::decode(DocumentService::get($documentId)['snapshot_json'] ?? null);
+    if (\GlpiPlugin\Reservaplus\PdfRenderer::isCessionTerm($snapshot)) {
+        rp_throws(static fn() => DocumentService::accept(
+            $documentId, $challenge, $consent, bin2hex(random_bytes(24))
+        ), DomainException::class, 'Desenhe sua assinatura');
+        rp_same(0, count(Store::find('acceptances', ['agreements_id' => $documentId])));
+    }
     $key = bin2hex(random_bytes(24));
     $doc = DocumentService::accept($documentId, $challenge, $consent, $key, null, rp_doc_signature($documentId));
     rp_same('complete', $doc['status'], (string) ($doc['last_error'] ?? ''));
