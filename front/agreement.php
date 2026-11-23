@@ -107,12 +107,21 @@ if ($justSigned && $showFinal) {
 if ($showFinal && $doc['is_current']) {
     if (($doc['purpose'] ?? '') === 'request') {
         echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">Continuar para aprovação da reserva</a></p>';
-    } elseif (($doc['purpose'] ?? '') === 'return_receipt'
-        && \GlpiPlugin\Reservaplus\BookingService::simplifiedReturn(
+    } elseif (($doc['purpose'] ?? '') === 'return_receipt') {
+        $relatedBooking = Store::row('bookings', (int) $doc['bookings_id']);
+        if (\GlpiPlugin\Reservaplus\BookingService::threeTermReturn($relatedBooking)) {
+            echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">'
+                . 'Devolução assinada — acompanhar conferência técnica</a></p>';
+        } elseif (\GlpiPlugin\Reservaplus\BookingService::simplifiedReturn($relatedBooking)) {
+            echo '<p><a class="btn btn-primary" href="' . $e($backUrl . '#rp-booking-actions') . '">'
+                . 'Continuar para conferência técnica</a></p>';
+        }
+    } elseif (($doc['purpose'] ?? '') === 'return_inspection'
+        && \GlpiPlugin\Reservaplus\BookingService::threeTermReturn(
             Store::row('bookings', (int) $doc['bookings_id'])
         )) {
-        echo '<p><a class="btn btn-primary" href="' . $e($backUrl . '#rp-booking-actions') . '">'
-            . 'Continuar para conferência técnica</a></p>';
+        echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">'
+            . 'Ver resultado da conferência e conclusão</a></p>';
     }
 }
 echo '<p>';
@@ -170,9 +179,14 @@ if ($doc['is_current'] && !$mySigned && $chosenRole !== '') {
         echo '<p><strong>Leia o documento e confirme seu aceite.</strong> O sistema registra a conta GLPI e o perfil autorizado utilizado nesta assinatura.</p>';
         if (PdfRenderer::requiresHandwrittenSignature((array) ($doc['snapshot'] ?? []))) {
             echo '<div class="rp-handwritten-panel my-3" data-rp-handwritten>';
-            $drawingLabel = ($doc['purpose'] ?? '') === 'return_receipt'
-                ? 'Assinatura do técnico recebedor (mouse ou toque)'
-                : 'Assinatura do(a) requerente (mouse ou toque)';
+            $relatedWorkflow = (string) (($doc['snapshot'] ?? [])['return_workflow'] ?? '');
+            $drawingLabel = match ((string) ($doc['purpose'] ?? '')) {
+                'return_receipt' => $relatedWorkflow === 'three_terms_v1'
+                    ? 'Assinatura do beneficiário que devolve (mouse ou toque)'
+                    : 'Assinatura do técnico recebedor (mouse ou toque)',
+                'return_inspection' => 'Assinatura do técnico responsável pela conferência (mouse ou toque)',
+                default => 'Assinatura do(a) requerente (mouse ou toque)',
+            };
             echo '<label class="form-label"><strong>' . $e($drawingLabel) . '</strong></label>';
             echo '<div style="max-width:680px;border:1px solid #9aaabc;border-radius:8px;background:#fff;overflow:hidden">';
             echo '<canvas width="680" height="170" style="display:block;width:100%;height:170px;touch-action:none;cursor:crosshair" aria-label="Área de desenho da assinatura"></canvas></div>';
