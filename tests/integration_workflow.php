@@ -38,7 +38,11 @@ function rp_sign(int $bookingId,string $purpose): int {
     $artifact=DocumentService::artifact($id,'source');
     rp_assert(str_starts_with($artifact['bytes'],'%PDF-'),'Source PDF rendered');
     $challenge=DocumentService::issueChallenge($id);
-    $doc=DocumentService::accept($id,$challenge,hash('sha256',DocumentService::consent($doc,Access::userId())),'integration_'.bin2hex(random_bytes(16)));
+    $snapshot=Store::decode($doc['snapshot_json']??null);
+    $signature=\GlpiPlugin\Reservaplus\PdfRenderer::requiresHandwrittenSignature($snapshot)
+        ? json_encode([[[80,100],[140,150],[200,220],[270,180],[310,210]]]) : null;
+    $doc=DocumentService::accept($id,$challenge,hash('sha256',DocumentService::consent($doc,Access::userId())),
+        'integration_'.bin2hex(random_bytes(16)),null,$signature);
     rp_same('complete',$doc['status'],'Final PDF acceptance');
     return $id;
 }
@@ -76,7 +80,8 @@ rp_throws(static fn()=>rp_action($bookingId,'approve'),DomainException::class);
 rp_test('self-service request creates one ticket and rejects unauthorized approval and altered retries',static function()use($booking):void{
     rp_same(1,count($booking['approvals']),'One approval per resource');
 });
-
+rp_assert(BookingService::simplifiedReturn($booking));
+rp_sign($bookingId,'request');
 rp_login($adminName,Access::ADMIN);
 $approval=$booking['approvals'][0];$nativeApproval=new TicketValidation();
 rp_assert($nativeApproval->getFromDB((int)$approval['ticketvalidations_id']),'Native approval exists');
@@ -109,23 +114,30 @@ rp_same('returning',$booking['status']);rp_same('inspection',Store::row('resourc
 rp_throws(static fn()=>rp_action($bookingId,'inspect',['result'=>'pass','findings'=>'Function tested.']),DomainException::class);
 rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
 $booking=rp_action($bookingId,'receive',['accessories'=>[(int)$line['id']=>[0=>1]],'note'=>'Charger now returned.']);
+$documentId=rp_sign($bookingId,'return_receipt');
+rp_same(1,count(DocumentService::get($documentId)['signers']),'Only the receiving technician signs the return document');
+rp_same(['receiver'],DocumentService::get($documentId)['signers'][0]['roles']);
 $booking=rp_action($bookingId,'inspect',['result'=>'pass','findings'=>'Equipment and charger tested, all functions normal.']);
+rp_same('completed',$booking['status'],'All items checked: automatically complete without third document');
 rp_same('ready',$booking['lines'][0]['state']);rp_same('available',Store::row('resources',$resourceId)['operational_state']);
 rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
 rp_test('physical receipt, accessory reconciliation and inspection gates',static function()use($booking):void{rp_same(1,(int)Store::decode($booking['lines'][0]['accessories_json'])[0]['received']);});
 
-$documentId=rp_sign($bookingId,'return_inspection');
 rp_test('native aggregate models cannot bypass service state or immutable evidence',static function()use($bookingId,$documentId):void{
     foreach([[new Booking(),$bookingId],[new Agreement(),$documentId]] as [$model,$id]) {
         rp_assert(!$model->can(-1,CREATE));rp_assert(!$model->can($id,UPDATE));rp_assert(!$model->can($id,DELETE));rp_assert(!$model->can($id,PURGE));
         rp_assert($model->update(['id'=>$id,'status'=>'forged'])===false,'Direct model update denied');
         rp_assert($model->delete(['id'=>$id],true)===false,'Direct model purge denied');
     }
-    rp_same('returning',Store::row('bookings',$bookingId)['status']);rp_same('complete',Store::row('agreements',$documentId)['status']);
+    rp_same('completed',Store::row('bookings',$bookingId)['status']);rp_same('complete',Store::row('agreements',$documentId)['status']);
 });
-$booking=rp_action($bookingId,'complete');rp_same('completed',$booking['status']);
+rp_same([],Store::find('agreements',['bookings_id'=>$bookingId,'purpose'=>'return_inspection']),
+    'Simplified return must not generate a third document');
 $ticket=new Ticket();rp_assert($ticket->getFromDB((int)$booking['tickets_id']));rp_same(CommonITILObject::SOLVED,(int)$ticket->fields['status']);
-rp_test('signed return inspection permits native ticket solution',static function()use($bookingId):void{rp_assert(DocumentService::isSatisfied($bookingId,'return_inspection'));});
+rp_test('signed return receipt and audited inspection permit native ticket solution',static function()use($bookingId):void{
+    rp_assert(DocumentService::isSatisfied($bookingId,'return_receipt'));
+    rp_assert(!DocumentService::isSatisfied($bookingId,'return_inspection'));
+});
 
 // Public internal rooms project to GLPI even when the requesting profile has no
 // generic Resource search permission; inventory remains plugin-owned.
@@ -156,16 +168,18 @@ $signedResource=ResourceService::save([
 ]);
 $signedInput=['resources_ids'=>[$signedResource],'begin'=>date('Y-m-d H:i:s',time()+14400),'end'=>date('Y-m-d H:i:s',time()+18000),'purpose'=>'Signed request revision'];
 $signedBooking=BookingService::submit($signedInput,'integration-'.bin2hex(random_bytes(16)));
-rp_throws(static fn()=>DocumentService::prepare($signedBooking,'handover'),DomainException::class);
+rp_throws(static fn()=>rp_action($signedBooking,'approve'),DomainException::class,
+    'Equipment requires a signed request before approval');
+$oldDocument=rp_sign($signedBooking,'request');
 $signed=rp_action($signedBooking,'approve');$oldApproval=(int)$signed['approvals'][0]['ticketvalidations_id'];
-$oldDocument=rp_sign($signedBooking,'handover');rp_assert(DocumentService::isSatisfied($signedBooking,'handover'));
+rp_assert(DocumentService::isSatisfied($signedBooking,'request'));
 // Force only the disposable clock fixture due date, leaving signed facts intact.
 Store::update('bookings',$signedBooking,['hold_expires_at'=>date('Y-m-d H:i:s',time()-1)]);
 BookingService::expireHolds();rp_same('approved',Store::row('bookings',$signedBooking)['status'],'Signed holds retained');
 rp_same(null,Store::row('bookings',$signedBooking)['hold_expires_at']);
 $signed=rp_action($signedBooking,'extend',['end'=>date('Y-m-d H:i:s',time()+21600)]);
 rp_same('submitted',$signed['status']);rp_same(2,(int)$signed['scope_revision']);
-rp_assert(!DocumentService::isSatisfied($signedBooking,'handover'),'Material period change invalidates prior signature');
+rp_assert(!DocumentService::isSatisfied($signedBooking,'request'),'Material period change invalidates prior signature');
 rp_assert(!DocumentService::get($oldDocument)['is_current']);
 rp_assert(count(Store::find('bookingapprovalhistory',['bookings_id'=>$signedBooking]))===1,'Historical approval persisted');
 rp_throws(static fn()=>(new TicketValidation())->update(['id'=>$oldApproval,'status'=>CommonITILValidation::REFUSED]),DomainException::class);
