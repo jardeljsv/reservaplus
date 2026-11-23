@@ -27,7 +27,7 @@ final class PdfRenderer
         $pdf->SetFont('dejavusans', '', 9);
         $pdf->AddPage();
         $pdf->writeHTML(self::html($snapshot), true, false, true, false, '');
-        if ($acceptances !== [] && self::isCessionTerm($snapshot)) {
+        if ($acceptances !== [] && self::requiresHandwrittenSignature($snapshot)) {
             self::drawSignature($pdf, $acceptances);
         }
         if ($acceptances !== []) {
@@ -125,6 +125,23 @@ final class PdfRenderer
     {
         if (($snapshot['template_version'] ?? '') !== self::TEMPLATE_VERSION) { return false; }
         if (!in_array((string) ($snapshot['purpose'] ?? ''), ['request', 'handover'], true)) { return false; }
+        $lines = (array) ($snapshot['scope']['lines'] ?? []);
+        if ($lines === []) { return false; }
+        foreach ($lines as $line) {
+            if (($line['resource']['kind'] ?? '') !== 'equipment') { return false; }
+        }
+        return true;
+    }
+
+    /** New equipment return receipts also require the authenticated drawn
+     * signature. Existing completed PDFs and old template versions stay intact. */
+    public static function requiresHandwrittenSignature(array $snapshot): bool
+    {
+        if (self::isCessionTerm($snapshot)) { return true; }
+        if (($snapshot['template_version'] ?? '') !== self::TEMPLATE_VERSION
+            || ($snapshot['purpose'] ?? '') !== 'return_receipt') {
+            return false;
+        }
         $lines = (array) ($snapshot['scope']['lines'] ?? []);
         if ($lines === []) { return false; }
         foreach ($lines as $line) {
