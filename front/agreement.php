@@ -36,13 +36,10 @@ try {
                 throw new DomainException('Marque a declaração para registrar um aceite explícito.');
             }
             $signedDocument = DocumentService::accept($id, (string) ($_POST['challenge'] ?? ''), (string) ($_POST['consent_sha256'] ?? ''), (string) ($_POST['operation_key'] ?? ''), (string) ($_POST['role'] ?? ''), is_string($_POST['signature_strokes'] ?? null) ? $_POST['signature_strokes'] : null);
-            // The requester signed the provisional equipment request: the
-            // same submission now advances to the approval stage.
-            if (($signedDocument['purpose'] ?? '') === 'request'
-                && DocumentService::isSatisfied((int) $signedDocument['bookings_id'], 'request')) {
-                Session::addMessageAfterRedirect(__('Termo assinado. Sua reserva foi encaminhada para aprovação.', 'reservaplus'));
-                Html::redirect(BookingView::url('booking.php', ['id' => (int) $signedDocument['bookings_id']]));
-            }
+            // Show the signed PDF immediately after acceptance. The requester
+            // can continue to the already-unblocked approval step from here.
+            Html::redirect(BookingView::url('agreement.php', ['id' => $id, 'signed' => 1]
+                + BookingView::ticketContextQuery($returnTicket)));
         } elseif ($action === 'retry') {
             DocumentService::finalize($id);
         } else {
@@ -89,12 +86,35 @@ echo '<p>Documento #' . $id . ' | Versão ' . (int) $doc['revision'] . ' | Estad
 if (!$doc['is_current']) {
     echo '<div class="alert alert-warning">Esta versão é histórica. O escopo atual da reserva exige um documento atualizado; os aceites anteriores permanecem preservados.</div>';
 }
-echo '<p><a class="btn btn-outline-primary" target="_blank" rel="noopener" href="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=source&inline=1') . '">Abrir PDF original</a> ';
-if (!empty($doc['final_sha256'])) {
-    echo '<a class="btn btn-primary" href="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=final') . '">Baixar PDF com comprovante</a> ';
+// Show the immutable final artifact by default once it is complete;
+// preserve the original for signing and audit without rewriting either PDF.
+$showFinal = (string) ($doc['status'] ?? '') === 'complete'
+    && !empty($doc['final_sha256']) && !empty($doc['final_path']);
+$viewerArtifact = $showFinal ? 'final' : 'source';
+$viewerTitle = $showFinal ? 'PDF final assinado com comprovante de aceite' : 'PDF original da versão a ser aceita';
+$justSigned = ($_GET['signed'] ?? '') === '1'
+    && DocumentService::userAcceptedFromRows(
+        array_values(array_filter($doc['acceptances'], static fn (array $row): bool =>
+            (int) ($row['users_id'] ?? 0) === Access::userId()
+        )),
+        (string) $doc['source_sha256']
+    );
+if ($justSigned && $showFinal) {
+    echo '<div class="alert alert-success" role="status"><strong>Assinatura registrada com sucesso.</strong> Abaixo está a versão final do termo com o comprovante de aceite.</div>';
+} elseif ($justSigned) {
+    echo '<div class="alert alert-info" role="status">Aceite registrado. O PDF final ainda está sendo preparado; o original permanece disponível para consulta.</div>';
 }
+if ($showFinal && ($doc['purpose'] ?? '') === 'request' && $doc['is_current']) {
+    echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">Continuar para aprovação da reserva</a></p>';
+}
+echo '<p>';
+if ($showFinal) {
+    echo '<a class="btn btn-primary" target="_blank" rel="noopener" href="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=final&inline=1') . '">Abrir versão assinada</a> ';
+    echo '<a class="btn btn-outline-primary" href="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=final') . '">Baixar PDF assinado</a> ';
+}
+echo '<a class="btn btn-outline-secondary" target="_blank" rel="noopener" href="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=source&inline=1') . '">Abrir PDF original</a> ';
 echo '<a class="btn btn-outline-secondary" href="' . $e(BookingView::url('verify.php', ['code' => $doc['verification_token']] + BookingView::ticketContextQuery($returnTicket))) . '">Verificar integridade</a></p>';
-echo '<iframe title="PDF original da versão a ser aceita" src="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=source&inline=1') . '" style="width:100%;height:560px;border:1px solid #ccd5df"></iframe>';
+echo '<iframe title="' . $e($viewerTitle) . '" src="' . $e($base . 'agreement.download.php?id=' . $id . '&artifact=' . $viewerArtifact . '&inline=1') . '" style="width:100%;height:560px;border:1px solid #ccd5df"></iframe>';
 if (!$isRequesterInterface) {
     echo '<details class="rp-subform"><summary>Identificação técnica do arquivo</summary><p class="rp-muted">SHA-256 do original: <code>' . $e((string) $doc['source_sha256']) . '</code></p></details>';
 }
