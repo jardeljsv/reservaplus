@@ -97,12 +97,14 @@ try {
         }
         $actedBooking = BookingService::act($id, $action, $_POST, $key);
         $goToReturnTerm = false;
-        if ($action === 'receive' && BookingService::simplifiedReturn($actedBooking)) {
+        if (($action === 'receive' && BookingService::simplifiedReturn($actedBooking))
+            || ($action === 'inspect' && BookingService::threeTermReturn($actedBooking))) {
             // The physical receipt has already committed. Redirect its actual
             // receiver directly to the immutable document generated afterward.
             try {
                 foreach (DocumentService::forBooking($id) as $document) {
-                    if (($document['purpose'] ?? '') !== 'return_receipt' || empty($document['is_current'])
+                    $expectedPurpose = $action === 'inspect' ? 'return_inspection' : 'return_receipt';
+                    if (($document['purpose'] ?? '') !== $expectedPurpose || empty($document['is_current'])
                         || empty($document['can_sign']) || ($document['status'] ?? '') === 'complete') {
                         continue;
                     }
@@ -116,7 +118,9 @@ try {
             }
         }
         if ($goToReturnTerm) {
-            Session::addMessageAfterRedirect(__('Recebimento registrado. Assine o termo de devolução para liberar a conferência técnica.', 'reservaplus'));
+            Session::addMessageAfterRedirect($action === 'inspect'
+                ? __('Conferência registrada. Assine o termo técnico para concluir a reserva.', 'reservaplus')
+                : __('Recebimento registrado. Assine o termo de devolução para liberar a conferência técnica.', 'reservaplus'));
         } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'mine') {
             $target = BookingView::url('booking.php', ['scope' => 'mine']);
         } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'requests') {
@@ -126,9 +130,11 @@ try {
         }
         if (!$goToReturnTerm) {
             Session::addMessageAfterRedirect(BookingView::e(
-                $action === 'inspect' && ($actedBooking['status'] ?? '') === 'completed'
-                    ? __('Conferência aprovada. Reserva concluída automaticamente, sem terceiro termo.', 'reservaplus')
-                    : __('Operação registrada. Confira a situação atual da solicitação.', 'reservaplus')
+                $action === 'receive' && BookingService::threeTermReturn($actedBooking)
+                    ? __('Recebimento registrado. O beneficiário deve assinar o termo de devolução antes da conferência técnica.', 'reservaplus')
+                    : ($action === 'inspect' && ($actedBooking['status'] ?? '') === 'completed'
+                        ? __('Conferência aprovada. Reserva concluída automaticamente.', 'reservaplus')
+                        : __('Operação registrada. Confira a situação atual da solicitação.', 'reservaplus'))
             ));
         }
     } else {
