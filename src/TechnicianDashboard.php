@@ -97,6 +97,11 @@ final class TechnicianDashboard
             return [];
         }
         $flags = self::physicalFlags($booking, $lines, Store::now());
+        if (BookingService::simplifiedReturn($booking)) {
+            foreach ($lines as $line) {
+                if (!empty($line['received_at'])) { return ['return_receipt']; }
+            }
+        }
         if ($flags['all_inspected']) { return ['return_inspection']; }
         if ($flags['allocated']) { return BookingService::signaturePurposes($lines); }
         return [];
