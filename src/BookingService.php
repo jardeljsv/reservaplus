@@ -266,6 +266,18 @@ final class BookingService
         return true;
     }
 
+    /** A submitted equipment request remains in its signing step until the immutable
+     * source PDF has one valid acceptance per required account and is finalized. */
+    public static function awaitsInitialSignature(array $booking, ?array $lines = null): bool
+    {
+        if (!in_array((string) ($booking['status'] ?? ''), ['submitted', 'approved'], true)) {
+            return false;
+        }
+        $lines ??= self::lines((int) $booking['id']);
+        return in_array('request', self::signaturePurposes($lines), true)
+            && !DocumentService::isSatisfied((int) $booking['id'], 'request');
+    }
+
     /** HTTP tokens and controls are not part of a business-command identity. */
     public static function commandFingerprint(int $id, string $action, array $input): string
     {
