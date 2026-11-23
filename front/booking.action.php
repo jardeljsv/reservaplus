@@ -54,12 +54,32 @@ try {
             if ($draftId !== '') { $draft['submitted_booking_id'] = $id; RequestDraft::save($draft); }
         }
         $target = BookingView::url('booking.php', ['id' => $id]);
-        if ((int) ($submission['tickets_id'] ?? 0) > 0) {
-            $origin = BookingView::ticketContext(BookingService::get($id), $submission['tickets_id']);
-            $target = BookingView::ticketTabUrl($origin);
+        $savedBooking = BookingService::get($id);
+        // Redirect straight to the signature after the transactional booking
+        // has established the final resource snapshot and document hash.
+        if (BookingService::awaitsInitialSignature($savedBooking, $savedBooking['lines'])) {
+            try {
+                $documents = DocumentService::forBooking($id);
+                foreach ($documents as $document) {
+                    if (($document['purpose'] ?? '') === 'request' && !empty($document['is_current'])
+                        && !empty($document['can_sign'])) {
+                        $target = BookingView::url('agreement.php', ['id' => (int) $document['id']]);
+                        break;
+                    }
+                }
+            } catch (Throwable $documentError) {
+                \Toolbox::logInFile('reservaplus', 'Signing step redirect #'. $id .': '.$documentError->getMessage()."\n");
+                // Booking detail exposes document preparation/retry if needed.
+            }
+            Session::addMessageAfterRedirect(BookingView::e(__('Reserva registrada provisoriamente. Assine o termo para encaminhá-la à aprovação.', 'reservaplus')));
+        } else {
+            if ((int) ($submission['tickets_id'] ?? 0) > 0) {
+                $origin = BookingView::ticketContext($savedBooking, $submission['tickets_id']);
+                $target = BookingView::ticketTabUrl($origin);
+            }
+            Session::addMessageAfterRedirect(BookingView::e(__('Solicitação registrada. Acompanhe as próximas etapas nesta página.', 'reservaplus')));
         }
         unset($_SESSION['reservaplus_booking_form']);
-        Session::addMessageAfterRedirect(BookingView::e(__('Solicitação registrada. Acompanhe as próximas etapas nesta página.', 'reservaplus')));
     } elseif ($action === 'prepare_document') {
         $booking = BookingService::get($id);
         if ((int) ($_POST['expected_revision'] ?? 0) !== (int) $booking['revision']) {
