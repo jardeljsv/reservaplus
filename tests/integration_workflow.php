@@ -183,10 +183,18 @@ rp_assert(!DocumentService::isSatisfied($signedBooking,'request'),'Material peri
 rp_assert(!DocumentService::get($oldDocument)['is_current']);
 rp_assert(count(Store::find('bookingapprovalhistory',['bookings_id'=>$signedBooking]))===1,'Historical approval persisted');
 rp_throws(static fn()=>(new TicketValidation())->update(['id'=>$oldApproval,'status'=>CommonITILValidation::REFUSED]),DomainException::class);
+rp_throws(static fn()=>rp_action($signedBooking,'approve'),DomainException::class,
+    'A revised equipment scope must be signed again before renewed approval');
+$newDocument=rp_sign($signedBooking,'request');
+rp_assert($newDocument!==$oldDocument,'A changed scope has its own signed document');
 $signed=rp_action($signedBooking,'approve');
 Store::update('bookings',$signedBooking,['hold_expires_at'=>date('Y-m-d H:i:s',time()-1)]);
-BookingService::expireHolds();rp_same('cancelled',Store::row('bookings',$signedBooking)['status'],'Unsigned revised hold expires');
-rp_test('material revision invalidates signatures, protects historical approvals and expires only unsigned holds',static function()use($signedBooking):void{rp_same('released',Store::find('bookinglines',['bookings_id'=>$signedBooking])[0]['state']);});
+BookingService::expireHolds();rp_same('approved',Store::row('bookings',$signedBooking)['status'],
+    'A signed revised scope is not cancelled by an obsolete hold');
+rp_test('material revision invalidates prior signature and preserves historical approval',static function()use($signedBooking):void{
+    rp_assert(DocumentService::isSatisfied($signedBooking,'request'));
+    rp_same('allocated',Store::find('bookinglines',['bookings_id'=>$signedBooking])[0]['state']);
+});
 
 // Technician ticket-origin intake reuses the native ticket instead of duplicating it.
 $nativeTicket=new Ticket();$ticketInput=['name'=>$tag.' existing ticket','content'=>'Reserve request from ticket','entities_id'=>0,'type'=>Ticket::DEMAND_TYPE,'_users_id_requester'=>$admin];
