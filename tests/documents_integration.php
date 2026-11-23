@@ -39,7 +39,7 @@ function rp_doc_signature(int $id): ?string
 {
     $doc = DocumentService::get($id);
     $snapshot = Store::decode($doc['snapshot_json'] ?? null);
-    return \GlpiPlugin\Reservaplus\PdfRenderer::isCessionTerm($snapshot)
+    return \GlpiPlugin\Reservaplus\PdfRenderer::requiresHandwrittenSignature($snapshot)
         ? json_encode([[[90, 140], [160, 190], [230, 300], [380, 225], [540, 360]]], JSON_THROW_ON_ERROR)
         : null;
 }
