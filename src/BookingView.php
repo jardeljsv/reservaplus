@@ -1094,9 +1094,12 @@ final class BookingView
         foreach ($booking['lines'] ?? [] as $line) {
             $allReady = $allReady && ($line['state'] ?? '') === 'ready' && !empty($line['inspection_at']);
         }
+        $canCompleteThreeTerms = BookingService::threeTermReturn($booking)
+            && DocumentService::isSatisfied((int) $booking['id'], 'return_receipt')
+            && DocumentService::isSatisfied((int) $booking['id'], 'return_inspection');
         if ($allReady && Access::booking($booking, 'inspect') && $state === 'returning'
             && !BookingService::simplifiedReturn($booking)
-            && !BookingService::threeTermReturn($booking)) {
+            && (!BookingService::threeTermReturn($booking) || $canCompleteThreeTerms)) {
             self::actionStart($booking, 'complete', __('Concluir solicitação', 'reservaplus'), __('A conclusão exige os registros de devolução ou término de uso e os documentos obrigatórios. Encerrar não substitui os registros físicos.', 'reservaplus'));
             self::actionEnd(__('Verificar requisitos e concluir', 'reservaplus'));
         }
