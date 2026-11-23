@@ -23,20 +23,22 @@ Estado: checklist de execução, não certificado de aprovação. Ambiente obser
 - [ ] Reserva de sala sem exigência antecipada: preserva Enviar solicitação e processo anterior.
 - [ ] Recarregar a tela ou repetir a solicitação não duplica chamado, documento ou assinatura.
 
-### Devolução simplificada — dois termos para novas reservas de equipamentos
-- [ ] Uma nova reserva de equipamento grava o marcador congelado `two_terms_v1`; reservas históricas e salas continuam com o fluxo anterior.
-- [ ] A abertura exige assinatura do beneficiário em um único termo de responsabilidade, antes da aprovação.
-- [ ] Receber devolução registra o fato físico e gera automaticamente um termo de devolução, sem exigir que o técnico procure a ação de preparação.
-- [ ] Após registrar o recebimento, a interface direciona o técnico recebedor diretamente à assinatura com mouse ou toque, sem aprovar automaticamente a inspeção.
-- [ ] O termo de devolução exige assinatura do(s) técnico(s) que efetivamente registraram recebimentos; não exige outra assinatura do beneficiário por política antiga.
-- [ ] O PDF de devolução apresenta patrimônio, acessórios e quantidades efetivamente recebidas; deixa claro que a conferência técnica é posterior.
-- [ ] Sem PDF de devolução assinado e íntegro, nem a interface nem o backend deixam registrar inspeção na nova modalidade.
-- [ ] A conferência técnica registra inspetor, testes, constatações, avarias e acessórios no histórico GLPI, sem criar termo `return_inspection`.
-- [ ] Com todos os equipamentos conferidos e acessórios conciliados, a última inspeção aprovada conclui automaticamente a reserva e soluciona o chamado.
-- [ ] Com acessórios faltantes, quarentena, manutenção, inspeção parcial ou erro de assinatura, a reserva permanece em andamento.
-- [ ] Recebimento complementar altera os fatos e exige termo de devolução vigente assinado antes da conferência.
-- [ ] Documento e aceite históricos permanecem imutáveis, sem migração ou reescrita de hashes.
-- [ ] Executar o teste integrado com banco descartável autorizado; GitHub Actions apenas comprova os testes independentes.
+### Três termos com signatários distintos — novas reservas de equipamento
+- [ ] Uma nova reserva de equipamento grava `three_terms_v1` no escopo congelado; reservas antigas `two_terms_v1`, `legacy` e salas não são alteradas.
+- [ ] **Termo de Responsabilidade**: é emitido automaticamente na solicitação e assinado exclusivamente pelo beneficiário antes da aprovação.
+- [ ] O técnico registra a devolução física com equipamentos e acessórios efetivamente recebidos, sem antecipar inspeção nem atribuir aceite ao beneficiário.
+- [ ] **Termo de Devolução**: é emitido após o recebimento físico, e somente o beneficiário indicado na reserva é signatário.
+- [ ] Mesmo se `return_signature_required` estava desativado, a devolução desta nova modalidade exige a assinatura do beneficiário.
+- [ ] O técnico não pode realizar conferência enquanto faltar a assinatura finalizada e íntegra do termo de devolução vigente.
+- [ ] O técnico registra testes, condições, ausências e resultado. O registro produz automaticamente **Termo de Conferência Técnica**, cujo único signatário é o inspetor autorizado que registrou o ato.
+- [ ] Após a conferência, a interface direciona o técnico ao termo de conferência e à assinatura manuscrita.
+- [ ] Antes da assinatura do técnico, a reserva permanece “Devolução em andamento”; somente o último aceite, com itens prontos e acessórios completos, conclui automaticamente e soluciona o chamado.
+- [ ] Avarias, quarentena, pendências de acessórios e conferências parciais nunca produzem conclusão automática.
+- [ ] Testar dois usuários distintos (beneficiário e técnico), com GLPI/perfis diferentes e acesso restrito às assinaturas do seu papel.
+- [ ] Testar usuário com dois papéis acumulados e conferir aceite separado por documento, nunca aceite por papel inventado.
+- [ ] Recebimentos adicionais invalidam a versão anterior de devolução e exigem novo aceite vinculado aos fatos atuais.
+- [ ] PDFs e registros antigos permanecem íntegros e imutáveis; não atualizar em massa o status ou hashes das reservas antigas.
+- [ ] Teste integrado só em banco descartável, autorizado explicitamente; os testes estáticos de CI não substituem homologação funcional.
 
 ### Nova assinatura de equipamento — ordem obrigatória
 - [ ] Nova reserva de equipamento gera termo de cessão antes da aprovação (mesmo se o recurso tinha configuração anterior de assinatura após aprovação).
