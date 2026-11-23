@@ -35,12 +35,21 @@ function rp_doc_login(string $name, int $rights = Access::ADMIN): int
     return (int) $user->getID();
 }
 
+function rp_doc_signature(int $id): ?string
+{
+    $doc = DocumentService::get($id);
+    $snapshot = Store::decode($doc['snapshot_json'] ?? null);
+    return \GlpiPlugin\Reservaplus\PdfRenderer::isCessionTerm($snapshot)
+        ? json_encode([[[90, 140], [160, 190], [230, 300], [380, 225], [540, 360]]], JSON_THROW_ON_ERROR)
+        : null;
+}
+
 function rp_doc_accept(int $id, ?string $role = null): array
 {
     DocumentService::artifact($id, 'source');
     $challenge = DocumentService::issueChallenge($id, $role);
     $consent = hash('sha256', DocumentService::consent(DocumentService::get($id), Access::userId(), $role));
-    return DocumentService::accept($id, $challenge, $consent, bin2hex(random_bytes(24)), $role);
+    return DocumentService::accept($id, $challenge, $consent, bin2hex(random_bytes(24)), $role, rp_doc_signature($id));
 }
 
 $borrower = rp_doc_login('glpi');
@@ -71,11 +80,11 @@ rp_test('native prepare preserves exact original; source must be served; wrong c
     $doc = DocumentService::get($documentId);
     $challenge = DocumentService::issueChallenge($documentId);
     $consent = hash('sha256', DocumentService::consent($doc, Access::userId()));
-    rp_throws(fn () => DocumentService::accept($documentId, $challenge, $consent, bin2hex(random_bytes(24))), DomainException::class, 'Abra o PDF');
+    rp_throws(fn () => DocumentService::accept($documentId, $challenge, $consent, bin2hex(random_bytes(24)), null, rp_doc_signature($documentId)), DomainException::class, 'Abra o PDF');
     $pdf = DocumentService::artifact($documentId, 'source');
     rp_assert(str_starts_with($pdf['bytes'], '%PDF-'));
     rp_same($doc['source_sha256'], hash('sha256', $pdf['bytes']));
-    rp_throws(fn () => DocumentService::accept($documentId, $challenge, str_repeat('0', 64), bin2hex(random_bytes(24))), DomainException::class);
+    rp_throws(fn () => DocumentService::accept($documentId, $challenge, str_repeat('0', 64), bin2hex(random_bytes(24)), null, rp_doc_signature($documentId)), DomainException::class);
     rp_same(0, count(Store::find('acceptances', ['agreements_id' => $documentId])));
 });
 
@@ -100,14 +109,14 @@ rp_test('actual PDF acceptance finalizes and attaches through native Document; r
     $challenge = DocumentService::issueChallenge($documentId);
     $consent = hash('sha256', DocumentService::consent(DocumentService::get($documentId), Access::userId()));
     $key = bin2hex(random_bytes(24));
-    $doc = DocumentService::accept($documentId, $challenge, $consent, $key);
+    $doc = DocumentService::accept($documentId, $challenge, $consent, $key, null, rp_doc_signature($documentId));
     rp_same('complete', $doc['status'], (string) ($doc['last_error'] ?? ''));
     rp_same('attached', $doc['attachment_status'], (string) ($doc['last_error'] ?? ''));
     rp_assert((int) $doc['final_documents_id'] > 0);
     global $DB;
     $relation = $DB->request(['FROM' => 'glpi_documents_items', 'WHERE' => ['documents_id' => (int) $doc['final_documents_id'], 'items_id' => (int) $ticketId, 'itemtype' => 'Ticket']])->current();
     rp_assert((bool) $relation, 'Actual native Document_Item relation must exist');
-    DocumentService::accept($documentId, $challenge, $consent, $key);
+    DocumentService::accept($documentId, $challenge, $consent, $key, null, rp_doc_signature($documentId));
     rp_same(1, count(Store::find('acceptances', ['agreements_id' => $documentId])));
     rp_same($source['bytes'], DocumentService::artifact($documentId, 'source')['bytes'], 'Original PDF bytes never rewritten');
     rp_assert(DocumentService::verify($doc['verification_token'])['integrity_valid']);
