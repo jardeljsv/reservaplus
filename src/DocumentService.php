@@ -33,11 +33,16 @@ final class DocumentService
         $token = bin2hex(random_bytes(32));
         $snapshot = [
             'scope' => $scope, 'scope_hash' => $scopeHash, 'purpose' => $purpose,
-            'title' => ($purpose === 'return_receipt' && BookingService::simplifiedReturn($booking))
-                ? 'Termo de devolução de equipamento' : self::title($purpose, self::roomsOnly($scope)),
+            'title' => ($purpose === 'return_receipt'
+                && (BookingService::simplifiedReturn($booking) || BookingService::threeTermReturn($booking)))
+                ? 'Termo de devolução de equipamento'
+                : ($purpose === 'return_inspection' && BookingService::threeTermReturn($booking)
+                    ? 'Termo de conferência técnica de equipamento'
+                    : self::title($purpose, self::roomsOnly($scope))),
             'statement' => self::statement($purpose, self::roomsOnly($scope)),
             'consent_text' => self::baseConsent(), 'template_version' => PdfRenderer::TEMPLATE_VERSION,
-            'return_workflow' => BookingService::simplifiedReturn($booking) ? 'two_terms_v1' : 'legacy',
+            'return_workflow' => BookingService::threeTermReturn($booking) ? 'three_terms_v1'
+                : (BookingService::simplifiedReturn($booking) ? 'two_terms_v1' : 'legacy'),
             'prepared_at' => Store::now(), 'timezone' => date_default_timezone_get(),
             'tickets_id' => (int) ($booking['tickets_id'] ?? 0), 'verification_token' => $token,
             // Login GLPI/AD congelado no documento, sem alterar hashes de termos antigos.
@@ -249,7 +254,12 @@ final class DocumentService
             ]);
         });
         self::finalize($documentId);
-        return self::get($documentId);
+        $finished = self::get($documentId);
+        if (($finished['status'] ?? '') === 'complete'
+            && ($finished['purpose'] ?? '') === 'return_inspection') {
+            BookingService::completeAfterFinalSignature((int) $finished['bookings_id']);
+        }
+        return $finished;
     }
 
     /** Strict normalized coordinate representation, not arbitrary image or HTML input. */
@@ -570,12 +580,14 @@ final class DocumentService
             }
         };
         $simplifiedReceipt = $purpose === 'return_receipt' && BookingService::simplifiedReturn($booking);
-        $borrowerRequired = in_array($purpose, ['request', 'handover'], true);
+        $threeTerms = BookingService::threeTermReturn($booking);
+        $borrowerRequired = in_array($purpose, ['request', 'handover'], true)
+            || ($threeTerms && $purpose === 'return_receipt');
         foreach (Store::find('bookinglines', ['bookings_id' => (int) $booking['id']]) as $line) {
             $snap = Store::decode($line['snapshot_json'] ?? null);
             $resource = (array) ($snap['resource'] ?? $snap);
             $policy = is_array($resource['policy'] ?? null) ? $resource['policy'] : Store::decode($resource['policy_json'] ?? null);
-            if (!$simplifiedReceipt) {
+            if (!$simplifiedReceipt && !$threeTerms) {
                 $borrowerRequired = $borrowerRequired || !empty($policy['return_signature_required']);
             }
         }
@@ -587,14 +599,21 @@ final class DocumentService
                 $add((int) ($line['inspector_users_id'] ?? 0), 'inspector');
             }
         } elseif ($purpose === 'return_receipt') {
+            $physicalReceiverFound = false;
             foreach (Store::find('bookingevents', ['bookings_id' => (int) $booking['id']], ['ORDER' => 'id ASC']) as $event) {
-                if (in_array((string) ($event['type'] ?? ''), ['receive', 'received', 'booking.received', 'line.received'], true)) {
-                    $add((int) ($event['users_id_actor'] ?? 0), 'receiver');
+                if (in_array((string) ($event['type'] ?? ''), ['receive', 'received', 'booking.received', 'line.received'], true)
+                    && (int) ($event['users_id_actor'] ?? 0) > 0) {
+                    $physicalReceiverFound = true;
+                    if (!$threeTerms) { $add((int) $event['users_id_actor'], 'receiver'); }
                 }
+            }
+            if ($threeTerms && !$physicalReceiverFound) {
+                throw new \DomainException('A devolução exige um recebimento físico registrado por técnico antes da assinatura do beneficiário.');
             }
         }
         $staff = array_filter($roles, static fn (array $v): bool => array_intersect($v, ['receiver', 'inspector']) !== []);
-        if (str_starts_with($purpose, 'return_') && $staff === []) {
+        if (str_starts_with($purpose, 'return_') && $staff === []
+            && !($threeTerms && $purpose === 'return_receipt')) {
             throw new \DomainException('O registro de devolução precisa identificar o recebedor/inspetor real antes da emissão.');
         }
         ksort($roles, SORT_NUMERIC);
