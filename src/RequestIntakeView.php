@@ -329,6 +329,10 @@ final class RequestIntakeView
 
     private static function review(array $draft, array $selected): void
     {
+        $equipmentSelected = in_array('equipment', array_column($selected, 'kind'), true);
+        $beneficiaryIsActor = (int) $draft['users_id_borrower'] === Access::userId();
+        $nextButton = !$equipmentSelected ? 'Enviar solicitação'
+            : ($beneficiaryIsActor ? 'Continuar para assinatura' : 'Registrar e solicitar assinatura');
         echo '<div class="rp-intake-review"><section class="rp-panel"><div class="rp-review-heading"><div><h2>Confira antes de enviar</h2><p class="rp-muted">' . count($selected) . ' recurso(s) em uma solicitação, com um chamado para acompanhar o atendimento.</p></div><i class="ti ti-clipboard-check" aria-hidden="true"></i></div>';
         self::periodSummary($draft);
         echo '<ul class="rp-review-resources">';
@@ -340,14 +344,22 @@ final class RequestIntakeView
         if ((int) $draft['users_id_borrower'] !== Access::userId()) { echo '<dt>Responsável pelo uso</dt><dd>' . BookingView::e(self::borrowerName((int) $draft['users_id_borrower'])) . '</dd>'; }
         if ($draft['matricula'] !== '') { echo '<dt>Matrícula</dt><dd>' . BookingView::e($draft['matricula']) . '</dd>'; }
         if ($draft['unit'] !== '') { echo '<dt>Unidade / setor</dt><dd>' . BookingView::e($draft['unit']) . '</dd>'; }
-        echo '</dl><div class="rp-review-next"><h3>Próxima etapa</h3><p>Para equipamentos, ao continuar a reserva será registrada provisoriamente e você será direcionado ao termo de cessão para assinar com mouse ou toque. Somente após a assinatura válida ela seguirá para aprovação. Depois, a equipe registrará a entrega, a devolução e a conferência. Para salas, acompanhe as etapas previstas na política do recurso.</p></div>';
+        echo '</dl><div class="rp-review-next"><h3>Próxima etapa</h3><p>' . BookingView::e(
+            !$equipmentSelected
+                ? 'Ao enviar, acompanhe a aprovação e as etapas previstas para o recurso.'
+                : ($beneficiaryIsActor
+                    ? 'A reserva será registrada provisoriamente e você seguirá diretamente para assinar o termo de cessão com mouse ou toque. Somente após o aceite ela entrará na fila de aprovação.'
+                    : 'A reserva será registrada provisoriamente. O responsável pelo uso precisará assinar o termo para encaminhá-la à aprovação.')
+        ) . '</p></div>';
         self::form($draft);
         echo '<div class="rp-actions">'; self::button('back_browse', 'Editar seleção e período', 'btn-outline-secondary', 'data-testid="intake-back"'); self::button('back_details', 'Editar informações', 'btn-outline-secondary'); echo '</div>';
         \Html::closeForm();
-        echo '</section><section class="rp-panel rp-review-submit"><div><strong>Pronto para continuar?</strong><p>A disponibilidade será revalidada. Para equipamentos, primeiro você assina o termo; em seguida a reserva segue para aprovação.</p></div>';
+        echo '</section><section class="rp-panel rp-review-submit"><div><strong>Pronto para continuar?</strong><p>' . BookingView::e(
+            $equipmentSelected ? 'A disponibilidade será revalidada. O termo deverá ser assinado antes da aprovação.' : 'A disponibilidade será revalidada ao enviar a solicitação.'
+        ) . '</p></div>';
         BookingView::formStart('submit'); BookingView::hidden('_return_draft', $draft['id']); BookingView::hidden('_draft_id', $draft['id']);
         BookingView::hidden('_review_hash', $draft['review_hash'] ?? '');
-        echo '<button type="submit" class="btn btn-primary" data-testid="intake-submit">Continuar para assinatura</button>';
+        echo '<button type="submit" class="btn btn-primary" data-testid="intake-submit">' . BookingView::e($nextButton) . '</button>';
         \Html::closeForm();
         echo '</section></div>';
     }
