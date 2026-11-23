@@ -925,7 +925,7 @@ final class BookingView
                     : __('O recebimento físico foi registrado. O técnico recebedor deve assinar antes da conferência.', 'reservaplus'))
                 : ($technicalSigning
                     ? __('A conferência foi registrada. O técnico inspetor deve assinar para concluir.', 'reservaplus')
-                    : __('Assinatura necessária antes da próxima etapa. Confira o documento e registre seu aceite.', 'reservaplus'))) . '</p></div>;
+                    : __('Assinatura necessária antes da próxima etapa. Confira o documento e registre seu aceite.', 'reservaplus'))) . '</p></div>';
             self::link('agreement.php', $technicalSigning
                 ? __('Assinar conferência técnica', 'reservaplus')
                 : ($returnSigning ? __('Assinar termo de devolução', 'reservaplus')
