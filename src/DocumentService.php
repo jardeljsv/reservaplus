@@ -375,6 +375,15 @@ final class DocumentService
                 @unlink(self::path($evidenceName));
             }
             self::attachFinal($documentId);
+            if ($doc['purpose'] === 'request') {
+                // Release preapproval notification queue only after the signed
+                // PDF is sealed. A mail failure never invalidates the evidence.
+                try {
+                    TicketBridge::deliverOutbox((int) $doc['bookings_id']);
+                } catch (\Throwable $notifyError) {
+                    \Toolbox::logInFile('reservaplus', 'Deferred approval notification: ' . $notifyError->getMessage() . "\n");
+                }
+            }
         } catch (\Throwable $e) {
             // Consent and physical events are already committed; failure is recoverable without re-signing.
             Store::transaction(function () use ($documentId, $doc, $e): void {
