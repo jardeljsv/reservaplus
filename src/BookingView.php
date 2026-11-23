@@ -316,7 +316,16 @@ final class BookingView
                 echo '<span class="rp-row-meta rp-row-purpose">' . self::e(mb_strimwidth((string) $row['purpose'], 0, 120, '…', 'UTF-8')) . '</span>';
             }
             echo '</td><td>';
+            $returnTerms = [];
+            if (($row['status'] ?? '') === 'returning') {
+                $returnTerms = self::returnTermAlertsForList($row, $meta['lines'],
+                    DocumentService::forBooking((int) $row['id']));
+            }
             self::bookingBadge($row, $meta['lines']);
+            foreach ($returnTerms as $term) {
+                echo '<span class="rp-row-meta rp-return-term-status" style="color:#9a5800;font-weight:600">'
+                    . self::e((string) $term['label']) . '</span>';
+            }
             $physical = TechnicianDashboard::physicalFlags($row, $meta['lines'], Store::now());
             if ($physical['overdue']) { echo '<br>'; self::badge('overdue'); }
             echo '</td><td><span class="rp-row-meta">' . self::e(__('Início', 'reservaplus')) . '</span>' . self::e(self::date($row['begin'] ?? '')) . '<span class="rp-row-meta">' . self::e(__('Devolução / término', 'reservaplus')) . '</span>' . self::e(self::date($row['end'] ?? '')) . '</td>';
@@ -330,9 +339,61 @@ final class BookingView
             echo '</td><td>';
             if (TechnicianDashboard::isStaff()) { self::renderListActions($row, $meta['lines'], true); }
             else { self::renderRequesterActions($row); }
+            foreach ($returnTerms as $term) {
+                if ((int) ($term['document_id'] ?? 0) < 1) { continue; }
+                self::link('agreement.php',
+                    !empty($term['can_sign']) ? __('Assinar termo de devolução', 'reservaplus')
+                        : __('Consultar termo pendente', 'reservaplus'),
+                    ['id' => (int) $term['document_id']], 'btn-outline-primary btn-sm');
+            }
             echo '</td></tr>';
         }
         echo '</tbody></table></div>';
+    }
+
+    /** Show document-specific return pendencies without conflating physical
+     * receiving, technical inspection and the legal evidence of acceptance. */
+    public static function returnTermAlertsForList(array $booking, array $lines, array $documents): array
+    {
+        if (($booking['status'] ?? '') !== 'returning') { return []; }
+        $hasReceiving = false;
+        $hasInspection = false;
+        foreach ($lines as $line) {
+            $hasReceiving = $hasReceiving || !empty($line['received_at']);
+            $hasInspection = $hasInspection || !empty($line['inspection_at']);
+        }
+        $purposes = [];
+        if ($hasReceiving) { $purposes['return_receipt'] = __('termo de recebimento', 'reservaplus'); }
+        if ($hasInspection) { $purposes['return_inspection'] = __('termo de devolução / conferência', 'reservaplus'); }
+        $current = [];
+        foreach ($documents as $doc) {
+            $purpose = (string) ($doc['purpose'] ?? '');
+            if (!isset($purposes[$purpose]) || empty($doc['is_current'])
+                || isset($current[$purpose])) { continue; }
+            $current[$purpose] = $doc;
+        }
+        $out = [];
+        foreach ($purposes as $purpose => $name) {
+            if (!isset($current[$purpose])) {
+                $out[] = ['purpose' => $purpose, 'label' => sprintf(__('Pendente emissão do %s', 'reservaplus'), $name),
+                    'document_id' => 0, 'can_sign' => false];
+                continue;
+            }
+            $doc = $current[$purpose];
+            $status = (string) ($doc['status'] ?? '');
+            if ($status === 'complete') { continue; }
+            $signingPending = !in_array($status, ['accepted', 'artifact_error', 'artifact_pending'], true);
+            $out[] = [
+                'purpose' => $purpose,
+                'label' => sprintf(
+                    $signingPending ? __('Pendente assinatura do %s', 'reservaplus') : __('Pendente finalização do %s', 'reservaplus'),
+                    $name
+                ),
+                'document_id' => (int) ($doc['id'] ?? 0),
+                'can_sign' => $signingPending && !empty($doc['can_sign']),
+            ];
+        }
+        return $out;
     }
 
     /** Shortcuts never bypass BookingService's locks, revision checks or native GLPI validation. */
