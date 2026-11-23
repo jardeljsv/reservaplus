@@ -48,7 +48,7 @@ rp_test('handwritten signature validates normalized points, size and shape', sta
     rp_same($good, DocumentService::validateHandwrittenStrokes(json_encode($good)));
     foreach ([null, '', 'null', '{}', '[]', '[[]]', '[[[1,2],[2,3]]]',
         '[[[10,10],[1001,10],[100,50],[50,100]]]',
-        '[[[10,10],[20,20],[30,30],[40,40]]]',
+        '[[[10,10],[15,15],[20,20],[24,24]]]',
         '[[[10,10],[80,20],[80,"30"],[90,40]]]',
         str_repeat('0', 150001)] as $bad) {
         rp_throws(static fn() => DocumentService::validateHandwrittenStrokes($bad), DomainException::class);
