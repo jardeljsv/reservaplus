@@ -156,7 +156,7 @@ final class RequestIntakeView
         $selected = self::selected($draft);
         echo '<div class="rp-intake" data-testid="request-intake" data-draft-id="' . BookingView::e($draft['id']) . '">';
         echo '<ol class="rp-intake-steps" aria-label="Etapas da solicitação">';
-        foreach (['browse' => 'Escolher recursos', 'details' => 'Informar o uso', 'review' => 'Revisar e enviar'] as $key => $label) {
+        foreach (['browse' => 'Escolher recursos', 'details' => 'Informar o uso', 'review' => 'Revisar e assinar'] as $key => $label) {
             echo '<li' . ($draft['step'] === $key ? ' aria-current="step" class="is-current"' : '') . '><span>' . BookingView::e($label) . '</span></li>';
         }
         echo '</ol>';
@@ -340,14 +340,14 @@ final class RequestIntakeView
         if ((int) $draft['users_id_borrower'] !== Access::userId()) { echo '<dt>Responsável pelo uso</dt><dd>' . BookingView::e(self::borrowerName((int) $draft['users_id_borrower'])) . '</dd>'; }
         if ($draft['matricula'] !== '') { echo '<dt>Matrícula</dt><dd>' . BookingView::e($draft['matricula']) . '</dd>'; }
         if ($draft['unit'] !== '') { echo '<dt>Unidade / setor</dt><dd>' . BookingView::e($draft['unit']) . '</dd>'; }
-        echo '</dl><div class="rp-review-next"><h3>Depois do envio</h3><p>Acompanhe a aprovação e os termos solicitados na página da reserva. Para equipamentos, a equipe registrará a retirada, a devolução e a conferência. Para salas, acompanhará o uso e o encerramento.</p></div>';
+        echo '</dl><div class="rp-review-next"><h3>Próxima etapa</h3><p>Para equipamentos, ao continuar a reserva será registrada provisoriamente e você será direcionado ao termo de cessão para assinar com mouse ou toque. Somente após a assinatura válida ela seguirá para aprovação. Depois, a equipe registrará a entrega, a devolução e a conferência. Para salas, acompanhe as etapas previstas na política do recurso.</p></div>';
         self::form($draft);
         echo '<div class="rp-actions">'; self::button('back_browse', 'Editar seleção e período', 'btn-outline-secondary', 'data-testid="intake-back"'); self::button('back_details', 'Editar informações', 'btn-outline-secondary'); echo '</div>';
         \Html::closeForm();
-        echo '</section><section class="rp-panel rp-review-submit"><div><strong>Pronto para solicitar?</strong><p>A disponibilidade será validada novamente no envio. Nenhum item é reservado apenas por estar nesta seleção.</p></div>';
+        echo '</section><section class="rp-panel rp-review-submit"><div><strong>Pronto para continuar?</strong><p>A disponibilidade será revalidada. Para equipamentos, primeiro você assina o termo; em seguida a reserva segue para aprovação.</p></div>';
         BookingView::formStart('submit'); BookingView::hidden('_return_draft', $draft['id']); BookingView::hidden('_draft_id', $draft['id']);
         BookingView::hidden('_review_hash', $draft['review_hash'] ?? '');
-        echo '<button type="submit" class="btn btn-primary" data-testid="intake-submit">Enviar solicitação</button>';
+        echo '<button type="submit" class="btn btn-primary" data-testid="intake-submit">Continuar para assinatura</button>';
         \Html::closeForm();
         echo '</section></div>';
     }
