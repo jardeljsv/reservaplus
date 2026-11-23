@@ -76,6 +76,26 @@ rp_test('new equipment receipt matches cession layout and preserves physical rec
     rp_assert(!PdfRenderer::isEquipmentReceiptTerm($sample));
 });
 
+rp_test('new simplified return PDF is one signed technician term, without legacy output changes', static function (): void {
+    $scope = ['bookings_id' => 22, 'lines' => [[
+        'resource' => ['kind' => 'equipment', 'name' => 'Notebook R'],
+        'received_at' => '2026-11-23 18:55:00', 'accessories' => [
+            ['name' => 'Carregador', 'issued' => 1, 'received' => 1],
+        ],
+    ]], 'borrower' => ['name' => 'Usuário']];
+    $sample = ['template_version' => PdfRenderer::TEMPLATE_VERSION, 'purpose' => 'return_receipt',
+        'return_workflow' => 'two_terms_v1', 'scope' => $scope];
+    $html = PdfRenderer::html($sample);
+    rp_assert(str_contains($html, 'TERMO DE DEVOLUÇÃO DE EQUIPAMENTO'));
+    rp_assert(str_contains($html, 'ASSINATURA DO TÉCNICO RECEBEDOR'));
+    rp_assert(str_contains($html, 'sem emissão de outro termo'));
+    rp_assert(PdfRenderer::requiresHandwrittenSignature($sample));
+    unset($sample['return_workflow']);
+    $legacy = PdfRenderer::html($sample);
+    rp_assert(str_contains($legacy, 'TERMO DE RECEBIMENTO DE EQUIPAMENTO'));
+    rp_assert(str_contains($legacy, 'ASSINATURAS E REGISTRO ELETRÔNICO'));
+});
+
 rp_test('equipment receiving terms require drawing without changing historic or inspection forms', static function (): void {
     $scope = ['lines' => [['resource' => ['kind' => 'equipment', 'name' => 'Notebook']]]];
     $current = ['template_version' => PdfRenderer::TEMPLATE_VERSION,
