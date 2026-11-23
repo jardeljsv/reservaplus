@@ -54,6 +54,30 @@ rp_test('approved operational bookings show delivery shortcut only with allocate
         [['state' => 'allocated'], ['state' => 'issued']], true));
 });
 
+rp_test('return shortcuts only offer real physical receipt and subsequent inspection', function (): void {
+    $issued = ['state' => 'issued', 'received_at' => null, 'accessories_json' => '[]'];
+    rp_assert(BookingView::returnReceiptLineEligible($issued));
+    rp_assert(!BookingView::inspectionLineEligible($issued, false));
+    $received = ['state' => 'received', 'received_at' => '2026-11-23 16:00:00',
+        'accessories_json' => json_encode([['name' => 'Fonte', 'issued' => 1, 'received' => 0]])];
+    rp_assert(BookingView::returnReceiptLineEligible($received));
+    rp_assert(BookingView::inspectionLineEligible($received, false));
+    $received['accessories_json'] = json_encode([['name' => 'Fonte', 'issued' => 1, 'received' => 1]]);
+    rp_assert(!BookingView::returnReceiptLineEligible($received));
+    rp_assert(BookingView::inspectionLineEligible($received, false));
+    foreach (['quarantine', 'maintenance'] as $state) {
+        $received['state'] = $state;
+        rp_assert(!BookingView::returnReceiptLineEligible($received));
+        rp_assert(BookingView::inspectionLineEligible($received, false));
+    }
+    rp_assert(!BookingView::inspectionLineEligible(['state' => 'received', 'received_at' => null], false));
+    rp_assert(!BookingView::returnReceiptLineEligible(['state' => 'ready'], true));
+    rp_assert(!BookingView::inspectionLineEligible(['state' => 'ready'], true));
+    rp_assert(BookingView::inspectionLineEligible(['state' => 'allocated'], true));
+    rp_assert(BookingView::inspectionLineEligible(['state' => 'issued'], true));
+    rp_assert(!BookingView::inspectionLineEligible(['state' => 'allocated'], false));
+});
+
 rp_test('workflow links honor GLPI subdirectory and errors do not reveal runtime internals', function (): void {
     global $CFG_GLPI;
     $CFG_GLPI['root_doc'] = '/support';
