@@ -41,6 +41,19 @@ rp_test('untrusted field values stay escaped and repeated fields retain unique l
     rp_same('', BookingView::e(['malformed' => 'query']));
 });
 
+rp_test('approved operational bookings show delivery shortcut only with allocated items and issue rights', function (): void {
+    $approved = ['id' => 21, 'status' => 'approved'];
+    $allocated = [['state' => 'allocated', 'resources_id' => 15]];
+    rp_assert(BookingView::issueListShortcutEligible($approved, $allocated, true));
+    rp_assert(!BookingView::issueListShortcutEligible($approved, $allocated, false));
+    rp_assert(!BookingView::issueListShortcutEligible(['status' => 'submitted'], $allocated, true));
+    rp_assert(!BookingView::issueListShortcutEligible(['status' => 'issued'], $allocated, true));
+    rp_assert(!BookingView::issueListShortcutEligible($approved, [], true));
+    rp_assert(!BookingView::issueListShortcutEligible($approved, [['state' => 'requested']], true));
+    rp_assert(!BookingView::issueListShortcutEligible($approved,
+        [['state' => 'allocated'], ['state' => 'issued']], true));
+});
+
 rp_test('workflow links honor GLPI subdirectory and errors do not reveal runtime internals', function (): void {
     global $CFG_GLPI;
     $CFG_GLPI['root_doc'] = '/support';
