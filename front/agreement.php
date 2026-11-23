@@ -104,8 +104,16 @@ if ($justSigned && $showFinal) {
 } elseif ($justSigned) {
     echo '<div class="alert alert-info" role="status">Aceite registrado. O PDF final ainda está sendo preparado; o original permanece disponível para consulta.</div>';
 }
-if ($showFinal && ($doc['purpose'] ?? '') === 'request' && $doc['is_current']) {
-    echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">Continuar para aprovação da reserva</a></p>';
+if ($showFinal && $doc['is_current']) {
+    if (($doc['purpose'] ?? '') === 'request') {
+        echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">Continuar para aprovação da reserva</a></p>';
+    } elseif (($doc['purpose'] ?? '') === 'return_receipt'
+        && \GlpiPlugin\Reservaplus\BookingService::simplifiedReturn(
+            Store::row('bookings', (int) $doc['bookings_id'])
+        )) {
+        echo '<p><a class="btn btn-primary" href="' . $e($backUrl . '#rp-booking-actions') . '">'
+            . 'Continuar para conferência técnica</a></p>';
+    }
 }
 echo '<p>';
 if ($showFinal) {
@@ -163,7 +171,7 @@ if ($doc['is_current'] && !$mySigned && $chosenRole !== '') {
         if (PdfRenderer::requiresHandwrittenSignature((array) ($doc['snapshot'] ?? []))) {
             echo '<div class="rp-handwritten-panel my-3" data-rp-handwritten>';
             $drawingLabel = ($doc['purpose'] ?? '') === 'return_receipt'
-                ? 'Assinatura de ciência do recebimento (mouse ou toque)'
+                ? 'Assinatura do técnico recebedor (mouse ou toque)'
                 : 'Assinatura do(a) requerente (mouse ou toque)';
             echo '<label class="form-label"><strong>' . $e($drawingLabel) . '</strong></label>';
             echo '<div style="max-width:680px;border:1px solid #9aaabc;border-radius:8px;background:#fff;overflow:hidden">';
