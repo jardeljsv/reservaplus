@@ -35,6 +35,7 @@ final class DocumentService
             'scope' => $scope, 'scope_hash' => $scopeHash, 'purpose' => $purpose,
             'title' => self::title($purpose, self::roomsOnly($scope)), 'statement' => self::statement($purpose, self::roomsOnly($scope)),
             'consent_text' => self::baseConsent(), 'template_version' => PdfRenderer::TEMPLATE_VERSION,
+            'return_workflow' => BookingService::simplifiedReturn($booking) ? 'two_terms_v1' : 'legacy',
             'prepared_at' => Store::now(), 'timezone' => date_default_timezone_get(),
             'tickets_id' => (int) ($booking['tickets_id'] ?? 0), 'verification_token' => $token,
             // Login GLPI/AD congelado no documento, sem alterar hashes de termos antigos.
@@ -102,7 +103,9 @@ final class DocumentService
         if ($state === 'returning') {
             foreach ($lines as $line) {
                 if (!empty($line['received_at'])) { $purposes[] = 'return_receipt'; }
-                if (!empty($line['inspection_at'])) { $purposes[] = 'return_inspection'; }
+                if (!BookingService::simplifiedReturn($booking) && !empty($line['inspection_at'])) {
+                    $purposes[] = 'return_inspection';
+                }
             }
         }
         $ids = [];
@@ -564,12 +567,15 @@ final class DocumentService
                 }
             }
         };
+        $simplifiedReceipt = $purpose === 'return_receipt' && BookingService::simplifiedReturn($booking);
         $borrowerRequired = in_array($purpose, ['request', 'handover'], true);
         foreach (Store::find('bookinglines', ['bookings_id' => (int) $booking['id']]) as $line) {
             $snap = Store::decode($line['snapshot_json'] ?? null);
             $resource = (array) ($snap['resource'] ?? $snap);
             $policy = is_array($resource['policy'] ?? null) ? $resource['policy'] : Store::decode($resource['policy_json'] ?? null);
-            $borrowerRequired = $borrowerRequired || !empty($policy['return_signature_required']);
+            if (!$simplifiedReceipt) {
+                $borrowerRequired = $borrowerRequired || !empty($policy['return_signature_required']);
+            }
         }
         if ($borrowerRequired) {
             $add((int) $booking['users_id_borrower'], 'borrower');
@@ -602,6 +608,9 @@ final class DocumentService
         self::assertHold($booking);
         if (in_array((string) $booking['status'], ['cancelled', 'rejected'], true)) {
             throw new \DomainException('Esta reserva não aceita novos documentos operacionais.');
+        }
+        if ($purpose === 'return_inspection' && BookingService::simplifiedReturn($booking)) {
+            throw new \DomainException('Neste fluxo, a conferência é registrada diretamente na reserva, sem um terceiro termo.');
         }
         if ($scope['lines'] === []) {
             throw new \DomainException('Ainda não há fatos registrados para esta finalidade de documento.');
