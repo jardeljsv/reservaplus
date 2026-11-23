@@ -71,7 +71,7 @@ rp_test('return shortcuts only offer real physical receipt and subsequent inspec
         rp_assert(BookingView::inspectionLineEligible($received, false));
     }
     rp_assert(!BookingView::inspectionLineEligible(['state' => 'received', 'received_at' => null], false));
-    rp_assert(!BookingView::returnReceiptLineEligible(['state' => 'ready'], true));
+    rp_assert(!BookingView::returnReceiptLineEligible(['state' => 'ready']));
     rp_assert(!BookingView::inspectionLineEligible(['state' => 'ready'], true));
     rp_assert(BookingView::inspectionLineEligible(['state' => 'allocated'], true));
     rp_assert(BookingView::inspectionLineEligible(['state' => 'issued'], true));
