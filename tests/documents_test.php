@@ -76,6 +76,32 @@ rp_test('new equipment receipt matches cession layout and preserves physical rec
     rp_assert(!PdfRenderer::isEquipmentReceiptTerm($sample));
 });
 
+rp_test('three-term PDFs separate borrower return and technical inspector evidence', static function (): void {
+    $scope = ['bookings_id' => 23, 'scope_revision' => 1,
+        'borrower' => ['name' => 'Beneficiário'],
+        'lines' => [[
+            'resource' => ['kind' => 'equipment', 'name' => 'Notebook <test>', 'inventory_number' => 'PC-001'],
+            'received_at' => '2026-11-23 18:00:00',
+            'inspection_at' => '2026-11-23 18:30:00',
+            'inspection' => ['result' => 'pass', 'findings' => 'Testado <script>'],
+            'accessories' => [['name' => 'Carregador', 'issued' => 1, 'received' => 1]],
+        ]]];
+    $return = ['template_version' => PdfRenderer::TEMPLATE_VERSION, 'purpose' => 'return_receipt',
+        'return_workflow' => 'three_terms_v1', 'scope' => $scope];
+    $html = PdfRenderer::html($return);
+    rp_assert(str_contains($html, 'TERMO DE DEVOLUÇÃO DE EQUIPAMENTO'));
+    rp_assert(str_contains($html, 'ASSINATURA DO BENEFICIÁRIO'));
+    rp_assert(str_contains($html, 'após o registro de recebimento'));
+    rp_assert(PdfRenderer::requiresHandwrittenSignature($return));
+    $return['purpose'] = 'return_inspection';
+    $technical = PdfRenderer::html($return);
+    rp_assert(str_contains($technical, 'TERMO DE CONFERÊNCIA TÉCNICA'));
+    rp_assert(str_contains($technical, 'ASSINATURA DO TÉCNICO RESPONSÁVEL'));
+    rp_assert(str_contains($technical, 'Testado &lt;script&gt;'));
+    rp_assert(!str_contains($technical, '<script>'));
+    rp_assert(PdfRenderer::requiresHandwrittenSignature($return));
+});
+
 rp_test('new simplified return PDF is one signed technician term, without legacy output changes', static function (): void {
     $scope = ['bookings_id' => 22, 'lines' => [[
         'resource' => ['kind' => 'equipment', 'name' => 'Notebook R'],
