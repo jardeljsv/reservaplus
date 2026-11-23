@@ -43,6 +43,39 @@ rp_test('new equipment cession template follows approved institutional sections 
     rp_assert(!PdfRenderer::isCessionTerm($sample));
 });
 
+rp_test('new equipment receipt matches cession layout and preserves physical receiving distinctions', static function (): void {
+    $sample = ['template_version' => PdfRenderer::TEMPLATE_VERSION,
+        'purpose' => 'return_receipt', 'borrower_login' => '03180214120',
+        'timezone' => 'America/Sao_Paulo', 'tickets_id' => 236333,
+        'scope' => ['bookings_id' => 17, 'scope_revision' => 1,
+            'begin' => '2026-11-23 15:00:00', 'end' => '2026-11-23 16:00:00',
+            'purpose_text' => 'Atividade <script>alert(1)</script>',
+            'borrower' => ['name' => 'Jardel de Jesus da Silva', 'matricula' => '', 'unit' => 'SETIS'],
+            'lines' => [['resource' => ['kind' => 'equipment', 'name' => 'PC-01769678',
+                'manufacturer' => 'Dell', 'model' => 'Latitude', 'inventory_number' => '1769678',
+                'serial' => '01044913010028'],
+                'received_at' => '2026-11-23 15:55:00',
+                'accessories' => [['name' => 'Carregador', 'issued' => 1, 'received' => 0]]]]]];
+    rp_assert(PdfRenderer::isEquipmentReceiptTerm($sample));
+    rp_assert(PdfRenderer::requiresHandwrittenSignature($sample));
+    $html = PdfRenderer::html($sample);
+    foreach (['TERMO DE RECEBIMENTO DE EQUIPAMENTO', '1. IDENTIFICAÇÃO DO EQUIPAMENTO',
+        '2. IDENTIFICAÇÃO DO RESPONSÁVEL', '3. PERÍODO DA RESERVA',
+        '4. DECLARAÇÃO DE RECEBIMENTO', '5. ASSINATURAS',
+        'PC-01769678', 'Carregador', '15:55:00', 'Recebido',
+        'não comprova o funcionamento', 'conferência técnica posterior',
+        '03180214120', '&lt;script&gt;'] as $needle) {
+        rp_assert(str_contains($html, $needle), $needle);
+    }
+    rp_assert(!str_contains($html, '<script>'));
+    rp_assert(!str_contains($html, '<img '));
+    $sample['scope']['lines'][0]['resource']['kind'] = 'room';
+    rp_assert(!PdfRenderer::isEquipmentReceiptTerm($sample));
+    $sample['scope']['lines'][0]['resource']['kind'] = 'equipment';
+    $sample['template_version'] = 'reservaplus-terms-v1';
+    rp_assert(!PdfRenderer::isEquipmentReceiptTerm($sample));
+});
+
 rp_test('equipment receiving terms require drawing without changing historic or inspection forms', static function (): void {
     $scope = ['lines' => [['resource' => ['kind' => 'equipment', 'name' => 'Notebook']]]];
     $current = ['template_version' => PdfRenderer::TEMPLATE_VERSION,
