@@ -98,12 +98,15 @@ final class TechnicianDashboard
         }
         $flags = self::physicalFlags($booking, $lines, Store::now());
         if (BookingService::threeTermReturn($booking)) {
-            $purposes = [];
+            $hasInspection = false;
             foreach ($lines as $line) {
-                if (!empty($line['received_at'])) { $purposes['return_receipt'] = true; }
-                if (!empty($line['inspection_at'])) { $purposes['return_inspection'] = true; }
+                $hasInspection = $hasInspection || !empty($line['inspection_at']);
             }
-            if ($purposes !== []) { return array_keys($purposes); }
+            if ($hasInspection) {
+                return DocumentService::isSatisfied((int) $booking['id'], 'return_inspection')
+                    ? ['return_receipt'] : ['return_inspection'];
+            }
+            return [];
         }
         if (BookingService::simplifiedReturn($booking)) {
             foreach ($lines as $line) {
