@@ -368,15 +368,21 @@ final class BookingView
             $hasInspection = $hasInspection || !empty($line['inspection_at']);
         }
         $purposes = [];
-        if ($hasReceiving) {
-            $purposes['return_receipt'] = (BookingService::simplifiedReturn($booking)
-                || BookingService::threeTermReturn($booking))
-                ? __('termo de devolução', 'reservaplus') : __('termo de recebimento', 'reservaplus');
-        }
-        if ($hasInspection && !BookingService::simplifiedReturn($booking)) {
-            $purposes['return_inspection'] = BookingService::threeTermReturn($booking)
-                ? __('termo de conferência técnica', 'reservaplus')
-                : __('termo de devolução / conferência', 'reservaplus');
+        if (BookingService::threeTermReturn($booking)) {
+            if ($hasInspection) {
+                $purposes['return_inspection'] = __('termo de conferência técnica', 'reservaplus');
+                if (DocumentService::isSatisfied((int) $booking['id'], 'return_inspection')) {
+                    $purposes['return_receipt'] = __('comprovante de devolução', 'reservaplus');
+                }
+            }
+        } else {
+            if ($hasReceiving) {
+                $purposes['return_receipt'] = BookingService::simplifiedReturn($booking)
+                    ? __('termo de devolução', 'reservaplus') : __('termo de recebimento', 'reservaplus');
+            }
+            if ($hasInspection && !BookingService::simplifiedReturn($booking)) {
+                $purposes['return_inspection'] = __('termo de devolução / conferência', 'reservaplus');
+            }
         }
         $current = [];
         foreach ($documents as $doc) {
@@ -455,11 +461,17 @@ final class BookingView
             $resource = self::lineSnapshot($line);
             return self::inspectionLineEligible($line, ($resource['kind'] ?? '') === 'room');
         }));
+        $canStartReturn = BookingService::threeTermReturn($booking) && $state === 'issued'
+            && (in_array(Access::userId(),
+                [(int) $booking['users_id_requester'], (int) $booking['users_id_borrower']], true)
+                || Access::booking($booking, 'receive'));
         $canReceive = in_array($state, ['issued', 'returning'], true) && $receiveLines !== [];
         $canInspect = in_array($state, ['approved', 'issued', 'returning'], true) && $inspectLines !== []
-            && (!(BookingService::simplifiedReturn($booking) || BookingService::threeTermReturn($booking))
-                || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'));
-        if ($eligible === [] && !$canExtend && !$canCancel && !$canIssue && !$canReceive && !$canInspect) {
+            && (!BookingService::simplifiedReturn($booking)
+                || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'))
+            && (!BookingService::threeTermReturn($booking) || $state === 'returning');
+        if ($eligible === [] && !$canExtend && !$canCancel && !$canIssue
+            && !$canStartReturn && !$canReceive && !$canInspect) {
             self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
             return;
         }
@@ -490,6 +502,12 @@ final class BookingView
             self::submit(__('Confirmar entrega', 'reservaplus'));
             Html::closeForm();
             echo '</details>';
+        }
+        if ($canStartReturn) {
+            self::formStart('start_return', (int) $booking['id'], (int) $booking['revision']);
+            self::hidden('_return_list', 'requests');
+            self::submit(__('Iniciar devolução', 'reservaplus'));
+            Html::closeForm();
         }
         if ($canReceive) {
             echo '<details class="rp-mini-expand rp-mini-receive"><summary class="btn rp-mini-action rp-mini-extend">'
@@ -607,12 +625,18 @@ final class BookingView
         $status = (string) ($booking['status'] ?? '');
         echo '<div class="rp-requester-actions" aria-label="' . self::e(__('Ações da minha reserva', 'reservaplus')) . '">';
         self::link('booking.php', __('Acompanhar', 'reservaplus'), ['id' => $id], 'rp-requester-follow btn-sm');
+        if ($status === 'issued' && BookingService::threeTermReturn($booking)) {
+            self::formStart('start_return', $id, (int) $booking['revision']);
+            self::hidden('_return_list', 'mine');
+            self::submit(__('Iniciar devolução', 'reservaplus'));
+            Html::closeForm();
+        }
         if (!in_array($status, ['cancelled', 'rejected'], true)) {
             $doc = self::signatureActionDocument($id);
             if ($doc !== null) {
                 $signLabel = match ((string) ($doc['purpose'] ?? '')) {
                     'return_receipt' => BookingService::threeTermReturn($booking)
-                        ? __('Assinar termo de devolução', 'reservaplus') : __('Assinar termo de recebimento', 'reservaplus'),
+                        ? __('Assinar comprovante de devolução', 'reservaplus') : __('Assinar termo de recebimento', 'reservaplus'),
                     'return_inspection' => BookingService::threeTermReturn($booking)
                         ? __('Assinar conferência técnica', 'reservaplus') : __('Assinar termo de devolução', 'reservaplus'),
                     default => __('Ler e assinar termo', 'reservaplus'),
@@ -921,7 +945,7 @@ final class BookingView
             echo '<span class="rp-signature-state">' . self::e(__('Aguardando assinatura', 'reservaplus')) . '</span>';
             echo '<p>' . self::e($returnSigning
                 ? (BookingService::threeTermReturn($booking)
-                    ? __('O equipamento foi recebido. O beneficiário deve assinar a devolução antes da conferência técnica.', 'reservaplus')
+                    ? __('A conferência técnica foi assinada. O beneficiário pode assinar e baixar o comprovante de devolução.', 'reservaplus')
                     : __('O recebimento físico foi registrado. O técnico recebedor deve assinar antes da conferência.', 'reservaplus'))
                 : ($technicalSigning
                     ? __('A conferência foi registrada. O técnico inspetor deve assinar para concluir.', 'reservaplus')
@@ -943,10 +967,15 @@ final class BookingView
         $simplifiedReturn = BookingService::simplifiedReturn($booking);
         $threeTerms = BookingService::threeTermReturn($booking);
         foreach ($booking['lines'] ?? [] as $line) {
-            if (!empty($line['received_at'])) { $purposes['return_receipt'] = $simplifiedReturn || $threeTerms; }
+            if (!empty($line['received_at']) && !$threeTerms) {
+                $purposes['return_receipt'] = $simplifiedReturn;
+            }
             if (!$simplifiedReturn && !empty($line['inspection_at'])) {
                 $purposes['return_inspection'] = true;
             }
+        }
+        if ($threeTerms && DocumentService::isSatisfied($id, 'return_inspection')) {
+            $purposes['return_receipt'] = true;
         }
         if (in_array($state, ['completed','cancelled','rejected'], true)) { $purposes = []; }
         $owner = in_array(Access::userId(), [(int) $booking['users_id_requester'], (int) $booking['users_id_borrower']], true);
@@ -1072,6 +1101,15 @@ final class BookingView
             self::textarea('condition', __('Condição na entrega e conferência dos acessórios', 'reservaplus'), '', true);
             self::actionEnd(__('Confirmar entrega', 'reservaplus'));
         }
+        if ($state === 'issued' && BookingService::threeTermReturn($booking)
+            && (Access::booking($booking, 'receive')
+                || in_array(Access::userId(), [(int) $booking['users_id_requester'],
+                    (int) $booking['users_id_borrower']], true))) {
+            self::formStart('start_return', (int) $booking['id'], (int) $booking['revision']);
+            echo '<button type="submit" class="btn rp-detail-action-button rp-action-neutral">'
+                . self::e(__('Iniciar devolução', 'reservaplus')) . '</button>';
+            Html::closeForm();
+        }
         $receiveLines = array_values(array_filter(self::actionLines($booking, 'receive', ['issued', 'received', 'quarantine', 'maintenance']), static fn(array $line): bool => (self::lineSnapshot($line)['kind'] ?? '') !== 'room'));
         if ($receiveLines !== [] && in_array($state, ['issued', 'returning'], true)) {
             self::actionStart($booking, 'receive', __('Receber devolução', 'reservaplus'), __('Marque apenas os itens que recebeu e informe a quantidade de cada acessório entregue agora. O recebimento não declara que a conferência foi aprovada.', 'reservaplus'));
@@ -1082,8 +1120,9 @@ final class BookingView
         }
         $inspectLines = array_values(array_filter(self::actionLines($booking, 'inspect', ['received', 'quarantine', 'maintenance', 'allocated', 'issued']), static fn(array $line): bool => in_array($line['state'], ['received', 'quarantine', 'maintenance'], true) || (self::lineSnapshot($line)['kind'] ?? '') === 'room'));
         if ($inspectLines !== [] && in_array($state, ['approved', 'issued', 'returning'], true)
-            && (!(BookingService::simplifiedReturn($booking) || BookingService::threeTermReturn($booking))
-                || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'))) {
+            && (!BookingService::simplifiedReturn($booking)
+                || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'))
+            && (!BookingService::threeTermReturn($booking) || $state === 'returning')) {
             self::actionStart($booking, 'inspect', __('Conferir devolução / término de uso', 'reservaplus'), __('Registre a conferência dos equipamentos recebidos ou das salas após o uso. Aponte faltas, avarias e testes realizados; nenhuma verificação é aprovada automaticamente.', 'reservaplus'));
             self::chooseLines($inspectLines);
             self::select('result', __('Resultado da conferência', 'reservaplus'), ['' => __('Selecione o resultado', 'reservaplus'), 'pass' => __('Aprovado para novo uso', 'reservaplus'), 'quarantine' => __('Reter para avaliação', 'reservaplus'), 'maintenance' => __('Encaminhar para manutenção', 'reservaplus')]);
