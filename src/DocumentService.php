@@ -43,7 +43,7 @@ final class DocumentService
                     : self::title($purpose, self::roomsOnly($scope)))),
             'statement' => self::statement($purpose, self::roomsOnly($scope)),
             'consent_text' => self::baseConsent(), 'template_version' => PdfRenderer::TEMPLATE_VERSION,
-            'return_workflow' => BookingService::threeTermReturn($booking) ? 'three_terms_v1'
+            'return_workflow' => BookingService::threeTermReturn($booking) ? 'three_terms_v2'
                 : (BookingService::simplifiedReturn($booking) ? 'two_terms_v1' : 'legacy'),
             'prepared_at' => Store::now(), 'timezone' => date_default_timezone_get(),
             'tickets_id' => (int) ($booking['tickets_id'] ?? 0), 'verification_token' => $token,
@@ -110,10 +110,24 @@ final class DocumentService
             $purposes = $required;
         }
         if ($state === 'returning') {
-            foreach ($lines as $line) {
-                if (!empty($line['received_at'])) { $purposes[] = 'return_receipt'; }
-                if (!BookingService::simplifiedReturn($booking) && !empty($line['inspection_at'])) {
-                    $purposes[] = 'return_inspection';
+            if (BookingService::threeTermReturn($booking)) {
+                $anyInspected = false;
+                $allInspected = $lines !== [];
+                foreach ($lines as $line) {
+                    $anyInspected = $anyInspected || !empty($line['inspection_at']);
+                    $allInspected = $allInspected && !empty($line['inspection_at'])
+                        && !empty($line['received_at']);
+                }
+                if ($anyInspected) { $purposes[] = 'return_inspection'; }
+                if ($allInspected && self::isSatisfied($bookingId, 'return_inspection')) {
+                    $purposes[] = 'return_receipt';
+                }
+            } else {
+                foreach ($lines as $line) {
+                    if (!empty($line['received_at'])) { $purposes[] = 'return_receipt'; }
+                    if (!BookingService::simplifiedReturn($booking) && !empty($line['inspection_at'])) {
+                        $purposes[] = 'return_inspection';
+                    }
                 }
             }
         }
@@ -257,10 +271,16 @@ final class DocumentService
         });
         self::finalize($documentId);
         $finished = self::get($documentId);
-        if (($finished['status'] ?? '') === 'complete'
-            && ($finished['purpose'] ?? '') === 'return_inspection') {
+        if (($finished['status'] ?? '') === 'complete') {
             try {
-                BookingService::completeAfterFinalSignature((int) $finished['bookings_id']);
+                $relatedBooking = Store::row('bookings', (int) $finished['bookings_id']);
+                if (BookingService::threeTermReturn($relatedBooking)
+                    && ($finished['purpose'] ?? '') === 'return_inspection') {
+                    self::prepareForCurrentStage((int) $finished['bookings_id']);
+                }
+                if (($finished['purpose'] ?? '') === 'return_receipt') {
+                    BookingService::completeAfterFinalSignature((int) $finished['bookings_id']);
+                }
             } catch (\Throwable $error) {
                 // Signature and immutable evidence are already committed.
                 // A GLPI ticket-solution failure must never tell the signer
@@ -563,7 +583,8 @@ final class DocumentService
                 }
                 $item['received_at'] = $line['received_at'] ?? null;
                 $item['accessories'] = Store::decode($line['accessories_json'] ?? null);
-                if ($purpose === 'return_inspection') {
+                if ($purpose === 'return_inspection'
+                    || ($purpose === 'return_receipt' && BookingService::threeTermReturn($booking))) {
                     if (empty($line['inspection_at'])) {
                         continue;
                     }
@@ -642,6 +663,13 @@ final class DocumentService
         }
         if ($purpose === 'return_inspection' && BookingService::simplifiedReturn($booking)) {
             throw new \DomainException('Neste fluxo, a conferência é registrada diretamente na reserva, sem um terceiro termo.');
+        }
+        if (BookingService::threeTermReturn($booking) && $purpose === 'return_receipt') {
+            $lines = Store::find('bookinglines', ['bookings_id' => (int) $booking['id']]);
+            if ($lines === [] || count($scope['lines']) !== count($lines)
+                || !self::isSatisfied((int) $booking['id'], 'return_inspection')) {
+                throw new \DomainException('O comprovante de devolução só é liberado após a conferência integral e a assinatura do técnico.');
+            }
         }
         if ($scope['lines'] === []) {
             throw new \DomainException('Ainda não há fatos registrados para esta finalidade de documento.');
