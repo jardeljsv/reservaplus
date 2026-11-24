@@ -91,7 +91,7 @@ try {
         }
         $documentId = DocumentService::prepare($id, $purpose);
         $target = BookingView::url('agreement.php', ['id' => $documentId] + BookingView::ticketContextQuery($returnTicket));
-    } elseif (in_array($action, ['approve', 'reject', 'cancel', 'issue', 'receive', 'inspect', 'complete', 'extend'], true)) {
+    } elseif (in_array($action, ['approve', 'reject', 'cancel', 'issue', 'start_return', 'receive', 'inspect', 'complete', 'extend'], true)) {
         if (in_array($action, ['approve', 'reject', 'receive', 'inspect'], true) && (!is_array($_POST['lines_ids'] ?? null) || $_POST['lines_ids'] === [])) {
             throw new DomainException(__('Selecione os itens que deseja registrar nesta operação.', 'reservaplus'));
         }
@@ -130,11 +130,13 @@ try {
         }
         if (!$goToReturnTerm) {
             Session::addMessageAfterRedirect(BookingView::e(
-                $action === 'receive' && BookingService::threeTermReturn($actedBooking)
-                    ? __('Recebimento registrado. O beneficiário deve assinar o termo de devolução antes da conferência técnica.', 'reservaplus')
+                $action === 'start_return' && BookingService::threeTermReturn($actedBooking)
+                    ? __('Devolução iniciada. Aguarde o técnico receber e conferir os equipamentos.', 'reservaplus')
+                    : ($action === 'receive' && BookingService::threeTermReturn($actedBooking)
+                        ? __('Recebimento físico registrado. Agora o técnico deve realizar a conferência e assinar o termo técnico.', 'reservaplus')
                     : ($action === 'inspect' && ($actedBooking['status'] ?? '') === 'completed'
                         ? __('Conferência aprovada. Reserva concluída automaticamente.', 'reservaplus')
-                        : __('Operação registrada. Confira a situação atual da solicitação.', 'reservaplus'))
+                        : __('Operação registrada. Confira a situação atual da solicitação.', 'reservaplus')))
             ));
         }
     } else {
