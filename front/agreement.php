@@ -190,7 +190,7 @@ if ($doc['is_current'] && !$mySigned && $chosenRole !== '') {
             echo '<div class="rp-handwritten-panel my-3" data-rp-handwritten>';
             $relatedWorkflow = (string) (($doc['snapshot'] ?? [])['return_workflow'] ?? '');
             $drawingLabel = match ((string) ($doc['purpose'] ?? '')) {
-                'return_receipt' => $relatedWorkflow === 'three_terms_v1'
+                'return_receipt' => $relatedWorkflow === 'three_terms_v2'
                     ? 'Assinatura do beneficiário que devolve (mouse ou toque)'
                     : 'Assinatura do técnico recebedor (mouse ou toque)',
                 'return_inspection' => 'Assinatura do técnico responsável pela conferência (mouse ou toque)',
