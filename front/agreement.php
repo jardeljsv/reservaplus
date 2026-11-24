@@ -120,7 +120,7 @@ if ($showFinal && $doc['is_current']) {
         $relatedBooking = Store::row('bookings', (int) $doc['bookings_id']);
         if (\GlpiPlugin\Reservaplus\BookingService::threeTermReturn($relatedBooking)) {
             echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">'
-                . 'Devolução assinada — acompanhar conferência técnica</a></p>';
+                . 'Comprovante de devolução assinado — acompanhar reserva</a></p>';
         } elseif (\GlpiPlugin\Reservaplus\BookingService::simplifiedReturn($relatedBooking)) {
             echo '<p><a class="btn btn-primary" href="' . $e($backUrl . '#rp-booking-actions') . '">'
                 . 'Continuar para conferência técnica</a></p>';
@@ -130,7 +130,7 @@ if ($showFinal && $doc['is_current']) {
             Store::row('bookings', (int) $doc['bookings_id'])
         )) {
         echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">'
-            . 'Ver resultado da conferência e conclusão</a></p>';
+            . 'Conferência assinada — liberar comprovante ao beneficiário</a></p>';
     }
 }
 echo '<p>';
