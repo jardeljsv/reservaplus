@@ -557,21 +557,56 @@ final class BookingService
         return self::get($id);
     }
 
-    /** Final signature automatically closes eligible new three-term equipment returns.
-     * Calls the same guarded command used by the detail view, never skips
-     * ticket permissions, inventory checks or idempotency. */
+    /** Signed beneficiary proof is the final gate; closure is independent
+     * of the signer's staff profile. Native ticket resolution is retried via
+     * the existing auditable outbox using a privileged GLPI context. */
     public static function completeAfterFinalSignature(int $bookingId): void
     {
-        $booking = self::get($bookingId);
-        if (!self::threeTermReturn($booking) || ($booking['status'] ?? '') !== 'returning'
-            || !self::allPhysicalReturnsComplete($bookingId)
-            || !DocumentService::isSatisfied($bookingId, 'return_receipt')
-            || !DocumentService::isSatisfied($bookingId, 'return_inspection')) {
+        $booking = Store::row('bookings', $bookingId);
+        if (!self::threeTermReturn($booking) || ($booking['status'] ?? '') !== 'returning') {
             return;
         }
-        if (!Access::booking($booking, 'inspect')) { return; }
-        self::act($bookingId, 'complete', ['expected_revision' => (int) $booking['revision']],
-            'signed-return-complete-' . $bookingId . '-' . (int) $booking['revision']);
+        Access::assertBooking($booking, 'read');
+        if (!in_array(Access::userId(),
+            [(int) $booking['users_id_borrower'], (int) $booking['users_id_requester']], true)
+            && !Access::booking($booking, 'inspect')) {
+            throw new \DomainException('Sem autorização para finalizar esta devolução.');
+        }
+        if (!self::allPhysicalReturnsComplete($bookingId)
+            || !DocumentService::isSatisfied($bookingId, 'return_inspection')
+            || !DocumentService::isSatisfied($bookingId, 'return_receipt')) {
+            return;
+        }
+        $closed = Store::transaction(static function () use ($bookingId): bool {
+            $locked = Store::lock('bookings', $bookingId);
+            if (($locked['status'] ?? '') !== 'returning') { return false; }
+            foreach (self::lines($bookingId) as $line) {
+                Store::lock('resources', (int) $line['resources_id']);
+            }
+            if (!self::allPhysicalReturnsComplete($bookingId)
+                || !DocumentService::isSatisfied($bookingId, 'return_inspection')
+                || !DocumentService::isSatisfied($bookingId, 'return_receipt')) {
+                return false;
+            }
+            Store::update('bookings', $bookingId, [
+                'status' => 'completed', 'hold_expires_at' => null,
+                'revision' => (int) $locked['revision'] + 1, 'date_mod' => Store::now(),
+            ]);
+            Store::event($bookingId, 'completed', [
+                'method' => 'automatic_after_beneficiary_signature',
+                'users_id_actor' => Access::userId(),
+            ]);
+            TicketBridge::enqueue($bookingId, 'solve', ['source' => 'return_signed'],
+                'signed-return-solve:' . $bookingId);
+            return true;
+        });
+        if ($closed) {
+            try { TicketBridge::deliverOutbox($bookingId); }
+            catch (\Throwable $error) {
+                \Toolbox::logInFile('reservaplus', 'Pending native solution #' . $bookingId
+                    . ': ' . $error->getMessage() . "\n");
+            }
+        }
     }
 
     private static function selectedLines(array $lines, mixed $ids): array
