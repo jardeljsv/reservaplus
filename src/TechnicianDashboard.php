@@ -380,7 +380,7 @@ final class TechnicianDashboard
                 echo '<div class="rp-dash-quick-actions">';
                 BookingView::renderRequesterActions($booking);
                 echo '</div>';
-            } elseif (in_array(($booking['status'] ?? ''), ['submitted', 'approved', 'ready'], true)) {
+            } elseif (in_array(($booking['status'] ?? ''), ['submitted', 'approved', 'ready', 'issued', 'returning'], true)) {
                 echo '<div class="rp-dash-quick-actions">';
                 BookingView::renderListActions($booking, self::lines($booking), true);
                 echo '</div>';
