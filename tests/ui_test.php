@@ -126,6 +126,21 @@ rp_test('new simplified returns only flag receipt signing, never a third inspect
     rp_same([], BookingView::returnTermAlertsForList($booking, $lines, $docs));
 });
 
+rp_test('new equipment return status makes initiated and physical-receipt stages explicit', function (): void {
+    $booking = ['id' => 140, 'status' => 'returning',
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'three_terms_v2'])];
+    $alerts = BookingView::returnTermAlertsForList($booking,
+        [['received_at' => null, 'inspection_at' => null]], []);
+    rp_same(1, count($alerts));
+    rp_assert(str_contains($alerts[0]['label'], 'recebimento físico'));
+    rp_same(0, $alerts[0]['document_id']);
+    $alerts = BookingView::returnTermAlertsForList($booking,
+        [['received_at' => '2026-11-23 21:00:00', 'inspection_at' => null]], []);
+    rp_same(1, count($alerts));
+    rp_assert(str_contains($alerts[0]['label'], 'conferência técnica'));
+    rp_same(0, $alerts[0]['document_id']);
+});
+
 rp_test('workflow links honor GLPI subdirectory and errors do not reveal runtime internals', function (): void {
     global $CFG_GLPI;
     $CFG_GLPI['root_doc'] = '/support';
