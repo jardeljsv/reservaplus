@@ -163,7 +163,7 @@ final class BookingService
                 'entities_id' => $entity, 'users_id_requester' => Access::userId(), 'users_id_borrower' => $borrowerId,
                 'tickets_id' => null, 'begin' => $begin, 'end' => $end, 'status' => 'submitted', 'revision' => 1, 'scope_revision' => 1,
                 'approved_revision' => 0, 'people_count' => $people, 'purpose' => $purpose,
-                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources), 'return_workflow' => $equipmentOnly ? 'three_terms_v1' : 'legacy']),
+                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources), 'return_workflow' => $equipmentOnly ? 'three_terms_v2' : 'legacy']),
                 'operation_key' => $operation, 'integration_status' => 'synced', 'date_creation' => $now, 'date_mod' => $now,
             ]);
             foreach ($resources as $resource) {
@@ -279,7 +279,7 @@ final class BookingService
     public static function threeTermReturn(array $booking): bool
     {
         return (Store::decode($booking['policy_snapshot_json'] ?? null)['return_workflow'] ?? '')
-            === 'three_terms_v1';
+            === 'three_terms_v2';
     }
 
     /** Complete only after actual inspection and reconciliation. */
@@ -325,14 +325,23 @@ final class BookingService
 
     public static function act(int $id, string $action, array $input, string $key): array
     {
-        $caps = ['approve' => 'approve', 'reject' => 'approve', 'cancel' => 'request', 'issue' => 'issue', 'receive' => 'receive', 'inspect' => 'inspect', 'complete' => 'inspect', 'extend' => 'approve'];
+        $caps = ['approve' => 'approve', 'reject' => 'approve', 'cancel' => 'request', 'issue' => 'issue',
+            'start_return' => 'read', 'receive' => 'receive', 'inspect' => 'inspect',
+            'complete' => 'inspect', 'extend' => 'approve'];
         if (!isset($caps[$action])) { throw new \InvalidArgumentException('Ação desconhecida.'); }
         $operation = self::operationKey($key);
         $fingerprint = self::commandFingerprint($id, $action, $input);
         $changed = false;
         Store::transaction(static function () use ($id, $action, $input, $operation, $fingerprint, $caps, &$changed): void {
             $booking = Store::lock('bookings', $id);
-            if ($action === 'cancel' && Access::booking($booking, 'manage')) { /* Scoped staff cancellation. */ }
+            if ($action === 'start_return' && self::threeTermReturn($booking)) {
+                $owner = in_array(Access::userId(),
+                    [(int) $booking['users_id_requester'], (int) $booking['users_id_borrower']], true);
+                if (!$owner && !Access::booking($booking, 'receive')) {
+                    throw new \DomainException('Somente o solicitante, o beneficiário ou o técnico autorizado pode iniciar a devolução.');
+                }
+                Access::assertBooking($booking, 'read');
+            } elseif ($action === 'cancel' && Access::booking($booking, 'manage')) { /* Scoped staff cancellation. */ }
             elseif ($action === 'extend') {
                 if (!Access::canReschedule($booking)) { throw new \DomainException('Sem autorização para alterar o período de todos os recursos da solicitação.'); }
             }
@@ -353,6 +362,14 @@ final class BookingService
             if (in_array($booking['status'], ['completed', 'cancelled', 'rejected'], true)) { throw new \DomainException('Esta solicitação já foi encerrada.'); }
             $reason = mb_substr(trim((string) ($input['reason'] ?? $input['note'] ?? '')), 0, 5000);
             switch ($action) {
+                case 'start_return':
+                    if (!self::threeTermReturn($booking) || ($booking['status'] ?? '') !== 'issued') {
+                        throw new \DomainException('A devolução só pode ser iniciada uma vez após a entrega física.');
+                    }
+                    Store::update('bookings', $id, ['status' => 'returning']);
+                    Store::event($id, 'return.initiated', ['users_id_actor' => Access::userId(),
+                        'reason' => $reason]);
+                    break;
                 case 'approve':
                 case 'reject':
                     if ($booking['status'] !== 'submitted') { throw new \DomainException('A solicitação não está aguardando aprovação.'); }
@@ -439,9 +456,12 @@ final class BookingService
                     Store::update('bookings', $id, ['status' => 'returning']);
                     break;
                 case 'inspect':
-                    if ((self::simplifiedReturn($booking) || self::threeTermReturn($booking))
+                    if (self::simplifiedReturn($booking)
                         && !DocumentService::isSatisfied($id, 'return_receipt')) {
                         throw new \DomainException('Confirme a assinatura do termo de devolução antes da conferência técnica.');
+                    }
+                    if (self::threeTermReturn($booking) && ($booking['status'] ?? '') !== 'returning') {
+                        throw new \DomainException('Inicie a devolução e registre o recebimento antes da conferência.');
                     }
                     $result = (string) ($input['result'] ?? '');
                     if (!in_array($result, ['pass', 'quarantine', 'maintenance'], true)) { throw new \DomainException('Selecione o resultado da conferência.'); }
@@ -482,9 +502,9 @@ final class BookingService
                             throw new \DomainException('Conclua a assinatura do termo de devolução.');
                         }
                     } elseif (self::threeTermReturn($booking)) {
-                        if (!DocumentService::isSatisfied($id, 'return_receipt')
-                            || !DocumentService::isSatisfied($id, 'return_inspection')) {
-                            throw new \DomainException('Conclua as assinaturas do beneficiário na devolução e do técnico na conferência.');
+                        if (!DocumentService::isSatisfied($id, 'return_inspection')
+                            || !DocumentService::isSatisfied($id, 'return_receipt')) {
+                            throw new \DomainException('Conclua a assinatura técnica e o comprovante de devolução do beneficiário.');
                         }
                     } elseif (!DocumentService::isSatisfied($id, 'return_inspection')) {
                         throw new \DomainException('Conclua as assinaturas obrigatórias do termo de conferência.');
@@ -570,7 +590,8 @@ final class BookingService
 
     private static function actionLabel(string $action): string
     {
-        return ['approve' => 'aprovação registrada', 'reject' => 'solicitação recusada', 'cancel' => 'solicitação cancelada', 'issue' => 'entrega registrada',
+        return ['approve' => 'aprovação registrada', 'reject' => 'solicitação recusada', 'cancel' => 'solicitação cancelada',
+            'start_return' => 'devolução iniciada; aguarde recebimento e conferência técnica', 'issue' => 'entrega registrada',
             'receive' => 'recebimento físico registrado; confira itens e acessórios pendentes', 'inspect' => 'conferência registrada', 'complete' => 'devolução concluída', 'extend' => 'período revisado; confira novas aprovações e termos'][$action] ?? $action;
     }
 
