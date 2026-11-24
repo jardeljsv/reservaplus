@@ -46,10 +46,10 @@ rp_test('signature requirements combine mandatory resource stages', static funct
 
 rp_test('legacy two-document workflow remains opt-in, while new equipment uses three documents', static function (): void {
     rp_assert(BookingService::threeTermReturn([
-        'policy_snapshot_json' => json_encode(['return_workflow' => 'three_terms_v1']),
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'three_terms_v2']),
     ]));
     rp_assert(!BookingService::simplifiedReturn([
-        'policy_snapshot_json' => json_encode(['return_workflow' => 'three_terms_v1']),
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'three_terms_v2']),
     ]));
     rp_assert(!BookingService::threeTermReturn([
         'policy_snapshot_json' => json_encode(['return_workflow' => 'two_terms_v1']),
