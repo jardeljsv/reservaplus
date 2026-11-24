@@ -369,11 +369,17 @@ final class BookingView
         }
         $purposes = [];
         if (BookingService::threeTermReturn($booking)) {
-            if ($hasInspection) {
-                $purposes['return_inspection'] = __('termo de conferência técnica', 'reservaplus');
-                if (DocumentService::isSatisfied((int) $booking['id'], 'return_inspection')) {
-                    $purposes['return_receipt'] = __('comprovante de devolução', 'reservaplus');
-                }
+            if (!$hasReceiving) {
+                return [['purpose' => '', 'label' => __('Aguardando recebimento físico pelo técnico', 'reservaplus'),
+                    'document_id' => 0, 'can_sign' => false]];
+            }
+            if (!$hasInspection) {
+                return [['purpose' => '', 'label' => __('Aguardando conferência técnica pelo técnico', 'reservaplus'),
+                    'document_id' => 0, 'can_sign' => false]];
+            }
+            $purposes['return_inspection'] = __('termo de conferência técnica', 'reservaplus');
+            if (DocumentService::isSatisfied((int) $booking['id'], 'return_inspection')) {
+                $purposes['return_receipt'] = __('comprovante de devolução', 'reservaplus');
             }
         } else {
             if ($hasReceiving) {
