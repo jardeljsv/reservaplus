@@ -87,7 +87,7 @@ rp_test('three-term PDFs separate borrower return and technical inspector eviden
             'accessories' => [['name' => 'Carregador', 'issued' => 1, 'received' => 1]],
         ]]];
     $return = ['template_version' => PdfRenderer::TEMPLATE_VERSION, 'purpose' => 'return_receipt',
-        'return_workflow' => 'three_terms_v1', 'scope' => $scope];
+        'return_workflow' => 'three_terms_v2', 'scope' => $scope];
     $html = PdfRenderer::html($return);
     rp_assert(str_contains($html, 'TERMO DE DEVOLUÇÃO DE EQUIPAMENTO'));
     rp_assert(str_contains($html, 'ASSINATURA DO BENEFICIÁRIO'));
