@@ -167,7 +167,7 @@ final class PdfRenderer
     {
         if (($snapshot['template_version'] ?? '') !== self::TEMPLATE_VERSION
             || ($snapshot['purpose'] ?? '') !== 'return_inspection'
-            || ($snapshot['return_workflow'] ?? '') !== 'three_terms_v1') {
+            || ($snapshot['return_workflow'] ?? '') !== 'three_terms_v2') {
             return false;
         }
         $lines = (array) ($snapshot['scope']['lines'] ?? []);
@@ -225,7 +225,7 @@ final class PdfRenderer
         $scope = (array) ($s['scope'] ?? []);
         $borrower = (array) ($scope['borrower'] ?? []);
         $simpleReturn = ($s['return_workflow'] ?? '') === 'two_terms_v1';
-        $borrowerReturn = ($s['return_workflow'] ?? '') === 'three_terms_v1';
+        $borrowerReturn = ($s['return_workflow'] ?? '') === 'three_terms_v2';
         $html = '<h1 style="text-align:center;font-size:15pt">'
             . (($simpleReturn || $borrowerReturn) ? 'TERMO DE DEVOLUÇÃO DE EQUIPAMENTO' : 'TERMO DE RECEBIMENTO DE EQUIPAMENTO') . '</h1>';
         $html .= '<p>Este termo registra o recebimento físico dos equipamentos e acessórios efetivamente devolvidos, conforme as quantidades e horários informados. <b>O recebimento não comprova o funcionamento, a ausência de danos nem a aprovação da conferência técnica.</b></p>';
@@ -286,7 +286,7 @@ final class PdfRenderer
         $e = self::escape(...);
         $scope = (array) ($s['scope'] ?? []);
         $borrower = (array) ($scope['borrower'] ?? []);
-        $header = ($s['return_workflow'] ?? '') === 'three_terms_v1'
+        $header = ($s['return_workflow'] ?? '') === 'three_terms_v2'
             ? 'TERMO DE RESPONSABILIDADE PELO USO'
             : 'TERMO DE CESSÃO DE EQUIPAMENTO';
         $html = '<h1 style="text-align:center;font-size:15pt">' . $header . '</h1>';
