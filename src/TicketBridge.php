@@ -337,6 +337,25 @@ final class TicketBridge
                     $payload = Store::decode($event['payload_json']);
                     if ($event['kind'] === 'followup') {
                         self::followup($booking, (string) $payload['message'], !empty($payload['is_private']));
+                    } elseif ($event['kind'] === 'solve') {
+                        // The borrower may finalize their signed proof, but may
+                        // not have native ticket UPDATE rights. Retry via the
+                        // auditable cron/admin outbox until GLPI allows solution.
+                        if (($booking['status'] ?? '') !== 'completed'
+                            || !BookingService::threeTermReturn($booking)
+                            || !DocumentService::isSatisfied((int) $booking['id'], 'return_receipt')
+                            || !DocumentService::isSatisfied((int) $booking['id'], 'return_inspection')) {
+                            throw new \DomainException('A conclusão documental ainda não permite solucionar o chamado.');
+                        }
+                        $ticket = new \Ticket();
+                        $ticketId = (int) ($booking['tickets_id'] ?? 0);
+                        if (!$ticket->getFromDB($ticketId)) {
+                            throw new \DomainException('Chamado vinculado não encontrado.');
+                        }
+                        if (!in_array((int) $ticket->fields['status'],
+                            [\CommonITILObject::SOLVED, \CommonITILObject::CLOSED], true)) {
+                            self::solve($booking);
+                        }
                     } elseif ($event['kind'] === 'approval') {
                         $approval = new \TicketValidation(); $ticket = new \Ticket();
                         if (!$approval->getFromDB((int) $payload['ticketvalidations_id']) || !$ticket->getFromDB((int) $booking['tickets_id'])) { throw new \DomainException('Vínculo nativo ausente na fila de aprovação.'); }
