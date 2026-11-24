@@ -23,22 +23,23 @@ Estado: checklist de execução, não certificado de aprovação. Ambiente obser
 - [ ] Reserva de sala sem exigência antecipada: preserva Enviar solicitação e processo anterior.
 - [ ] Recarregar a tela ou repetir a solicitação não duplica chamado, documento ou assinatura.
 
-### Três termos com signatários distintos — novas reservas de equipamento
-- [ ] Uma nova reserva de equipamento grava `three_terms_v1` no escopo congelado; reservas antigas `two_terms_v1`, `legacy` e salas não são alteradas.
-- [ ] **Termo de Responsabilidade**: é emitido automaticamente na solicitação e assinado exclusivamente pelo beneficiário antes da aprovação.
-- [ ] O técnico registra a devolução física com equipamentos e acessórios efetivamente recebidos, sem antecipar inspeção nem atribuir aceite ao beneficiário.
-- [ ] **Termo de Devolução**: é emitido após o recebimento físico, e somente o beneficiário indicado na reserva é signatário.
-- [ ] Mesmo se `return_signature_required` estava desativado, a devolução desta nova modalidade exige a assinatura do beneficiário.
-- [ ] O técnico não pode realizar conferência enquanto faltar a assinatura finalizada e íntegra do termo de devolução vigente.
-- [ ] O técnico registra testes, condições, ausências e resultado. O registro produz automaticamente **Termo de Conferência Técnica**, cujo único signatário é o inspetor autorizado que registrou o ato.
-- [ ] Após a conferência, a interface direciona o técnico ao termo de conferência e à assinatura manuscrita.
-- [ ] Antes da assinatura do técnico, a reserva permanece “Devolução em andamento”; somente o último aceite, com itens prontos e acessórios completos, conclui automaticamente e soluciona o chamado.
-- [ ] Avarias, quarentena, pendências de acessórios e conferências parciais nunca produzem conclusão automática.
-- [ ] Testar dois usuários distintos (beneficiário e técnico), com GLPI/perfis diferentes e acesso restrito às assinaturas do seu papel.
-- [ ] Testar usuário com dois papéis acumulados e conferir aceite separado por documento, nunca aceite por papel inventado.
-- [ ] Recebimentos adicionais invalidam a versão anterior de devolução e exigem novo aceite vinculado aos fatos atuais.
-- [ ] PDFs e registros antigos permanecem íntegros e imutáveis; não atualizar em massa o status ou hashes das reservas antigas.
-- [ ] Teste integrado só em banco descartável, autorizado explicitamente; os testes estáticos de CI não substituem homologação funcional.
+### Devolução definitiva — conferência assinada antes do comprovante (novas reservas de equipamento)
+- [ ] Novas reservas exclusivamente de equipamento congelam `three_terms_v2`; reservas antigas e salas preservam o modelo anterior.
+- [ ] Beneficiário assina **Termo de Responsabilidade pelo Uso** na solicitação, antes de liberar a aprovação.
+- [ ] Com reserva em uso, beneficiário/solicitante ou técnico autorizado consegue clicar **Iniciar devolução** uma única vez; esse ato não indica recebimento físico.
+- [ ] Técnico autorizado registra **Receber devolução**, identifica o entregador e discrimina acessórios físicos.
+- [ ] Técnico registra testes e divergências em **Conferir devolução** após recebimento físico. Uma conferência com acessórios pendentes não pode liberar equipamento para uso.
+- [ ] Após a conferência o sistema emite **Termo de Conferência Técnica**, exigindo assinatura eletrônica manuscrita do inspetor real.
+- [ ] Antes do PDF técnico íntegro e assinado, o sistema **não** emite nem permite assinar o comprovante do beneficiário.
+- [ ] Após **todos** os equipamentos recebidos e conferidos, com a conferência técnica assinada, o sistema gera **Termo de Devolução**, incluindo equipamentos, acessórios, resultados e ressalvas da inspeção.
+- [ ] Beneficiário assina seu comprovante de devolução e pode baixar o PDF final, sem qualquer assinatura de recebedor/inspetor nesse terceiro documento.
+- [ ] Somente após os três documentos finalizados, os itens prontos e acessórios conciliados, a assinatura final conclui automaticamente a reserva.
+- [ ] A solução nativa do chamado segue fila auditável separada quando o beneficiário não possui permissão GLPI de solução; testar execução por usuário autorizado/cron e eventual estado de integração pendente.
+- [ ] Conferência parcial, quarentena, manutenção e acessórios faltantes não concluem automaticamente; documentar ressalvas e exigir tratamento real.
+- [ ] Verificar com **duas identidades reais**: beneficiário sem direitos técnicos e inspetor com direitos técnicos. Uma pessoa com ambos os papéis deve assinar cada documento apropriado separadamente.
+- [ ] Documentos antigos (incluindo reservas #17 e #22) não são refeitos nem têm assinatura/hash alterado.
+- [ ] Validar edição, repetição, CSRF, mudanças de revisão, termo vigente, PDF de origem/final e trilha de auditoria.
+- [ ] Rodar `tests/integration_workflow.php` somente em uma base descartável habilitada explicitamente; GitHub Actions não cobre o GLPI real.
 
 ### Nova assinatura de equipamento — ordem obrigatória
 - [ ] Nova reserva de equipamento gera termo de cessão antes da aprovação (mesmo se o recurso tinha configuração anterior de assinatura após aprovação).
