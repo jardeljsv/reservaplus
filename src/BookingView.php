@@ -882,10 +882,10 @@ final class BookingView
         foreach ($documents as $document) {
             $documentSnapshot = Store::decode($document['snapshot_json'] ?? null);
             $displayPurpose = ($document['purpose'] ?? '') === 'return_receipt'
-                && in_array(($documentSnapshot['return_workflow'] ?? ''), ['two_terms_v1', 'three_terms_v1'], true)
+                && in_array(($documentSnapshot['return_workflow'] ?? ''), ['two_terms_v1', 'three_terms_v2'], true)
                 ? __('Termo de devolução de equipamento', 'reservaplus')
                 : (($document['purpose'] ?? '') === 'return_inspection'
-                    && ($documentSnapshot['return_workflow'] ?? '') === 'three_terms_v1'
+                    && ($documentSnapshot['return_workflow'] ?? '') === 'three_terms_v2'
                     ? __('Termo de conferência técnica', 'reservaplus')
                     : self::purposeLabel((string) $document['purpose']));
             echo '<tr><td>' . self::e($displayPurpose) . '<span class="rp-row-meta">Documento #' . (int) $document['id'] . ' · Versão ' . (int) $document['revision'] . '</span></td><td>';
