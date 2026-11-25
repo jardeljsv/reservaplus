@@ -89,6 +89,10 @@ final class BookingService
         $ids = self::resourceIds($input);
         $purpose = trim((string) ($input['purpose'] ?? ''));
         if ($purpose === '' || mb_strlen($purpose) > 5000) { throw new \InvalidArgumentException('Informe a finalidade em até 5.000 caracteres.'); }
+        $unit = trim((string) ($input['unit'] ?? ''));
+        if ($unit === '' || mb_strlen($unit) > 255) {
+            throw new \InvalidArgumentException('Informe a Unidade / setor do usuário em até 255 caracteres.');
+        }
         $people = filter_var($input['people_count'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 100000]]);
         if ($people === false) { throw new \InvalidArgumentException('Quantidade de pessoas inválida.'); }
         $borrowerId = (int) ($input['users_id_borrower'] ?? Access::userId());
@@ -99,8 +103,8 @@ final class BookingService
         }
         $borrower = [
             'users_id' => $borrowerId, 'name' => trim(($user->fields['firstname'] ?? '') . ' ' . ($user->fields['realname'] ?? '')) ?: (string) $user->fields['name'],
-            'matricula' => mb_substr(trim((string) ($input['matricula'] ?? '')), 0, 100),
-            'unit' => mb_substr(trim((string) ($input['unit'] ?? '')), 0, 255),
+            'matricula' => '',
+            'unit' => $unit,
             'affiliation_source' => 'declared',
         ];
         $operation = self::operationKey($key);
