@@ -102,6 +102,26 @@ rp_test('three-term PDFs separate borrower return and technical inspector eviden
     rp_assert(PdfRenderer::requiresHandwrittenSignature($return));
 });
 
+rp_test('unified technician return proof records physical receiving, inspection and exceptions in one PDF', static function (): void {
+    $sample = [
+        'template_version' => PdfRenderer::TEMPLATE_VERSION,
+        'purpose' => 'return_inspection', 'return_workflow' => 'unified_return_v1',
+        'scope' => ['bookings_id' => 51, 'lines' => [[
+            'resource' => ['kind' => 'equipment', 'name' => 'Laptop <one>', 'inventory_number' => 'PC-51'],
+            'received_at' => '2026-11-25 15:00:00', 'inspection_at' => '2026-11-25 15:06:00',
+            'inspection' => ['result' => 'pass', 'findings' => 'Conferido <script>'],
+            'accessories' => [['name' => 'Fonte', 'issued' => 1, 'received' => 1]],
+        ]]],
+    ];
+    $html = PdfRenderer::html($sample);
+    rp_assert(str_contains($html, 'TERMO DE DEVOLUÇÃO E CONFERÊNCIA TÉCNICA'));
+    rp_assert(str_contains($html, 'recebimento físico e a conferência técnica'));
+    rp_assert(str_contains($html, 'Fonte'));
+    rp_assert(str_contains($html, 'Conferido &lt;script&gt;'));
+    rp_assert(!str_contains($html, '<script>'));
+    rp_assert(PdfRenderer::requiresHandwrittenSignature($sample));
+});
+
 rp_test('new simplified return PDF is one signed technician term, without legacy output changes', static function (): void {
     $scope = ['bookings_id' => 22, 'lines' => [[
         'resource' => ['kind' => 'equipment', 'name' => 'Notebook R'],
