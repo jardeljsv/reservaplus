@@ -342,8 +342,10 @@ final class TicketBridge
                         // not have native ticket UPDATE rights. Retry via the
                         // auditable cron/admin outbox until GLPI allows solution.
                         if (($booking['status'] ?? '') !== 'completed'
-                            || !BookingService::threeTermReturn($booking)
-                            || !DocumentService::isSatisfied((int) $booking['id'], 'return_receipt')
+                            || (!BookingService::threeTermReturn($booking)
+                                && !BookingService::unifiedReturn($booking))
+                            || (BookingService::threeTermReturn($booking)
+                                && !DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'))
                             || !DocumentService::isSatisfied((int) $booking['id'], 'return_inspection')) {
                             throw new \DomainException('A conclusão documental ainda não permite solucionar o chamado.');
                         }
