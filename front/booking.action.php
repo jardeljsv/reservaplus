@@ -91,19 +91,21 @@ try {
         }
         $documentId = DocumentService::prepare($id, $purpose);
         $target = BookingView::url('agreement.php', ['id' => $documentId] + BookingView::ticketContextQuery($returnTicket));
-    } elseif (in_array($action, ['approve', 'reject', 'cancel', 'issue', 'start_return', 'receive', 'inspect', 'complete', 'extend'], true)) {
-        if (in_array($action, ['approve', 'reject', 'receive', 'inspect'], true) && (!is_array($_POST['lines_ids'] ?? null) || $_POST['lines_ids'] === [])) {
+    } elseif (in_array($action, ['approve', 'reject', 'cancel', 'issue', 'start_return', 'receive', 'inspect', 'receive_inspect', 'complete', 'extend'], true)) {
+        if (in_array($action, ['approve', 'reject', 'receive', 'inspect', 'receive_inspect'], true) && (!is_array($_POST['lines_ids'] ?? null) || $_POST['lines_ids'] === [])) {
             throw new DomainException(__('Selecione os itens que deseja registrar nesta operação.', 'reservaplus'));
         }
         $actedBooking = BookingService::act($id, $action, $_POST, $key);
         $goToReturnTerm = false;
         if (($action === 'receive' && BookingService::simplifiedReturn($actedBooking))
-            || ($action === 'inspect' && BookingService::threeTermReturn($actedBooking))) {
+            || ($action === 'inspect' && BookingService::threeTermReturn($actedBooking))
+            || ($action === 'receive_inspect' && BookingService::unifiedReturn($actedBooking))) {
             // The physical receipt has already committed. Redirect its actual
             // receiver directly to the immutable document generated afterward.
             try {
                 foreach (DocumentService::forBooking($id) as $document) {
-                    $expectedPurpose = $action === 'inspect' ? 'return_inspection' : 'return_receipt';
+                    $expectedPurpose = in_array($action, ['inspect', 'receive_inspect'], true)
+                        ? 'return_inspection' : 'return_receipt';
                     if (($document['purpose'] ?? '') !== $expectedPurpose || empty($document['is_current'])
                         || empty($document['can_sign']) || ($document['status'] ?? '') === 'complete') {
                         continue;
@@ -118,9 +120,11 @@ try {
             }
         }
         if ($goToReturnTerm) {
-            Session::addMessageAfterRedirect($action === 'inspect'
-                ? __('Conferência registrada. Assine o termo técnico para concluir a reserva.', 'reservaplus')
-                : __('Recebimento registrado. Assine o termo de devolução para liberar a conferência técnica.', 'reservaplus'));
+            Session::addMessageAfterRedirect($action === 'receive_inspect'
+                ? __('Equipamentos recebidos e conferidos. Assine o termo único para registrar a devolução.', 'reservaplus')
+                : ($action === 'inspect'
+                    ? __('Conferência registrada. Assine o termo técnico para concluir a reserva.', 'reservaplus')
+                    : __('Recebimento registrado. Assine o termo de devolução para liberar a conferência técnica.', 'reservaplus')));
         } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'mine') {
             $target = BookingView::url('booking.php', ['scope' => 'mine']);
         } elseif ($returnTicket === 0 && ($_POST['_return_list'] ?? '') === 'requests') {
@@ -130,7 +134,8 @@ try {
         }
         if (!$goToReturnTerm) {
             Session::addMessageAfterRedirect(BookingView::e(
-                $action === 'start_return' && BookingService::threeTermReturn($actedBooking)
+                $action === 'start_return'
+                    && (BookingService::threeTermReturn($actedBooking) || BookingService::unifiedReturn($actedBooking))
                     ? __('Devolução iniciada. Aguarde o técnico receber e conferir os equipamentos.', 'reservaplus')
                     : ($action === 'receive' && BookingService::threeTermReturn($actedBooking)
                         ? __('Recebimento físico registrado. Agora o técnico deve realizar a conferência e assinar o termo técnico.', 'reservaplus')
