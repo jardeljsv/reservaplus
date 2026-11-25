@@ -44,7 +44,16 @@ rp_test('signature requirements combine mandatory resource stages', static funct
     rp_same([], BookingService::signaturePurposes([$line('none')]));
 });
 
-rp_test('legacy two-document workflow remains opt-in, while new equipment uses three documents', static function (): void {
+rp_test('new equipment uses unified signed return while historic workflows remain frozen', static function (): void {
+    rp_assert(BookingService::unifiedReturn([
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'unified_return_v1']),
+    ]));
+    rp_assert(!BookingService::threeTermReturn([
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'unified_return_v1']),
+    ]));
+    rp_assert(!BookingService::unifiedReturn([
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'three_terms_v2']),
+    ]));
     rp_assert(BookingService::threeTermReturn([
         'policy_snapshot_json' => json_encode(['return_workflow' => 'three_terms_v2']),
     ]));
