@@ -368,7 +368,13 @@ final class BookingView
             $hasInspection = $hasInspection || !empty($line['inspection_at']);
         }
         $purposes = [];
-        if (BookingService::threeTermReturn($booking)) {
+        if (BookingService::unifiedReturn($booking)) {
+            if (!$hasInspection) {
+                return [['purpose' => '', 'label' => __('Aguardando recebimento e conferência pelo técnico', 'reservaplus'),
+                    'document_id' => 0, 'can_sign' => false]];
+            }
+            $purposes['return_inspection'] = __('termo de devolução e conferência técnica', 'reservaplus');
+        } elseif (BookingService::threeTermReturn($booking)) {
             if (!$hasReceiving) {
                 return [['purpose' => '', 'label' => __('Aguardando recebimento físico pelo técnico', 'reservaplus'),
                     'document_id' => 0, 'can_sign' => false]];
@@ -467,17 +473,23 @@ final class BookingView
             $resource = self::lineSnapshot($line);
             return self::inspectionLineEligible($line, ($resource['kind'] ?? '') === 'room');
         }));
-        $canStartReturn = BookingService::threeTermReturn($booking) && $state === 'issued'
+        $canStartReturn = (BookingService::threeTermReturn($booking) || BookingService::unifiedReturn($booking))
+            && $state === 'issued'
             && (in_array(Access::userId(),
                 [(int) $booking['users_id_requester'], (int) $booking['users_id_borrower']], true)
                 || Access::booking($booking, 'receive'));
-        $canReceive = in_array($state, ['issued', 'returning'], true) && $receiveLines !== [];
-        $canInspect = in_array($state, ['approved', 'issued', 'returning'], true) && $inspectLines !== []
+        $canUnified = BookingService::unifiedReturn($booking)
+            && $state === 'returning' && $receiveLines !== []
+            && Access::booking($booking, 'receive') && Access::booking($booking, 'inspect');
+        $canReceive = !BookingService::unifiedReturn($booking)
+            && in_array($state, ['issued', 'returning'], true) && $receiveLines !== [];
+        $canInspect = !BookingService::unifiedReturn($booking)
+            && in_array($state, ['approved', 'issued', 'returning'], true) && $inspectLines !== []
             && (!BookingService::simplifiedReturn($booking)
                 || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'))
             && (!BookingService::threeTermReturn($booking) || $state === 'returning');
         if ($eligible === [] && !$canExtend && !$canCancel && !$canIssue
-            && !$canStartReturn && !$canReceive && !$canInspect) {
+            && !$canStartReturn && !$canReceive && !$canInspect && !$canUnified) {
             self::link('booking.php', __('Detalhes', 'reservaplus'), ['id' => (int) $booking['id']], 'btn-outline-secondary btn-sm');
             return;
         }
@@ -514,6 +526,10 @@ final class BookingView
             self::hidden('_return_list', 'requests');
             self::submit(__('Iniciar devolução', 'reservaplus'));
             Html::closeForm();
+        }
+        if ($canUnified) {
+            self::link('booking.php', __('Receber e conferir', 'reservaplus'),
+                ['id' => (int) $booking['id']], 'btn-primary btn-sm');
         }
         if ($canReceive) {
             echo '<details class="rp-mini-expand rp-mini-receive"><summary class="btn rp-mini-action rp-mini-extend">'
@@ -631,7 +647,8 @@ final class BookingView
         $status = (string) ($booking['status'] ?? '');
         echo '<div class="rp-requester-actions" aria-label="' . self::e(__('Ações da minha reserva', 'reservaplus')) . '">';
         self::link('booking.php', __('Acompanhar', 'reservaplus'), ['id' => $id], 'rp-requester-follow btn-sm');
-        if ($status === 'issued' && BookingService::threeTermReturn($booking)) {
+        if ($status === 'issued'
+            && (BookingService::threeTermReturn($booking) || BookingService::unifiedReturn($booking))) {
             self::formStart('start_return', $id, (int) $booking['revision']);
             self::hidden('_return_list', 'mine');
             self::submit(__('Iniciar devolução', 'reservaplus'));
@@ -644,7 +661,9 @@ final class BookingView
                     'return_receipt' => BookingService::threeTermReturn($booking)
                         ? __('Assinar comprovante de devolução', 'reservaplus') : __('Assinar termo de recebimento', 'reservaplus'),
                     'return_inspection' => BookingService::threeTermReturn($booking)
-                        ? __('Assinar conferência técnica', 'reservaplus') : __('Assinar termo de devolução', 'reservaplus'),
+                        ? (BookingService::unifiedReturn($booking)
+                    ? __('Assinar termo de devolução e conferência', 'reservaplus')
+                    : __('Assinar conferência técnica', 'reservaplus')) : __('Assinar termo de devolução', 'reservaplus'),
                     default => __('Ler e assinar termo', 'reservaplus'),
                 };
                 echo '<a class="btn rp-requester-sign btn-sm" href="' . self::e(self::url('agreement.php', ['id' => (int) $doc['id']])) . '"><i class="ti ti-file-pencil" aria-hidden="true"></i> ' . self::e($signLabel) . '</a>';
@@ -911,13 +930,16 @@ final class BookingView
         echo '<div class="rp-table-wrap"><table class="rp-table"><thead><tr><th>Documento</th><th>Situação</th><th>Acesso</th></tr></thead><tbody>';
         foreach ($documents as $document) {
             $documentSnapshot = Store::decode($document['snapshot_json'] ?? null);
-            $displayPurpose = ($document['purpose'] ?? '') === 'return_receipt'
+            $displayPurpose = ($document['purpose'] ?? '') === 'return_inspection'
+                && ($documentSnapshot['return_workflow'] ?? '') === 'unified_return_v1'
+                ? __('Termo de devolução e conferência técnica', 'reservaplus')
+                : (($document['purpose'] ?? '') === 'return_receipt'
                 && in_array(($documentSnapshot['return_workflow'] ?? ''), ['two_terms_v1', 'three_terms_v2'], true)
                 ? __('Termo de devolução de equipamento', 'reservaplus')
                 : (($document['purpose'] ?? '') === 'return_inspection'
                     && ($documentSnapshot['return_workflow'] ?? '') === 'three_terms_v2'
                     ? __('Termo de conferência técnica', 'reservaplus')
-                    : self::purposeLabel((string) $document['purpose']));
+                    : self::purposeLabel((string) $document['purpose'])));
             echo '<tr><td>' . self::e($displayPurpose) . '<span class="rp-row-meta">Documento #' . (int) $document['id'] . ' · Versão ' . (int) $document['revision'] . '</span></td><td>';
             self::badge((string) $document['status']);
             if ($document['status'] === 'complete' && $document['attachment_status'] !== 'attached') { echo '<span class="rp-row-meta">Anexo do chamado pendente</span>'; }
@@ -942,11 +964,13 @@ final class BookingView
             $returnSigning = ($signature['purpose'] ?? '') === 'return_receipt'
                 && (BookingService::simplifiedReturn($booking) || BookingService::threeTermReturn($booking));
             $technicalSigning = ($signature['purpose'] ?? '') === 'return_inspection'
-                && BookingService::threeTermReturn($booking);
+                && (BookingService::threeTermReturn($booking) || BookingService::unifiedReturn($booking));
             echo '<div class="rp-signature-highlight" role="status">';
             echo '<div><strong>' . self::e($returnSigning
                 ? __('Termo de devolução de equipamento', 'reservaplus')
-                : ($technicalSigning ? __('Termo de conferência técnica', 'reservaplus')
+                : ($technicalSigning ? (BookingService::unifiedReturn($booking)
+                    ? __('Termo de devolução e conferência técnica', 'reservaplus')
+                    : __('Termo de conferência técnica', 'reservaplus'))
                     : __('Termo de responsabilidade', 'reservaplus'))) . '</strong>';
             echo '<span class="rp-signature-state">' . self::e(__('Aguardando assinatura', 'reservaplus')) . '</span>';
             echo '<p>' . self::e($returnSigning
@@ -954,7 +978,9 @@ final class BookingView
                     ? __('A conferência técnica foi assinada. O beneficiário pode assinar e baixar o comprovante de devolução.', 'reservaplus')
                     : __('O recebimento físico foi registrado. O técnico recebedor deve assinar antes da conferência.', 'reservaplus'))
                 : ($technicalSigning
-                    ? __('A conferência foi registrada. O técnico inspetor deve assinar para concluir.', 'reservaplus')
+                    ? (BookingService::unifiedReturn($booking)
+                        ? __('Recebimento e conferência registrados. O técnico deve assinar o termo único para concluir.', 'reservaplus')
+                        : __('A conferência foi registrada. O técnico inspetor deve assinar para concluir.', 'reservaplus'))
                     : __('Assinatura necessária antes da próxima etapa. Confira o documento e registre seu aceite.', 'reservaplus'))) . '</p></div>';
             self::link('agreement.php', $technicalSigning
                 ? __('Assinar conferência técnica', 'reservaplus')
@@ -972,8 +998,9 @@ final class BookingView
         }
         $simplifiedReturn = BookingService::simplifiedReturn($booking);
         $threeTerms = BookingService::threeTermReturn($booking);
+        $unifiedReturn = BookingService::unifiedReturn($booking);
         foreach ($booking['lines'] ?? [] as $line) {
-            if (!empty($line['received_at']) && !$threeTerms) {
+            if (!empty($line['received_at']) && !$threeTerms && !$unifiedReturn) {
                 $purposes['return_receipt'] = $simplifiedReturn;
             }
             if (!$simplifiedReturn && !empty($line['inspection_at'])) {
@@ -990,11 +1017,13 @@ final class BookingView
         $existing = array_column($current, 'purpose');
         $missing = array_diff(array_keys($purposes), $existing);
         foreach ($missing as $purpose) {
-            $missingLabel = ($simplifiedReturn || $threeTerms) && $purpose === 'return_receipt'
+            $missingLabel = $unifiedReturn && $purpose === 'return_inspection'
+                ? __('Termo de devolução e conferência técnica', 'reservaplus')
+                : (($simplifiedReturn || $threeTerms) && $purpose === 'return_receipt'
                 ? __('Termo de devolução de equipamento', 'reservaplus')
                 : ($threeTerms && $purpose === 'return_inspection'
                     ? __('Termo de conferência técnica', 'reservaplus')
-                    : self::purposeLabel($purpose));
+                    : self::purposeLabel($purpose)));
             echo '<div class="rp-document-action"><div><h3>' . self::e($missingLabel) . '</h3><p class="rp-muted">' . self::e($purposes[$purpose] ? __('Prepare o documento desta etapa para os signatários conferirem e aceitarem.', 'reservaplus') : __('Emita um recibo dos itens recebidos, mesmo antes da conferência final.', 'reservaplus')) . '</p></div>';
             if ($canPrepare) {
                 self::formStart('prepare_document', $id, (int) $booking['revision']);
@@ -1107,7 +1136,8 @@ final class BookingView
             self::textarea('condition', __('Condição na entrega e conferência dos acessórios', 'reservaplus'), '', true);
             self::actionEnd(__('Confirmar entrega', 'reservaplus'));
         }
-        if ($state === 'issued' && BookingService::threeTermReturn($booking)
+        if ($state === 'issued'
+            && (BookingService::threeTermReturn($booking) || BookingService::unifiedReturn($booking))
             && (Access::booking($booking, 'receive')
                 || in_array(Access::userId(), [(int) $booking['users_id_requester'],
                     (int) $booking['users_id_borrower']], true))) {
@@ -1117,7 +1147,24 @@ final class BookingView
             Html::closeForm();
         }
         $receiveLines = array_values(array_filter(self::actionLines($booking, 'receive', ['issued', 'received', 'quarantine', 'maintenance']), static fn(array $line): bool => (self::lineSnapshot($line)['kind'] ?? '') !== 'room'));
-        if ($receiveLines !== [] && in_array($state, ['issued', 'returning'], true)) {
+        if (BookingService::unifiedReturn($booking) && $state === 'returning'
+            && $receiveLines !== [] && Access::booking($booking, 'receive')
+            && Access::booking($booking, 'inspect')) {
+            self::actionStart($booking, 'receive_inspect',
+                __('Receber devolução e realizar conferência', 'reservaplus'),
+                __('O mesmo técnico confirma o recebimento físico, confere os acessórios e registra o resultado em uma única operação. Em seguida, assina um termo único.', 'reservaplus'));
+            self::chooseLines($receiveLines, true);
+            self::input('deliverer', __('Nome de quem entregou os equipamentos', 'reservaplus'), '', 'text', true, 'maxlength="255"');
+            self::textarea('note', __('Observações do recebimento', 'reservaplus'));
+            self::select('result', __('Resultado da conferência', 'reservaplus'),
+                ['' => __('Selecione', 'reservaplus'), 'pass' => __('Aprovado para novo uso', 'reservaplus'),
+                'quarantine' => __('Reter para avaliação', 'reservaplus'),
+                'maintenance' => __('Encaminhar para manutenção', 'reservaplus')]);
+            self::textarea('findings', __('Testes, condições e eventuais avarias', 'reservaplus'), '', true);
+            self::actionEnd(__('Registrar recebimento e conferência', 'reservaplus'));
+        }
+        if (!BookingService::unifiedReturn($booking) && $receiveLines !== []
+            && in_array($state, ['issued', 'returning'], true)) {
             self::actionStart($booking, 'receive', __('Receber devolução', 'reservaplus'), __('Marque apenas os itens que recebeu e informe a quantidade de cada acessório entregue agora. O recebimento não declara que a conferência foi aprovada.', 'reservaplus'));
             self::chooseLines($receiveLines, true);
             self::input('deliverer', __('Nome de quem entregou os itens', 'reservaplus'), '', 'text', true, 'maxlength="255"');
@@ -1125,7 +1172,8 @@ final class BookingView
             self::actionEnd(__('Registrar recebimento agora', 'reservaplus'));
         }
         $inspectLines = array_values(array_filter(self::actionLines($booking, 'inspect', ['received', 'quarantine', 'maintenance', 'allocated', 'issued']), static fn(array $line): bool => in_array($line['state'], ['received', 'quarantine', 'maintenance'], true) || (self::lineSnapshot($line)['kind'] ?? '') === 'room'));
-        if ($inspectLines !== [] && in_array($state, ['approved', 'issued', 'returning'], true)
+        if (!BookingService::unifiedReturn($booking)
+            && $inspectLines !== [] && in_array($state, ['approved', 'issued', 'returning'], true)
             && (!BookingService::simplifiedReturn($booking)
                 || DocumentService::isSatisfied((int) $booking['id'], 'return_receipt'))
             && (!BookingService::threeTermReturn($booking) || $state === 'returning')) {
@@ -1139,12 +1187,15 @@ final class BookingView
         foreach ($booking['lines'] ?? [] as $line) {
             $allReady = $allReady && ($line['state'] ?? '') === 'ready' && !empty($line['inspection_at']);
         }
-        $canCompleteThreeTerms = BookingService::threeTermReturn($booking)
+        $canCompleteThreeTerms = (BookingService::threeTermReturn($booking)
             && DocumentService::isSatisfied((int) $booking['id'], 'return_receipt')
-            && DocumentService::isSatisfied((int) $booking['id'], 'return_inspection');
+            && DocumentService::isSatisfied((int) $booking['id'], 'return_inspection'))
+            || (BookingService::unifiedReturn($booking)
+                && DocumentService::isSatisfied((int) $booking['id'], 'return_inspection'));
         if ($allReady && Access::booking($booking, 'inspect') && $state === 'returning'
             && !BookingService::simplifiedReturn($booking)
-            && (!BookingService::threeTermReturn($booking) || $canCompleteThreeTerms)) {
+            && ((!BookingService::threeTermReturn($booking) && !BookingService::unifiedReturn($booking))
+                || $canCompleteThreeTerms)) {
             self::actionStart($booking, 'complete', __('Concluir solicitação', 'reservaplus'), __('A conclusão exige os registros de devolução ou término de uso e os documentos obrigatórios. Encerrar não substitui os registros físicos.', 'reservaplus'));
             self::actionEnd(__('Verificar requisitos e concluir', 'reservaplus'));
         }
