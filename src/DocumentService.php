@@ -33,18 +33,22 @@ final class DocumentService
         $token = bin2hex(random_bytes(32));
         $snapshot = [
             'scope' => $scope, 'scope_hash' => $scopeHash, 'purpose' => $purpose,
-            'title' => ($purpose === 'request' && BookingService::threeTermReturn($booking))
+            'title' => ($purpose === 'request'
+                && (BookingService::threeTermReturn($booking) || BookingService::unifiedReturn($booking)))
                 ? 'Termo de responsabilidade pelo uso'
                 : (($purpose === 'return_receipt'
                 && (BookingService::simplifiedReturn($booking) || BookingService::threeTermReturn($booking)))
                 ? 'Termo de devolução de equipamento'
-                : ($purpose === 'return_inspection' && BookingService::threeTermReturn($booking)
+                : ($purpose === 'return_inspection' && BookingService::unifiedReturn($booking)
+                    ? 'Termo de devolução e conferência técnica'
+                    : ($purpose === 'return_inspection' && BookingService::threeTermReturn($booking)
                     ? 'Termo de conferência técnica de equipamento'
-                    : self::title($purpose, self::roomsOnly($scope)))),
+                    : self::title($purpose, self::roomsOnly($scope))))),
             'statement' => self::statement($purpose, self::roomsOnly($scope)),
             'consent_text' => self::baseConsent(), 'template_version' => PdfRenderer::TEMPLATE_VERSION,
-            'return_workflow' => BookingService::threeTermReturn($booking) ? 'three_terms_v2'
-                : (BookingService::simplifiedReturn($booking) ? 'two_terms_v1' : 'legacy'),
+            'return_workflow' => BookingService::unifiedReturn($booking) ? 'unified_return_v1'
+                : (BookingService::threeTermReturn($booking) ? 'three_terms_v2'
+                : (BookingService::simplifiedReturn($booking) ? 'two_terms_v1' : 'legacy')),
             'prepared_at' => Store::now(), 'timezone' => date_default_timezone_get(),
             'tickets_id' => (int) ($booking['tickets_id'] ?? 0), 'verification_token' => $token,
             // Login GLPI/AD congelado no documento, sem alterar hashes de termos antigos.
@@ -110,7 +114,11 @@ final class DocumentService
             $purposes = $required;
         }
         if ($state === 'returning') {
-            if (BookingService::threeTermReturn($booking)) {
+            if (BookingService::unifiedReturn($booking)) {
+                foreach ($lines as $line) {
+                    if (!empty($line['inspection_at'])) { $purposes[] = 'return_inspection'; }
+                }
+            } elseif (BookingService::threeTermReturn($booking)) {
                 $anyInspected = false;
                 $allInspected = $lines !== [];
                 foreach ($lines as $line) {
@@ -278,7 +286,9 @@ final class DocumentService
                     && ($finished['purpose'] ?? '') === 'return_inspection') {
                     self::prepareForCurrentStage((int) $finished['bookings_id']);
                 }
-                if (($finished['purpose'] ?? '') === 'return_receipt') {
+                if (($finished['purpose'] ?? '') === 'return_receipt'
+                    || (($finished['purpose'] ?? '') === 'return_inspection'
+                        && BookingService::unifiedReturn($relatedBooking))) {
                     BookingService::completeAfterFinalSignature((int) $finished['bookings_id']);
                 }
             } catch (\Throwable $error) {
@@ -612,13 +622,14 @@ final class DocumentService
         };
         $simplifiedReceipt = $purpose === 'return_receipt' && BookingService::simplifiedReturn($booking);
         $threeTerms = BookingService::threeTermReturn($booking);
+        $unified = BookingService::unifiedReturn($booking);
         $borrowerRequired = in_array($purpose, ['request', 'handover'], true)
             || ($threeTerms && $purpose === 'return_receipt');
         foreach (Store::find('bookinglines', ['bookings_id' => (int) $booking['id']]) as $line) {
             $snap = Store::decode($line['snapshot_json'] ?? null);
             $resource = (array) ($snap['resource'] ?? $snap);
             $policy = is_array($resource['policy'] ?? null) ? $resource['policy'] : Store::decode($resource['policy_json'] ?? null);
-            if (!$simplifiedReceipt && !$threeTerms) {
+            if (!$simplifiedReceipt && !$threeTerms && !$unified) {
                 $borrowerRequired = $borrowerRequired || !empty($policy['return_signature_required']);
             }
         }
@@ -663,6 +674,9 @@ final class DocumentService
         }
         if ($purpose === 'return_inspection' && BookingService::simplifiedReturn($booking)) {
             throw new \DomainException('Neste fluxo, a conferência é registrada diretamente na reserva, sem um terceiro termo.');
+        }
+        if (BookingService::unifiedReturn($booking) && $purpose === 'return_receipt') {
+            throw new \DomainException('Este fluxo utiliza somente o termo de devolução e conferência técnica, assinado pelo técnico.');
         }
         if (BookingService::threeTermReturn($booking) && $purpose === 'return_receipt') {
             $lines = Store::find('bookinglines', ['bookings_id' => (int) $booking['id']]);
