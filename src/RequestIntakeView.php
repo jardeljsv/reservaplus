@@ -104,7 +104,12 @@ final class RequestIntakeView
             }
             if (!$allowed) { $errors[] = __('O usuário escolhido não está habilitado para esta seleção. Confira o responsável pelo uso.', 'reservaplus'); }
         }
-        if ($details && trim((string) $draft['purpose']) === '') { $errors[] = __('Informe para que os recursos serão utilizados.', 'reservaplus'); }
+        if ($details && trim((string) ($draft['purpose'] ?? '')) === '') {
+            $errors[] = __('Informe para que os recursos serão utilizados.', 'reservaplus');
+        }
+        if ($details && trim((string) ($draft['unit'] ?? '')) === '') {
+            $errors[] = __('Informe a Unidade / setor do usuário para continuar a reserva.', 'reservaplus');
+        }
         return array_values(array_unique($errors));
     }
 
@@ -321,10 +326,9 @@ final class RequestIntakeView
             echo '</div>';
         } else { echo '<p class="rp-intake-identity"><i class="ti ti-user" aria-hidden="true"></i> Você será o responsável pelo uso e pelos aceites desta solicitação.</p>'; }
         echo '<div class="rp-field"><label for="rp-intake-purpose">Finalidade do uso</label><textarea id="rp-intake-purpose" name="purpose" maxlength="5000" required>' . BookingView::e($draft['purpose']) . '</textarea></div>';
-        echo '<details class="rp-intake-optional"' . ($draft['matricula'] !== '' || $draft['unit'] !== '' ? ' open' : '') . '><summary>Identificação complementar (opcional)</summary><p class="rp-muted">Informe apenas se a equipe precisar identificar a matrícula ou a unidade deste uso.</p><div class="rp-grid">';
-        BookingView::input('matricula', 'Matrícula utilizada', $draft['matricula'], 'text', false, 'maxlength="100"');
-        BookingView::input('unit', 'Unidade / setor do usuário', $draft['unit'], 'text', false, 'maxlength="255"');
-        echo '</div></details></section>';
+        BookingView::input('unit', 'Unidade / setor do usuário', $draft['unit'] ?? '',
+            'text', true, 'maxlength="255" autocomplete="organization"');
+        echo '</section>';
     }
 
     private static function review(array $draft, array $selected): void
@@ -342,8 +346,7 @@ final class RequestIntakeView
         echo '</ul><dl class="rp-review-facts"><dt>Finalidade</dt><dd>' . nl2br(BookingView::e($draft['purpose'])) . '</dd>';
         if (self::hasRoom($selected)) { echo '<dt>Participantes</dt><dd>' . (int) $draft['people_count'] . '</dd>'; }
         if ((int) $draft['users_id_borrower'] !== Access::userId()) { echo '<dt>Responsável pelo uso</dt><dd>' . BookingView::e(self::borrowerName((int) $draft['users_id_borrower'])) . '</dd>'; }
-        if ($draft['matricula'] !== '') { echo '<dt>Matrícula</dt><dd>' . BookingView::e($draft['matricula']) . '</dd>'; }
-        if ($draft['unit'] !== '') { echo '<dt>Unidade / setor</dt><dd>' . BookingView::e($draft['unit']) . '</dd>'; }
+        echo '<dt>Unidade / setor do usuário</dt><dd>' . BookingView::e($draft['unit'] ?? '') . '</dd>';
         echo '</dl><div class="rp-review-next"><h3>Próxima etapa</h3><p>' . BookingView::e(
             !$equipmentSelected
                 ? 'Ao enviar, acompanhe a aprovação e as etapas previstas para o recurso.'
