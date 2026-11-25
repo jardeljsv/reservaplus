@@ -198,6 +198,8 @@ final class PdfRenderer
                 . '<br><b>Patrimônio:</b> ' . $e((string) ($resource['inventory_number'] ?? 'Não informado'))
                 . '<br><b>Série:</b> ' . $e((string) ($resource['serial'] ?? 'Não informado'))
                 . '<br><b>Recebido em:</b> ' . $e((string) ($line['received_at'] ?? 'Não informado'))
+                . ($unified ? '<br><b>Entregue por:</b> ' . $e((string) ($line['deliverer'] ?? 'Não informado'))
+                    . '<br><b>Observações do recebimento:</b> ' . $e((string) ($line['receipt_note'] ?? 'Nenhuma')) : '')
                 . '<br><b>Conferido em:</b> ' . $e((string) ($line['inspection_at'] ?? 'Não informado'))
                 . '<br><b>Resultado:</b> ' . $e((string) ($inspection['result'] ?? 'Não informado'))
                 . '<br><b>Verificações e constatações:</b> ' . $e((string) ($inspection['findings'] ?? $inspection['note'] ?? 'Não informado')) . '</p>';
