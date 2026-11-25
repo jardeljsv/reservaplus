@@ -983,7 +983,9 @@ final class BookingView
                         : __('A conferência foi registrada. O técnico inspetor deve assinar para concluir.', 'reservaplus'))
                     : __('Assinatura necessária antes da próxima etapa. Confira o documento e registre seu aceite.', 'reservaplus'))) . '</p></div>';
             self::link('agreement.php', $technicalSigning
-                ? __('Assinar conferência técnica', 'reservaplus')
+                ? (BookingService::unifiedReturn($booking)
+                    ? __('Assinar devolução e conferência', 'reservaplus')
+                    : __('Assinar conferência técnica', 'reservaplus'))
                 : ($returnSigning ? __('Assinar termo de devolução', 'reservaplus')
                     : __('Ler e assinar termo', 'reservaplus')),
                 ['id' => (int) $signature['id']] + self::ticketContextQuery(self::$ticketContext), 'rp-signature-cta');
