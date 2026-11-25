@@ -635,9 +635,9 @@ final class BookingService
         return self::get($id);
     }
 
-    /** Signed beneficiary proof is the final gate; closure is independent
-     * of the signer's staff profile. Native ticket resolution is retried via
-     * the existing auditable outbox using a privileged GLPI context. */
+    /** Final signature is workflow-specific: technician for unified returns,
+     * beneficiary for the historical three-term flow. Native ticket solution
+     * is retried through the auditable outbox if GLPI permissions prevent it. */
     public static function completeAfterFinalSignature(int $bookingId): void
     {
         $booking = Store::row('bookings', $bookingId);
