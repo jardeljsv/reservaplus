@@ -80,7 +80,7 @@ rp_throws(static fn()=>rp_action($bookingId,'approve'),DomainException::class);
 rp_test('self-service request creates one ticket and rejects unauthorized approval and altered retries',static function()use($booking):void{
     rp_same(1,count($booking['approvals']),'One approval per resource');
 });
-rp_assert(BookingService::threeTermReturn($booking));
+rp_assert(BookingService::unifiedReturn($booking));
 rp_sign($bookingId,'request');
 rp_login($adminName,Access::ADMIN);
 $approval=$booking['approvals'][0];$nativeApproval=new TicketValidation();
@@ -114,35 +114,28 @@ $booking=rp_action($bookingId,'start_return');
 rp_same('returning',$booking['status'],'Borrower may initiate return independently of physical receipt');
 rp_throws(static fn()=>rp_action($bookingId,'start_return'),DomainException::class);
 rp_login($adminName,Access::ADMIN);
-$booking=rp_action($bookingId,'receive',['deliverer'=>'Borrower','note'=>'Equipment received; charger pending.']);
-rp_same('returning',$booking['status']);rp_same('inspection',Store::row('resources',$resourceId)['operational_state']);
-rp_throws(static fn()=>rp_action($bookingId,'inspect',['result'=>'pass','findings'=>'Function tested.']),DomainException::class);
-rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
-$booking=rp_action($bookingId,'receive',['accessories'=>[(int)$line['id']=>[0=>1]],'note'=>'Charger now returned.']);
+rp_throws(static fn()=>rp_action($bookingId,'receive',['deliverer'=>'Borrower']),DomainException::class);
+rp_throws(static fn()=>DocumentService::prepare($bookingId,'return_receipt'),DomainException::class);
+rp_throws(static fn()=>rp_action($bookingId,'receive_inspect',['result'=>'pass','findings'=>'Tested']),DomainException::class,
+    'Cannot pass with missing accessories');
+$booking=rp_action($bookingId,'receive_inspect',[
+    'deliverer'=>'Borrower', 'accessories'=>[(int)$line['id']=>[0=>1]],
+    'result'=>'pass', 'findings'=>'Equipment and charger received and tested, all functions normal.']);
+rp_same('returning',$booking['status'],'Single operation awaits technician signature');
+rp_same('ready',$booking['lines'][0]['state']);
+rp_same('available',Store::row('resources',$resourceId)['operational_state']);
+rp_assert(!DocumentService::isSatisfied($bookingId,'return_inspection'));
 rp_throws(static fn()=>DocumentService::prepare($bookingId,'return_receipt'),DomainException::class,
-    'Beneficiary proof must not be issued before signed technical inspection');
-$booking=rp_action($bookingId,'inspect',['result'=>'pass','findings'=>'Equipment and charger tested, all functions normal.']);
-rp_same('returning',$booking['status'],'Inspection awaits signed technical term');
-rp_same('ready',$booking['lines'][0]['state']);rp_same('available',Store::row('resources',$resourceId)['operational_state']);
-rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
+    'Unified workflow has no beneficiary return term');
 $inspectionDoc=DocumentService::prepare($bookingId,'return_inspection');
 rp_same(['inspector'],DocumentService::get($inspectionDoc)['signers'][0]['roles']);
-rp_same(1,count(DocumentService::get($inspectionDoc)['signers']),'Only inspecting technician signs technical term');
-rp_sign($bookingId,'return_inspection');
-rp_same('returning',Store::row('bookings',$bookingId)['status'],
-    'Technician signature releases borrower proof, but cannot close booking alone');
-$returnDoc=DocumentService::prepare($bookingId,'return_receipt');
-rp_same(['borrower'],DocumentService::get($returnDoc)['signers'][0]['roles']);
-rp_same(1,count(DocumentService::get($returnDoc)['signers']),'Only beneficiary signs the proof');
-rp_same('pass',(DocumentService::get($returnDoc)['snapshot']['scope']['lines'][0]['inspection']['result'] ?? ''),
-    'Borrower return receipt must record signed technical result');
-rp_login($employeeName,READ|CREATE);
-$documentId=rp_sign($bookingId,'return_receipt');
+rp_same(1,count(DocumentService::get($inspectionDoc)['signers']),
+    'One technician signs receipt and inspection on the same document');
+$documentId=rp_sign($bookingId,'return_inspection');
 rp_same('completed',Store::row('bookings',$bookingId)['status'],
-    'Final beneficiary signature automatically completes booking');
+    'Technician signature automatically concludes the complete physical return');
 $booking=BookingService::get($bookingId);
 rp_throws(static fn()=>rp_action($bookingId,'complete'),DomainException::class);
-rp_login($adminName,Access::ADMIN);
 rp_test('physical receipt, accessory reconciliation and inspection gates',static function()use($booking):void{rp_same(1,(int)Store::decode($booking['lines'][0]['accessories_json'])[0]['received']);});
 
 rp_test('native aggregate models cannot bypass service state or immutable evidence',static function()use($bookingId,$documentId):void{
@@ -154,14 +147,16 @@ rp_test('native aggregate models cannot bypass service state or immutable eviden
     rp_same('completed',Store::row('bookings',$bookingId)['status']);rp_same('complete',Store::row('agreements',$documentId)['status']);
 });
 rp_same(1,count(Store::find('agreements',['bookings_id'=>$bookingId,'purpose'=>'return_inspection'])),
-    'Technical inspection has its own signed immutable document');
+    'Only one immutable return and inspection document is signed');
+rp_same([],Store::find('agreements',['bookings_id'=>$bookingId,'purpose'=>'return_receipt']),
+    'Beneficiary does not sign a return receipt in unified workflow');
 $ticket=new Ticket();rp_assert($ticket->getFromDB((int)$booking['tickets_id']));
 rp_assert(in_array((int)$ticket->fields['status'],[CommonITILObject::SOLVED,CommonITILObject::CLOSED],true)
     || Store::find('bookingoutbox',['bookings_id'=>$bookingId,'kind'=>'solve'])!==[],
     'Native ticket must be solved or queued for privileged retry');
-rp_test('three signatures verify beneficiary responsibility and return plus technical inspection',static function()use($bookingId):void{
+rp_test('beneficiary responsibility and technician combined return are the only required terms',static function()use($bookingId):void{
     rp_assert(DocumentService::isSatisfied($bookingId,'request'));
-    rp_assert(DocumentService::isSatisfied($bookingId,'return_receipt'));
+    rp_assert(!DocumentService::isSatisfied($bookingId,'return_receipt'));
     rp_assert(DocumentService::isSatisfied($bookingId,'return_inspection'));
 });
 
