@@ -161,7 +161,7 @@ try {
         exit;
     }
     if ($action === 'submit') {
-        $allowed = ['resources_ids', 'begin', 'end', 'purpose', 'people_count', 'users_id_borrower', 'matricula', 'unit'];
+        $allowed = ['resources_ids', 'begin', 'end', 'purpose', 'people_count', 'users_id_borrower', 'unit'];
         $_SESSION['reservaplus_booking_form'] = array_intersect_key($_POST, array_flip($allowed));
         $return = [];
         if ((int) ($_POST['tickets_id'] ?? 0) > 0) {
