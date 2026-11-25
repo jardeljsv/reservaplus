@@ -471,10 +471,14 @@ final class BookingService
                             throw new \DomainException('O recebimento não pode anteceder a entrega.');
                         }
                         $deltas = (array) ($input['accessories'][(int) $line['id']] ?? []);
-                        if ($line['state'] !== 'issued' && array_sum(array_map('intval', $deltas)) < 1) {
-                            throw new \DomainException('Para novo recebimento, informe os acessórios adicionais.');
+                        $existingAccessories = Store::decode($line['accessories_json']);
+                        $newPhysicalReceipt = $line['state'] === 'issued'
+                            || array_sum(array_map('intval', $deltas)) > 0;
+                        if (!$newPhysicalReceipt
+                            && !Booking::accessoriesComplete($existingAccessories)) {
+                            throw new \DomainException('Para complementar uma devolução incompleta, registre os acessórios recebidos.');
                         }
-                        $accessories = Booking::receiveAccessories(Store::decode($line['accessories_json']), $deltas);
+                        $accessories = Booking::receiveAccessories($existingAccessories, $deltas);
                         if ($result === 'pass' && !Booking::accessoriesComplete($accessories)) {
                             throw new \DomainException('Há acessórios pendentes. Registre quarentena ou manutenção até a conciliação.');
                         }
@@ -491,8 +495,10 @@ final class BookingService
                             'operational_state' => $result === 'pass' ? 'available' : $result,
                             'date_mod' => Store::now(),
                         ]);
-                        Store::event($id, 'received', ['deliverer' => mb_substr((string) ($input['deliverer'] ?? ''), 0, 255),
-                            'note' => $reason, 'accessories_delta' => $deltas], (int) $line['id'], $received);
+                        if ($newPhysicalReceipt) {
+                            Store::event($id, 'received', ['deliverer' => mb_substr((string) ($input['deliverer'] ?? ''), 0, 255),
+                                'note' => $reason, 'accessories_delta' => $deltas], (int) $line['id'], $received);
+                        }
                         Store::event($id, 'inspected', $inspection, (int) $line['id']);
                         if ($result === 'pass') { CalendarBridge::releaseTail($line); }
                     }
