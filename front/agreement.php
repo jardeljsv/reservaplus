@@ -126,6 +126,12 @@ if ($showFinal && $doc['is_current']) {
                 . 'Continuar para conferência técnica</a></p>';
         }
     } elseif (($doc['purpose'] ?? '') === 'return_inspection'
+        && \GlpiPlugin\Reservaplus\BookingService::unifiedReturn(
+            Store::row('bookings', (int) $doc['bookings_id'])
+        )) {
+        echo '<p><a class="btn btn-primary" href="' . $e($backUrl) . '">'
+            . 'Termo assinado — acompanhar devolução</a></p>';
+    } elseif (($doc['purpose'] ?? '') === 'return_inspection'
         && \GlpiPlugin\Reservaplus\BookingService::threeTermReturn(
             Store::row('bookings', (int) $doc['bookings_id'])
         )) {
