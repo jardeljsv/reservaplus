@@ -187,7 +187,9 @@ final class DocumentService
                 ? ($roomsOnly ? 'Como beneficiário, confirmo ciência deste registro de encerramento do uso da sala. Posso contestar divergências no chamado; o aceite não atribui automaticamente culpa ou responsabilidade por danos.' : 'Como beneficiário, confirmo ciência deste registro de devolução. Posso contestar divergências no chamado; o aceite não atribui automaticamente culpa ou responsabilidade por danos.')
                 : ($roomsOnly ? 'Como beneficiário, aceito a responsabilidade pelo uso e conservação das salas descritas, no período indicado. Este aceite prévio não declara que o uso já ocorreu.' : 'Como beneficiário, aceito a responsabilidade de uso e devolução dos recursos descritos, no período indicado. Este aceite prévio não declara que a retirada física já ocorreu.'),
             'receiver' => 'Como recebedor, atesto os itens e quantidades que efetivamente recebi e os horários registrados, sem declarar aprovação de testes ainda não realizados.',
-            'inspector' => 'Como inspetor, atesto somente as verificações, resultados e destinações registrados neste documento.',
+            'inspector' => ($snapshot['return_workflow'] ?? '') === 'unified_return_v1'
+                ? 'Como técnico responsável, confirmo que recebi fisicamente os equipamentos e acessórios declarados e realizei a conferência registrada neste termo, incluindo resultados, divergências e ressalvas.'
+                : 'Como inspetor, atesto somente as verificações, resultados e destinações registrados neste documento.',
             default => throw new \DomainException('Papel de assinatura inválido.'),
         };
         return $text;
@@ -602,6 +604,18 @@ final class DocumentService
                     $item['inspector_users_id'] = (int) ($line['inspector_users_id'] ?? 0);
                     $item['inspection'] = Store::decode($line['inspection_json'] ?? null);
                     $item['state'] = (string) $line['state'];
+                    if (BookingService::unifiedReturn($booking)) {
+                        $receipts = Store::find('bookingevents', [
+                            'bookings_id' => (int) $booking['id'],
+                            'lines_id' => (int) $line['id'],
+                            'type' => 'received',
+                        ], ['ORDER' => 'id DESC', 'LIMIT' => 1]);
+                        if ($receipts !== []) {
+                            $receipt = Store::decode($receipts[0]['payload_json'] ?? null);
+                            $item['deliverer'] = (string) ($receipt['deliverer'] ?? '');
+                            $item['receipt_note'] = (string) ($receipt['note'] ?? '');
+                        }
+                    }
                 }
             }
             $scope['lines'][] = $item;
