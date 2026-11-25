@@ -141,6 +141,20 @@ rp_test('new equipment return status makes initiated and physical-receipt stages
     rp_same(0, $alerts[0]['document_id']);
 });
 
+rp_test('unified return list exposes one technician term and no beneficiary return signature', function (): void {
+    $booking = ['id' => 82, 'status' => 'returning',
+        'policy_snapshot_json' => json_encode(['return_workflow' => 'unified_return_v1'])];
+    $pending = BookingView::returnTermAlertsForList($booking,
+        [['received_at' => null, 'inspection_at' => null]], []);
+    rp_same(1, count($pending));
+    rp_assert(str_contains($pending[0]['label'], 'recebimento e conferência'));
+    $pending = BookingView::returnTermAlertsForList($booking,
+        [['received_at' => '2026-11-25 16:30:00', 'inspection_at' => '2026-11-25 16:35:00']], []);
+    rp_same(1, count($pending));
+    rp_same('return_inspection', $pending[0]['purpose']);
+    rp_assert(str_contains($pending[0]['label'], 'termo de devolução e conferência técnica'));
+});
+
 rp_test('workflow links honor GLPI subdirectory and errors do not reveal runtime internals', function (): void {
     global $CFG_GLPI;
     $CFG_GLPI['root_doc'] = '/support';
