@@ -33,7 +33,7 @@ final class RequestDraft
             'step' => 'browse', 'kind' => '', 'q' => '', 'location' => '', 'feature' => '',
             'page' => 1, 'fit' => false, 'available_only' => false, 'resources_ids' => [],
             'begin' => date('Y-m-d\TH:i', $start), 'end' => date('Y-m-d\TH:i', $start + 3600),
-            'people_count' => 1, 'purpose' => '', 'matricula' => '', 'unit' => '',
+            'people_count' => 1, 'purpose' => '', 'unit' => '',
             'users_id_borrower' => Access::userId(), 'tickets_id' => 0,
         ];
         foreach (['kind', 'begin', 'end'] as $field) {
@@ -43,7 +43,7 @@ final class RequestDraft
         $draft['tickets_id'] = max(0, (int) ($seed['tickets_id'] ?? 0));
         if ((int) ($seed['resources_id'] ?? 0) > 0) { $draft['resources_ids'] = [(int) $seed['resources_id']]; }
         if (is_array($seed['resources_ids'] ?? null)) { $draft['resources_ids'] = self::ids($seed['resources_ids']); }
-        foreach (['purpose', 'matricula', 'unit', 'people_count', 'users_id_borrower'] as $field) {
+        foreach (['purpose', 'unit', 'people_count', 'users_id_borrower'] as $field) {
             if (isset($seed[$field]) && is_scalar($seed[$field])) { $draft[$field] = $seed[$field]; }
         }
         if (!Access::right('on_behalf')) { $draft['users_id_borrower'] = Access::userId(); }
@@ -98,7 +98,7 @@ final class RequestDraft
         }
         if (isset($input['people_count']) && is_scalar($input['people_count'])) { $draft['people_count'] = max(1, min(100000, (int) $input['people_count'])); }
         if (($input['view_step'] ?? '') === 'details') {
-            foreach (['purpose' => 5000, 'matricula' => 100, 'unit' => 255] as $field => $max) {
+            foreach (['purpose' => 5000, 'unit' => 255] as $field => $max) {
                 if (is_scalar($input[$field] ?? null)) { $draft[$field] = mb_substr(trim((string) $input[$field]), 0, $max); }
             }
             $draft['users_id_borrower'] = Access::right('on_behalf') ? max(1, (int) ($input['users_id_borrower'] ?? Access::userId())) : Access::userId();
@@ -139,7 +139,7 @@ final class RequestDraft
 
     public static function submission(array $draft): array
     {
-        return array_intersect_key($draft, array_flip(['resources_ids', 'begin', 'end', 'purpose', 'people_count', 'users_id_borrower', 'matricula', 'unit', 'tickets_id']));
+        return array_intersect_key($draft, array_flip(['resources_ids', 'begin', 'end', 'purpose', 'people_count', 'users_id_borrower', 'unit', 'tickets_id']));
     }
 
     public static function assertReviewed(array $draft, string $displayedHash): void
