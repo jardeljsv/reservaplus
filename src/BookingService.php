@@ -163,7 +163,7 @@ final class BookingService
                 'entities_id' => $entity, 'users_id_requester' => Access::userId(), 'users_id_borrower' => $borrowerId,
                 'tickets_id' => null, 'begin' => $begin, 'end' => $end, 'status' => 'submitted', 'revision' => 1, 'scope_revision' => 1,
                 'approved_revision' => 0, 'people_count' => $people, 'purpose' => $purpose,
-                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources), 'return_workflow' => $equipmentOnly ? 'three_terms_v2' : 'legacy']),
+                'borrower_snapshot_json' => Store::json($borrower), 'policy_snapshot_json' => Store::json(['resources' => array_map(static fn($r) => Store::decode($r['policy_json'] ?? null), $resources), 'approval_pools' => array_map(static fn($r) => $r['_approval_policy'], $resources), 'return_workflow' => $equipmentOnly ? 'unified_return_v1' : 'legacy']),
                 'operation_key' => $operation, 'integration_status' => 'synced', 'date_creation' => $now, 'date_mod' => $now,
             ]);
             foreach ($resources as $resource) {
@@ -282,6 +282,13 @@ final class BookingService
             === 'three_terms_v2';
     }
 
+    /** New two-document workflow. Historical booking snapshots never change. */
+    public static function unifiedReturn(array $booking): bool
+    {
+        return (Store::decode($booking['policy_snapshot_json'] ?? null)['return_workflow'] ?? '')
+            === 'unified_return_v1';
+    }
+
     /** Complete only after actual inspection and reconciliation. */
     private static function allPhysicalReturnsComplete(int $bookingId): bool
     {
@@ -327,6 +334,7 @@ final class BookingService
     {
         $caps = ['approve' => 'approve', 'reject' => 'approve', 'cancel' => 'request', 'issue' => 'issue',
             'start_return' => 'read', 'receive' => 'receive', 'inspect' => 'inspect',
+            'receive_inspect' => 'receive',
             'complete' => 'inspect', 'extend' => 'approve'];
         if (!isset($caps[$action])) { throw new \InvalidArgumentException('Ação desconhecida.'); }
         $operation = self::operationKey($key);
@@ -334,7 +342,7 @@ final class BookingService
         $changed = false;
         Store::transaction(static function () use ($id, $action, $input, $operation, $fingerprint, $caps, &$changed): void {
             $booking = Store::lock('bookings', $id);
-            if ($action === 'start_return' && self::threeTermReturn($booking)) {
+            if ($action === 'start_return' && (self::threeTermReturn($booking) || self::unifiedReturn($booking))) {
                 $owner = in_array(Access::userId(),
                     [(int) $booking['users_id_requester'], (int) $booking['users_id_borrower']], true);
                 if (!$owner && !Access::booking($booking, 'receive')) {
@@ -346,6 +354,7 @@ final class BookingService
                 if (!Access::canReschedule($booking)) { throw new \DomainException('Sem autorização para alterar o período de todos os recursos da solicitação.'); }
             }
             else { Access::assertBooking($booking, $caps[$action]); }
+            if ($action === 'receive_inspect') { Access::assertBooking($booking, 'inspect'); }
             $previous = Store::find('bookingcommands', ['operation_key' => $operation], ['LIMIT' => 1]);
             if ($previous) {
                 $result = Store::decode($previous[0]['result_json']);
@@ -355,7 +364,7 @@ final class BookingService
             if ((int) ($input['expected_revision'] ?? 0) !== (int) $booking['revision']) { throw new \DomainException('A solicitação mudou. Recarregue a página antes de continuar.'); }
             $lines = self::lines($id); $resources = [];
             foreach ($lines as $line) { $rid = (int) $line['resources_id']; $resources[$rid] = Store::lock('resources', $rid); }
-            if (in_array($action, ['receive', 'inspect'], true) && empty($input['lines_ids'])) {
+            if (in_array($action, ['receive', 'inspect', 'receive_inspect'], true) && empty($input['lines_ids'])) {
                 throw new \DomainException('Selecione explicitamente os itens recebidos ou conferidos.');
             }
             $selected = self::selectedLines($lines, $input['lines_ids'] ?? []);
@@ -363,7 +372,8 @@ final class BookingService
             $reason = mb_substr(trim((string) ($input['reason'] ?? $input['note'] ?? '')), 0, 5000);
             switch ($action) {
                 case 'start_return':
-                    if (!self::threeTermReturn($booking) || ($booking['status'] ?? '') !== 'issued') {
+                    if ((!self::threeTermReturn($booking) && !self::unifiedReturn($booking))
+                        || ($booking['status'] ?? '') !== 'issued') {
                         throw new \DomainException('A devolução só pode ser iniciada uma vez após a entrega física.');
                     }
                     Store::update('bookings', $id, ['status' => 'returning']);
@@ -436,7 +446,62 @@ final class BookingService
                     }
                     Store::update('bookings', $id, ['status' => 'issued', 'hold_expires_at' => null]);
                     break;
+                case 'receive_inspect':
+                    if (!self::unifiedReturn($booking) || ($booking['status'] ?? '') !== 'returning') {
+                        throw new \DomainException('Inicie a devolução antes de receber e conferir o equipamento.');
+                    }
+                    $result = (string) ($input['result'] ?? '');
+                    if (!in_array($result, ['pass', 'quarantine', 'maintenance'], true)) {
+                        throw new \DomainException('Selecione o resultado da conferência.');
+                    }
+                    $findings = mb_substr(trim((string) ($input['findings'] ?? '')), 0, 10000);
+                    if ($findings === '') {
+                        throw new \DomainException('Registre os testes, condições e constatações da conferência.');
+                    }
+                    $received = empty($input['received_at']) ? Store::now() : Booking::date((string) $input['received_at']);
+                    if ($received > Store::now() || ($received < date('Y-m-d H:i:s', time() - 300) && $reason === '')) {
+                        throw new \DomainException('Data de recebimento inválida ou retroativa sem justificativa.');
+                    }
+                    foreach ($selected as $line) {
+                        if (($resources[(int) $line['resources_id']]['kind'] ?? '') !== 'equipment'
+                            || !in_array($line['state'], ['issued', 'received', 'quarantine', 'maintenance'], true)) {
+                            throw new \DomainException('Selecione somente equipamentos entregues e pendentes de devolução.');
+                        }
+                        if (!empty($line['issued_at']) && $received < $line['issued_at']) {
+                            throw new \DomainException('O recebimento não pode anteceder a entrega.');
+                        }
+                        $deltas = (array) ($input['accessories'][(int) $line['id']] ?? []);
+                        if ($line['state'] !== 'issued' && array_sum(array_map('intval', $deltas)) < 1) {
+                            throw new \DomainException('Para novo recebimento, informe os acessórios adicionais.');
+                        }
+                        $accessories = Booking::receiveAccessories(Store::decode($line['accessories_json']), $deltas);
+                        if ($result === 'pass' && !Booking::accessoriesComplete($accessories)) {
+                            throw new \DomainException('Há acessórios pendentes. Registre quarentena ou manutenção até a conciliação.');
+                        }
+                        $inspection = ['result' => $result, 'findings' => $findings,
+                            'users_id' => Access::userId(), 'at' => Store::now()];
+                        $newState = $result === 'pass' ? 'ready' : $result;
+                        Store::update('bookinglines', (int) $line['id'], [
+                            'state' => $newState, 'received_at' => $line['received_at'] ?: $received,
+                            'accessories_json' => Store::json($accessories),
+                            'inspection_at' => Store::now(), 'inspector_users_id' => Access::userId(),
+                            'inspection_json' => Store::json($inspection),
+                        ]);
+                        Store::update('resources', (int) $line['resources_id'], [
+                            'operational_state' => $result === 'pass' ? 'available' : $result,
+                            'date_mod' => Store::now(),
+                        ]);
+                        Store::event($id, 'received', ['deliverer' => mb_substr((string) ($input['deliverer'] ?? ''), 0, 255),
+                            'note' => $reason, 'accessories_delta' => $deltas], (int) $line['id'], $received);
+                        Store::event($id, 'inspected', $inspection, (int) $line['id']);
+                        if ($result === 'pass') { CalendarBridge::releaseTail($line); }
+                    }
+                    Store::update('bookings', $id, ['status' => 'returning', 'hold_expires_at' => null]);
+                    break;
                 case 'receive':
+                    if (self::unifiedReturn($booking)) {
+                        throw new \DomainException('Use a operação única de recebimento e conferência.');
+                    }
                     if (!in_array($booking['status'], ['issued', 'returning'], true)) { throw new \DomainException('Não há entrega física pendente nesta solicitação.'); }
                     $received = empty($input['received_at']) ? Store::now() : Booking::date((string) $input['received_at']);
                     if ($received > Store::now()) { throw new \DomainException('O recebimento não pode estar no futuro.'); }
@@ -456,6 +521,9 @@ final class BookingService
                     Store::update('bookings', $id, ['status' => 'returning']);
                     break;
                 case 'inspect':
+                    if (self::unifiedReturn($booking)) {
+                        throw new \DomainException('Use a operação única de recebimento e conferência.');
+                    }
                     if (self::simplifiedReturn($booking)
                         && !DocumentService::isSatisfied($id, 'return_receipt')) {
                         throw new \DomainException('Confirme a assinatura do termo de devolução antes da conferência técnica.');
@@ -500,6 +568,10 @@ final class BookingService
                     if (self::simplifiedReturn($booking)) {
                         if (!DocumentService::isSatisfied($id, 'return_receipt')) {
                             throw new \DomainException('Conclua a assinatura do termo de devolução.');
+                        }
+                    } elseif (self::unifiedReturn($booking)) {
+                        if (!DocumentService::isSatisfied($id, 'return_inspection')) {
+                            throw new \DomainException('Assine o termo único de devolução e conferência técnica.');
                         }
                     } elseif (self::threeTermReturn($booking)) {
                         if (!DocumentService::isSatisfied($id, 'return_inspection')
@@ -563,7 +635,8 @@ final class BookingService
     public static function completeAfterFinalSignature(int $bookingId): void
     {
         $booking = Store::row('bookings', $bookingId);
-        if (!self::threeTermReturn($booking) || ($booking['status'] ?? '') !== 'returning') {
+        if ((!self::threeTermReturn($booking) && !self::unifiedReturn($booking))
+            || ($booking['status'] ?? '') !== 'returning') {
             return;
         }
         Access::assertBooking($booking, 'read');
@@ -574,7 +647,8 @@ final class BookingService
         }
         if (!self::allPhysicalReturnsComplete($bookingId)
             || !DocumentService::isSatisfied($bookingId, 'return_inspection')
-            || !DocumentService::isSatisfied($bookingId, 'return_receipt')) {
+            || (self::threeTermReturn($booking)
+                && !DocumentService::isSatisfied($bookingId, 'return_receipt'))) {
             return;
         }
         $closed = Store::transaction(static function () use ($bookingId): bool {
@@ -585,7 +659,8 @@ final class BookingService
             }
             if (!self::allPhysicalReturnsComplete($bookingId)
                 || !DocumentService::isSatisfied($bookingId, 'return_inspection')
-                || !DocumentService::isSatisfied($bookingId, 'return_receipt')) {
+                || (self::threeTermReturn($locked)
+                    && !DocumentService::isSatisfied($bookingId, 'return_receipt'))) {
                 return false;
             }
             Store::update('bookings', $bookingId, [
@@ -593,7 +668,8 @@ final class BookingService
                 'revision' => (int) $locked['revision'] + 1, 'date_mod' => Store::now(),
             ]);
             Store::event($bookingId, 'completed', [
-                'method' => 'automatic_after_beneficiary_signature',
+                'method' => self::unifiedReturn($locked)
+                    ? 'automatic_after_technician_signature' : 'automatic_after_beneficiary_signature',
                 'users_id_actor' => Access::userId(),
             ]);
             TicketBridge::enqueue($bookingId, 'solve', ['source' => 'return_signed'],
@@ -626,7 +702,8 @@ final class BookingService
     private static function actionLabel(string $action): string
     {
         return ['approve' => 'aprovação registrada', 'reject' => 'solicitação recusada', 'cancel' => 'solicitação cancelada',
-            'start_return' => 'devolução iniciada; aguarde recebimento e conferência técnica', 'issue' => 'entrega registrada',
+            'start_return' => 'devolução iniciada; aguarde recebimento e conferência técnica',
+            'receive_inspect' => 'recebimento e conferência registrados; assine o termo único', 'issue' => 'entrega registrada',
             'receive' => 'recebimento físico registrado; confira itens e acessórios pendentes', 'inspect' => 'conferência registrada', 'complete' => 'devolução concluída', 'extend' => 'período revisado; confira novas aprovações e termos'][$action] ?? $action;
     }
 
