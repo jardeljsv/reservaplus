@@ -167,7 +167,8 @@ final class PdfRenderer
     {
         if (($snapshot['template_version'] ?? '') !== self::TEMPLATE_VERSION
             || ($snapshot['purpose'] ?? '') !== 'return_inspection'
-            || ($snapshot['return_workflow'] ?? '') !== 'three_terms_v2') {
+            || !in_array(($snapshot['return_workflow'] ?? ''),
+                ['three_terms_v2', 'unified_return_v1'], true)) {
             return false;
         }
         $lines = (array) ($snapshot['scope']['lines'] ?? []);
@@ -183,8 +184,12 @@ final class PdfRenderer
     {
         $e = self::escape(...);
         $scope = (array) ($s['scope'] ?? []);
-        $html = '<h1 style="text-align:center;font-size:15pt">TERMO DE CONFERÊNCIA TÉCNICA</h1>';
-        $html .= '<p>O técnico responsável registra o resultado da verificação do equipamento após a devolução física. Este termo não substitui a declaração de devolução assinada pelo beneficiário.</p>';
+        $unified = ($s['return_workflow'] ?? '') === 'unified_return_v1';
+        $html = '<h1 style="text-align:center;font-size:15pt">'
+            . ($unified ? 'TERMO DE DEVOLUÇÃO E CONFERÊNCIA TÉCNICA' : 'TERMO DE CONFERÊNCIA TÉCNICA') . '</h1>';
+        $html .= '<p>' . ($unified
+            ? 'Este documento comprova o recebimento físico e a conferência técnica realizados pelo mesmo profissional. Descreve os equipamentos e acessórios recebidos, as verificações, os resultados e possíveis ressalvas. O documento é assinado pelo técnico ou cedente que executou a operação; o beneficiário pode consultar e baixar a versão final.'
+            : 'O técnico responsável registra o resultado da verificação do equipamento após a devolução física. Este termo não substitui a declaração de devolução assinada pelo beneficiário.') . '</p>';
         $html .= '<h3>1. EQUIPAMENTOS E CONFERÊNCIA</h3>';
         foreach ((array) ($scope['lines'] ?? []) as $line) {
             $resource = (array) ($line['resource'] ?? []);
@@ -208,7 +213,9 @@ final class PdfRenderer
             }
         }
         $html .= '<h3>2. DECLARAÇÃO DO TÉCNICO</h3>'
-            . '<p>Atesto apenas os testes, resultados, condições e divergências que registrei. Pendências de manutenção ou quarentena continuam sob acompanhamento no GLPI.</p>';
+            . '<p>' . ($unified
+                ? 'Declaro que recebi fisicamente e conferi os equipamentos e acessórios acima relacionados, conforme os registros e resultados apresentados. Eventuais divergências, avarias e pendências continuam documentadas no GLPI, sem certificação de regularidade quando houver ressalvas.'
+                : 'Atesto apenas os testes, resultados, condições e divergências que registrei. Pendências de manutenção ou quarentena continuam sob acompanhamento no GLPI.') . '</p>';
         $html .= '<h3>3. ASSINATURA DO TÉCNICO RESPONSÁVEL</h3>'
             . '<p>O técnico inspetor assina este registro com sua conta autenticada no GLPI. A assinatura manuscrita será integrada ao PDF final.</p>';
         $html .= '<p><b>Reserva:</b> #' . (int) ($scope['bookings_id'] ?? 0)
@@ -297,7 +304,7 @@ final class PdfRenderer
         $e = self::escape(...);
         $scope = (array) ($s['scope'] ?? []);
         $borrower = (array) ($scope['borrower'] ?? []);
-        $header = ($s['return_workflow'] ?? '') === 'three_terms_v2'
+        $header = in_array(($s['return_workflow'] ?? ''), ['three_terms_v2', 'unified_return_v1'], true)
             ? 'TERMO DE RESPONSABILIDADE PELO USO'
             : 'TERMO DE CESSÃO DE EQUIPAMENTO';
         $html = '<h1 style="text-align:center;font-size:15pt">' . $header . '</h1>';
