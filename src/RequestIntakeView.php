@@ -325,9 +325,9 @@ final class RequestIntakeView
             \User::dropdown(['name' => 'users_id_borrower', 'value' => $borrowerValue, 'entity' => Access::entityIds(), 'right' => 'all', 'width' => '100%']);
             echo '</div>';
         } else { echo '<p class="rp-intake-identity"><i class="ti ti-user" aria-hidden="true"></i> Você será o responsável pelo uso e pelos aceites desta solicitação.</p>'; }
-        echo '<div class="rp-field"><label for="rp-intake-purpose">Finalidade do uso</label><textarea id="rp-intake-purpose" name="purpose" maxlength="5000" required>' . BookingView::e($draft['purpose']) . '</textarea></div>';
         BookingView::input('unit', 'Unidade / setor do usuário', $draft['unit'] ?? '',
             'text', true, 'maxlength="255" autocomplete="organization"');
+        echo '<div class="rp-field"><label for="rp-intake-purpose">Finalidade do uso</label><textarea id="rp-intake-purpose" name="purpose" maxlength="5000" required>' . BookingView::e($draft['purpose']) . '</textarea></div>';
         echo '</section>';
     }
 
