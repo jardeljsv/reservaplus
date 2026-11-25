@@ -43,6 +43,17 @@ rp_test('category navigation preserves cart and period while business submission
     rp_assert(!isset($data['kind']) && !isset($data['id']) && !isset($data['page']));
     rp_same([1, 13, 14], $data['resources_ids']);
 });
+rp_test('user unit persists through details and review while manual matricula is excluded', static function (): void {
+    $_SESSION = []; Session::$user = 7;
+    $draft = RequestDraft::open('', ['resources_ids' => [11]]);
+    $draft = RequestDraft::apply($draft, ['view_step' => 'details', 'purpose' => 'Empréstimo',
+        'unit' => 'Setor de Tecnologia', 'matricula' => 'NAO-USAR', 'intent' => 'review']);
+    rp_same('Setor de Tecnologia', $draft['unit']);
+    $data = RequestDraft::submission($draft);
+    rp_same('Setor de Tecnologia', $data['unit']);
+    rp_assert(!array_key_exists('matricula', $data));
+});
+
 rp_test('duration shortcuts and item removal preserve other request details', static function (): void {
     $_SESSION = []; Session::$user = 7;
     $draft = RequestDraft::open('', ['resources_ids' => [2, 3], 'begin' => '2026-10-29T10:00', 'end' => '2026-10-29T11:00', 'purpose' => 'Reunião']);
