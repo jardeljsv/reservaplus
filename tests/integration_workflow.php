@@ -69,8 +69,11 @@ rp_test('native GLPI resource creation and internal-only inventory identity',sta
 });
 
 $employee=rp_login($employeeName,READ|CREATE);
-$input=['resources_ids'=>[$resourceId],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Integration loan and complete physical return','people_count'=>1];
+$input=['resources_ids'=>[$resourceId],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Integration loan and complete physical return','people_count'=>1,'unit'=>'SETIS - Integração'];
 $key='integration-submit-'.bin2hex(random_bytes(12));
+rp_throws(static fn()=>BookingService::submit(array_replace($input,['unit'=>' ']),
+    'integration-'.bin2hex(random_bytes(16))),InvalidArgumentException::class,
+    'Missing user unit must be rejected by the backend');
 $bookingId=BookingService::submit($input,$key);
 $booking=BookingService::get($bookingId);
 rp_same('submitted',$booking['status']);rp_assert((int)$booking['tickets_id']>0,'Native ticket created');
@@ -169,7 +172,7 @@ $room=ResourceService::save([
     'policy_json'=>['approval_required'=>false,'signature_stage'=>'none','return_signature_required'=>false],
 ]);
 rp_login($employeeName,READ|CREATE);
-$roomInput=['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()+7200),'end'=>date('Y-m-d H:i:s',time()+10800),'purpose'=>'Room booking'];
+$roomInput=['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()+7200),'end'=>date('Y-m-d H:i:s',time()+10800),'purpose'=>'Room booking','unit'=>'Sala de Reuniões'];
 rp_throws(static fn()=>BookingService::submit($roomInput+['people_count'=>9],'integration-'.bin2hex(random_bytes(16))),DomainException::class);
 $roomBooking=BookingService::submit($roomInput+['people_count'=>8],'integration-'.bin2hex(random_bytes(16)));
 $auto=BookingService::get($roomBooking);rp_same('approved',$auto['status']);rp_same('native',$auto['lines'][0]['calendar_mode']);
@@ -187,7 +190,7 @@ $signedResource=ResourceService::save([
     'groups_id_ticket'=>$groupId,'groups_id_manage'=>$groupId,'groups_id_approve'=>$groupId,'custodian_users_id'=>$admin,
     'policy_json'=>['approval_required'=>true,'signature_stage'=>'approval','return_signature_required'=>true],
 ]);
-$signedInput=['resources_ids'=>[$signedResource],'begin'=>date('Y-m-d H:i:s',time()+14400),'end'=>date('Y-m-d H:i:s',time()+18000),'purpose'=>'Signed request revision'];
+$signedInput=['resources_ids'=>[$signedResource],'begin'=>date('Y-m-d H:i:s',time()+14400),'end'=>date('Y-m-d H:i:s',time()+18000),'purpose'=>'Signed request revision','unit'=>'Setor de TI'];
 $signedBooking=BookingService::submit($signedInput,'integration-'.bin2hex(random_bytes(16)));
 rp_throws(static fn()=>rp_action($signedBooking,'approve'),DomainException::class,
     'Equipment requires a signed request before approval');
@@ -226,7 +229,7 @@ rp_same($existingTicket,(int)BookingService::get($ticketBooking)['tickets_id']);
 rp_action($ticketBooking,'cancel');
 rp_test('technician ticket intake reuses its authorized existing ticket',static function()use($ticketBooking):void{rp_same('cancelled',BookingService::get($ticketBooking)['status']);});
 
-$roomUse=BookingService::submit(['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Room use and inspection'],'integration-'.bin2hex(random_bytes(16)));
+$roomUse=BookingService::submit(['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Room use and inspection','unit'=>'Infraestrutura'],'integration-'.bin2hex(random_bytes(16)));
 $roomReturned=rp_action($roomUse,'inspect',['result'=>'pass','findings'=>'Room and installed facilities checked after use.']);
 rp_same('ready',$roomReturned['lines'][0]['state']);
 rp_sign($roomUse,'return_inspection');$roomReturned=rp_action($roomUse,'complete');
