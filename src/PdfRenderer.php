@@ -63,7 +63,8 @@ final class PdfRenderer
             . ' (GLPI #' . (int) ($scope['users_id_borrower'] ?? 0) . ')<br>'
             . '<b>Matrícula:</b> ' . $e((string) ($s['borrower_login'] ?? 'Não informada')) . '<br>'
             . '<b>Identificação / vínculo informado:</b> ' . $e((string) ($borrower['registration'] ?? $borrower['matricula'] ?? 'Não informado'))
-            . '<br><b>Unidade do beneficiário:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada')) . '</p>';
+            . '<br><b>Unidade / Localização GLPI:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada'))
+            . '<br><b>Lotação:</b> ' . $e((string) ($borrower['lotation'] ?? 'Não informada')) . '</p>';
         $html .= '<p><b>Período previsto:</b> ' . $e((string) ($scope['begin'] ?? '')) . ' até '
             . $e((string) ($scope['end'] ?? '')) . '<br><b>Fuso apresentado:</b> '
             . $e((string) ($s['timezone'] ?? '')) . '<br><b>Finalidade:</b> '
@@ -272,7 +273,8 @@ final class PdfRenderer
             . '<p><b>Nome:</b> ' . $e((string) ($borrower['name'] ?? 'Não informado'))
             . '<br><b>Matrícula / usuário GLPI:</b> '
             . $e(trim((string) ($borrower['matricula'] ?? '')) !== '' ? (string) $borrower['matricula'] : (string) ($s['borrower_login'] ?? 'Não informada'))
-            . '<br><b>Setor / unidade:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada')) . '</p>';
+            . '<br><b>Unidade / Localização GLPI:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada'))
+            . '<br><b>Lotação:</b> ' . $e((string) ($borrower['lotation'] ?? 'Não informada')) . '</p>';
         $html .= '<h3>3. PERÍODO DA RESERVA E DEVOLUÇÃO</h3>'
             . '<p><b>Início previsto:</b> ' . $e((string) ($scope['begin'] ?? ''))
             . '<br><b>Devolução prevista:</b> ' . $e((string) ($scope['end'] ?? ''))
@@ -325,7 +327,8 @@ final class PdfRenderer
         }
         $html .= '<h3>2. REQUERENTE</h3><p><b>Nome:</b> ' . $e((string) ($borrower['name'] ?? ''))
             . '<br><b>Matrícula / usuário:</b> ' . $e(trim((string) ($borrower['matricula'] ?? '')) !== '' ? (string) $borrower['matricula'] : (string) ($s['borrower_login'] ?? 'Não informada'))
-            . '<br><b>Setor / unidade:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada')) . '</p>';
+            . '<br><b>Unidade / Localização GLPI:</b> ' . $e((string) ($borrower['unit'] ?? 'Não informada'))
+            . '<br><b>Lotação:</b> ' . $e((string) ($borrower['lotation'] ?? 'Não informada')) . '</p>';
         $html .= '<h3>3. PERÍODO DA CESSÃO</h3><p><b>Retirada prevista:</b> '
             . $e((string) ($scope['begin'] ?? '')) . '<br><b>Devolução prevista:</b> '
             . $e((string) ($scope['end'] ?? '')) . '</p>';
