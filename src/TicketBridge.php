@@ -9,6 +9,13 @@ final class TicketBridge
     {
         global $DB;
         $ticket = new \Ticket();
+        $borrower = Store::decode($booking['borrower_snapshot_json'] ?? null);
+        $locationId = (int) ($borrower['locations_id'] ?? 0);
+        // Historical bookings may not have this field. New bookings require it.
+        if ($locationId < 1 && !empty($borrower['affiliation_source'])
+            && $borrower['affiliation_source'] === 'glpi_native') {
+            throw new \DomainException('Localização da unidade não registrada nesta reserva.');
+        }
         if ($existing > 0) {
             if (!$ticket->getFromDB($existing) || !$ticket->can($existing, UPDATE)
                 || (int) $ticket->fields['entities_id'] !== (int) $booking['entities_id']
@@ -18,7 +25,18 @@ final class TicketBridge
             if (Store::find('bookings', ['tickets_id' => $existing], ['LIMIT' => 1])) {
                 throw new \DomainException('Este chamado já possui uma solicitação de reserva.');
             }
-            return $existing; // Preserve intentional assignment on ticket-origin intake.
+            if ($locationId > 0 && (int) ($ticket->fields['locations_id'] ?? 0) !== $locationId) {
+                if (!WorkflowHooks::native(static fn() => $ticket->update([
+                    'id' => $existing, 'locations_id' => $locationId,
+                ]))) {
+                    throw new \DomainException('Não foi possível definir a localização no chamado vinculado.');
+                }
+                if (!$ticket->getFromDB($existing)
+                    || (int) ($ticket->fields['locations_id'] ?? 0) !== $locationId) {
+                    throw new \DomainException('Uma regra do GLPI alterou a localização do chamado vinculado.');
+                }
+            }
+            return $existing; // Preserve intentional assignment; sync only selected location.
         }
         $groups = array_values(array_unique(array_map(static fn($r) => (int) $r['groups_id_ticket'], $resources)));
         if (count($groups) !== 1 || $groups[0] < 1) {
@@ -50,12 +68,16 @@ final class TicketBridge
             '_users_id_requester' => (int) $booking['users_id_borrower'],
             '_groups_id_assign' => $groups[0], '_disablenotif' => true,
         ];
+        if ($locationId > 0) { $input['locations_id'] = $locationId; }
         if ($assignee > 0) { $input['_users_id_assign'] = $assignee; }
         if (!$ticket->can(-1, CREATE, $input)) { throw new \DomainException('Sem permissão nativa para abrir o chamado desta reserva.'); }
         $id = WorkflowHooks::native(static fn() => (int) $ticket->add($input));
         if ($id < 1 || !$ticket->getFromDB($id)) { throw new \DomainException('O GLPI não confirmou a criação do chamado.'); }
         if ((int) $ticket->fields['entities_id'] !== (int) $booking['entities_id']) {
             throw new \DomainException('Uma regra do GLPI alterou a entidade do chamado. Revise o roteamento.');
+        }
+        if ($locationId > 0 && (int) ($ticket->fields['locations_id'] ?? 0) !== $locationId) {
+            throw new \DomainException('O GLPI não manteve a localização selecionada na reserva.');
         }
         if (in_array((int) $ticket->fields['status'], [\CommonITILObject::SOLVED, \CommonITILObject::CLOSED], true)) {
             throw new \DomainException('Uma regra encerrou o chamado antes do fluxo de reserva. Revise o roteamento.');
