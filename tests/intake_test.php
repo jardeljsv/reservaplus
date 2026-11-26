@@ -43,15 +43,18 @@ rp_test('category navigation preserves cart and period while business submission
     rp_assert(!isset($data['kind']) && !isset($data['id']) && !isset($data['page']));
     rp_same([1, 13, 14], $data['resources_ids']);
 });
-rp_test('user unit persists through details and review while manual matricula is excluded', static function (): void {
+rp_test('location and group lotation IDs persist through details, review and submission', static function (): void {
     $_SESSION = []; Session::$user = 7;
     $draft = RequestDraft::open('', ['resources_ids' => [11]]);
     $draft = RequestDraft::apply($draft, ['view_step' => 'details', 'purpose' => 'Empréstimo',
-        'unit' => 'Setor de Tecnologia', 'matricula' => 'NAO-USAR', 'intent' => 'review']);
-    rp_same('Setor de Tecnologia', $draft['unit']);
+        'locations_id' => 48, 'lotation_groups_id' => 72,
+        'unit' => 'TEXTO INJETADO', 'matricula' => 'NAO-USAR', 'intent' => 'review']);
+    rp_same(48, $draft['locations_id']);
+    rp_same(72, $draft['lotation_groups_id']);
     $data = RequestDraft::submission($draft);
-    rp_same('Setor de Tecnologia', $data['unit']);
-    rp_assert(!array_key_exists('matricula', $data));
+    rp_same(48, $data['locations_id']);
+    rp_same(72, $data['lotation_groups_id']);
+    rp_assert(!array_key_exists('unit', $data) && !array_key_exists('matricula', $data));
 });
 
 rp_test('duration shortcuts and item removal preserve other request details', static function (): void {
