@@ -81,6 +81,75 @@ final class BookingService
         return $ids;
     }
 
+    /** Native GLPI physical locations visible in the current entity context. */
+    public static function locationOptions(): array
+    {
+        global $DB;
+        $options = [];
+        foreach ($DB->request(['FROM' => 'glpi_locations']) as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            if ($id < 1 || !\Session::haveAccessToEntity(
+                (int) ($row['entities_id'] ?? -1), (bool) ($row['is_recursive'] ?? false)
+            )) { continue; }
+            $label = trim((string) ($row['completename'] ?: $row['name'] ?? ''));
+            if ($label !== '') { $options[$id] = $label; }
+        }
+        natcasesort($options);
+        return $options;
+    }
+
+    /** Descendants of GLPI group LOTAÇÃO #61 (not user-group membership).
+     * Keep parent-child traversal independent of sorting and entity display. */
+    public static function lotationOptions(): array
+    {
+        global $DB;
+        $children = [];
+        foreach ($DB->request(['FROM' => 'glpi_groups']) as $row) {
+            $children[(int) ($row['groups_id'] ?? 0)][] = $row;
+        }
+        $options = [];
+        $visited = [61 => true];
+        $pending = $children[61] ?? [];
+        while ($pending !== []) {
+            $row = array_pop($pending);
+            $id = (int) ($row['id'] ?? 0);
+            if ($id < 1 || isset($visited[$id])) { continue; }
+            $visited[$id] = true;
+            foreach ($children[$id] ?? [] as $child) { $pending[] = $child; }
+            if (!\Session::haveAccessToEntity((int) ($row['entities_id'] ?? -1),
+                (bool) ($row['is_recursive'] ?? false))) { continue; }
+            $label = trim((string) (($row['completename'] ?? '') ?: ($row['name'] ?? '')));
+            if ($label !== '') { $options[$id] = $label; }
+        }
+        natcasesort($options);
+        return $options;
+    }
+
+    /** Server-side validation prevents forged IDs and stale/inaccessible choices. */
+    public static function locationAndLotation(array $input): array
+    {
+        $locationId = filter_var($input['locations_id'] ?? null, FILTER_VALIDATE_INT);
+        $lotationId = filter_var($input['lotation_groups_id'] ?? null, FILTER_VALIDATE_INT);
+        if ($locationId === false || $locationId === null || $locationId < 1) {
+            throw new \InvalidArgumentException('Selecione a Unidade na lista de Localizações do GLPI.');
+        }
+        if ($lotationId === false || $lotationId === null || $lotationId < 1) {
+            throw new \InvalidArgumentException('Selecione a Lotação na hierarquia LOTAÇÃO (grupo 61).');
+        }
+        $locations = self::locationOptions();
+        $lotations = self::lotationOptions();
+        if (!isset($locations[$locationId])) {
+            throw new \DomainException('A localização selecionada não está disponível nesta entidade.');
+        }
+        if (!isset($lotations[$lotationId])) {
+            throw new \DomainException('A lotação selecionada não pertence à hierarquia autorizada.');
+        }
+        return [
+            'locations_id' => $locationId, 'unit' => $locations[$locationId],
+            'lotation_groups_id' => $lotationId, 'lotation' => $lotations[$lotationId],
+        ];
+    }
+
     public static function submit(array $input, string $key): int
     {
         Access::assertRight('request');
@@ -89,10 +158,7 @@ final class BookingService
         $ids = self::resourceIds($input);
         $purpose = trim((string) ($input['purpose'] ?? ''));
         if ($purpose === '' || mb_strlen($purpose) > 5000) { throw new \InvalidArgumentException('Informe a finalidade em até 5.000 caracteres.'); }
-        $unit = trim((string) ($input['unit'] ?? ''));
-        if ($unit === '' || mb_strlen($unit) > 255) {
-            throw new \InvalidArgumentException('Informe a Unidade / setor do usuário em até 255 caracteres.');
-        }
+        $org = self::locationAndLotation($input);
         $people = filter_var($input['people_count'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 100000]]);
         if ($people === false) { throw new \InvalidArgumentException('Quantidade de pessoas inválida.'); }
         $borrowerId = (int) ($input['users_id_borrower'] ?? Access::userId());
@@ -104,8 +170,11 @@ final class BookingService
         $borrower = [
             'users_id' => $borrowerId, 'name' => trim(($user->fields['firstname'] ?? '') . ' ' . ($user->fields['realname'] ?? '')) ?: (string) $user->fields['name'],
             'matricula' => '',
-            'unit' => $unit,
-            'affiliation_source' => 'declared',
+            'unit' => $org['unit'],
+            'locations_id' => $org['locations_id'],
+            'lotation' => $org['lotation'],
+            'lotation_groups_id' => $org['lotation_groups_id'],
+            'affiliation_source' => 'glpi_native',
         ];
         $operation = self::operationKey($key);
         $fingerprint = hash('sha256', Store::json([$ids, $begin, $end, $purpose, $people, $borrower, (int) ($input['tickets_id'] ?? 0)]));
