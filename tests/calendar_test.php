@@ -4,7 +4,7 @@ require_once __DIR__.'/bootstrap.php';
 if(!class_exists('Session',false)){
     class Session { public static function getLoginUserID():int{return 7;} }
 }
-use GlpiPlugin\Reservaplus\{WorkflowCalendarView,BookingView};
+use GlpiPlugin\Reservaplus\{WorkflowCalendarView,BookingView,CalendarBridge};
 
 rp_test('calendar views use exact half-open days and reject impossible dates',function():void{
     $month=WorkflowCalendarView::state(['date'=>'2026-10-31','view'=>'month']);
@@ -30,6 +30,14 @@ rp_test('anonymous occupancy has no booking identity, purpose, actors or action 
     rp_assert(!isset($event['users_id_borrower']));rp_assert($event['readonly']);
     $authorized=WorkflowCalendarView::bookingEvent($booking,$line,$resource,true,$event['start'],$event['end']);
     rp_same(918,$authorized['booking_id']);rp_assert(str_contains($authorized['url'],'id=918'));
+});
+rp_test('native calendar release handles return before scheduled start without stale future hold',function():void{
+    $begin='2026-11-26 10:15:00';$end='2026-11-26 11:15:00';
+    rp_same('delete',CalendarBridge::tailReleaseAction($begin,$end,'2026-11-26 10:04:03'));
+    rp_same('delete',CalendarBridge::tailReleaseAction($begin,$end,$begin));
+    rp_same('shorten',CalendarBridge::tailReleaseAction($begin,$end,'2026-11-26 10:45:00'));
+    rp_same('none',CalendarBridge::tailReleaseAction($begin,$end,$end));
+    rp_same('none',CalendarBridge::tailReleaseAction($begin,$end,'2026-11-26 11:45:00'));
 });
 rp_test('calendar links prefill one period and selected resource without creating a request',function():void{
     global $CFG_GLPI;$CFG_GLPI['root_doc']='/support';
