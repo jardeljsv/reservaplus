@@ -321,11 +321,13 @@ final class RequestIntakeView
         string $name, string $label, array $options, int $selected, string $placeholder
     ): void {
         $items = [0 => $placeholder] + $options;
+        $rand = random_int(100000, 999999);
         echo '<div class="rp-field">';
-        echo '<label for="dropdown_' . BookingView::e($name) . '">';
+        echo '<label for="dropdown_' . BookingView::e($name) . $rand . '">';
         echo BookingView::e($label) . ' <span aria-hidden="true">*</span></label>';
         \Dropdown::showFromArray($name, $items, [
             'value' => isset($options[$selected]) ? $selected : 0,
+            'rand' => $rand,
             'width' => '100%',
             'display_emptychoice' => false,
             'required' => true,
