@@ -13,6 +13,16 @@ if (!class_exists('Session', false)) {
 }
 use GlpiPlugin\Reservaplus\RequestDraft;
 
+class RpIntakeDropdownStub
+{
+    public static array $calls = [];
+    public static function showFromArray(string $name, array $options, array $params = []): void
+    {
+        self::$calls[] = [$name, $options, $params];
+    }
+}
+
+
 rp_test('cart retains selections across pages and removes only unchecked visible items', static function (): void {
     rp_same([1, 13, 21], RequestDraft::mergeSelection([1, 13], [20, 21], [21]));
     rp_same([1, 21], RequestDraft::mergeSelection([1, 13, 21], [13, 14], []));
@@ -55,6 +65,27 @@ rp_test('location and group lotation IDs persist through details, review and sub
     rp_same(48, $data['locations_id']);
     rp_same(72, $data['lotation_groups_id']);
     rp_assert(!array_key_exists('unit', $data) && !array_key_exists('matricula', $data));
+});
+
+rp_test('GLPI native dropdown receives restricted options, selected ID and searchable native parameters', static function (): void {
+    if (!class_exists('Dropdown', false)) {
+        class_alias(RpIntakeDropdownStub::class, 'Dropdown');
+    }
+    RpIntakeDropdownStub::$calls = [];
+    $method = new ReflectionMethod(\GlpiPlugin\Reservaplus\RequestIntakeView::class,
+        'nativeSearchableDropdown');
+    ob_start();
+    $method->invoke(null, 'locations_id', 'Unidade / Localização GLPI',
+        [13 => 'Hospital Regional', 14 => 'UBS'], 14, 'Selecione ou pesquise');
+    $html = (string) ob_get_clean();
+    rp_same(1, count(RpIntakeDropdownStub::$calls));
+    [$name, $options, $params] = RpIntakeDropdownStub::$calls[0];
+    rp_same('locations_id', $name);
+    rp_same([0 => 'Selecione ou pesquise', 13 => 'Hospital Regional', 14 => 'UBS'], $options);
+    rp_same(14, $params['value']);
+    rp_assert($params['required'] === true);
+    rp_assert($params['display_emptychoice'] === false);
+    rp_assert(str_contains($html, 'for="dropdown_locations_id' . $params['rand'] . '"'));
 });
 
 rp_test('duration shortcuts and item removal preserve other request details', static function (): void {
