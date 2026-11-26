@@ -107,8 +107,12 @@ final class RequestIntakeView
         if ($details && trim((string) ($draft['purpose'] ?? '')) === '') {
             $errors[] = __('Informe para que os recursos serão utilizados.', 'reservaplus');
         }
-        if ($details && trim((string) ($draft['unit'] ?? '')) === '') {
-            $errors[] = __('Informe a Unidade / setor do usuário para continuar a reserva.', 'reservaplus');
+        if ($details) {
+            try {
+                BookingService::locationAndLotation($draft);
+            } catch (\InvalidArgumentException|\DomainException $error) {
+                $errors[] = $error->getMessage();
+            }
         }
         return array_values(array_unique($errors));
     }
@@ -325,8 +329,12 @@ final class RequestIntakeView
             \User::dropdown(['name' => 'users_id_borrower', 'value' => $borrowerValue, 'entity' => Access::entityIds(), 'right' => 'all', 'width' => '100%']);
             echo '</div>';
         } else { echo '<p class="rp-intake-identity"><i class="ti ti-user" aria-hidden="true"></i> Você será o responsável pelo uso e pelos aceites desta solicitação.</p>'; }
-        BookingView::input('unit', 'Unidade / setor do usuário', $draft['unit'] ?? '',
-            'text', true, 'maxlength="255" autocomplete="organization"');
+        BookingView::select('locations_id', 'Unidade / Localização GLPI *',
+            ['' => 'Selecione a unidade'] + BookingService::locationOptions(),
+            (string) ($draft['locations_id'] ?? ''), true);
+        BookingView::select('lotation_groups_id', 'Lotação *',
+            ['' => 'Selecione a lotação'] + BookingService::lotationOptions(),
+            (string) ($draft['lotation_groups_id'] ?? ''), true);
         echo '<div class="rp-field"><label for="rp-intake-purpose">Finalidade do uso</label><textarea id="rp-intake-purpose" name="purpose" maxlength="5000" required>' . BookingView::e($draft['purpose']) . '</textarea></div>';
         echo '</section>';
     }
@@ -346,7 +354,12 @@ final class RequestIntakeView
         echo '</ul><dl class="rp-review-facts"><dt>Finalidade</dt><dd>' . nl2br(BookingView::e($draft['purpose'])) . '</dd>';
         if (self::hasRoom($selected)) { echo '<dt>Participantes</dt><dd>' . (int) $draft['people_count'] . '</dd>'; }
         if ((int) $draft['users_id_borrower'] !== Access::userId()) { echo '<dt>Responsável pelo uso</dt><dd>' . BookingView::e(self::borrowerName((int) $draft['users_id_borrower'])) . '</dd>'; }
-        echo '<dt>Unidade / setor do usuário</dt><dd>' . BookingView::e($draft['unit'] ?? '') . '</dd>';
+        $locations = BookingService::locationOptions();
+        $lotations = BookingService::lotationOptions();
+        echo '<dt>Unidade / Localização GLPI</dt><dd>' .
+            BookingView::e($locations[(int) ($draft['locations_id'] ?? 0)] ?? 'Não selecionada') . '</dd>';
+        echo '<dt>Lotação</dt><dd>' .
+            BookingView::e($lotations[(int) ($draft['lotation_groups_id'] ?? 0)] ?? 'Não selecionada') . '</dd>';
         echo '</dl><div class="rp-review-next"><h3>Próxima etapa</h3><p>' . BookingView::e(
             !$equipmentSelected
                 ? 'Ao enviar, acompanhe a aprovação e as etapas previstas para o recurso.'
