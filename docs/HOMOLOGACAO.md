@@ -23,6 +23,18 @@ Estado: checklist de execução, não certificado de aprovação. Ambiente obser
 - [ ] Reserva de sala sem exigência antecipada: preserva Enviar solicitação e processo anterior.
 - [ ] Recarregar a tela ou repetir a solicitação não duplica chamado, documento ou assinatura.
 
+### Campos de Unidade e Lotação (integração com GLPI da SES-DF)
+- [ ] Na etapa **Como os recursos serão utilizados?**, depois de **Usuário responsável pelo uso** e antes de **Finalidade do uso**, aparecem dois campos obrigatórios: **Unidade / Localização GLPI** e **Lotação**.
+- [ ] **Unidade** usa as localizações nativas cadastradas em `glpi_locations` (Administração > Localizações); o usuário seleciona um ID válido no contexto de entidade.
+- [ ] **Lotação** usa exclusivamente todos os descendentes de `glpi_groups.id = 61` (LOTAÇÃO), em qualquer profundidade. O grupo raiz 61 não é opção de resposta.
+- [ ] Usuário não consegue avançar sem escolher ambos; o backend rejeita IDs forjados, grupos fora da árvore e localizações não disponíveis na entidade.
+- [ ] A revisão exibe ambos os nomes; o snapshot da reserva conserva `locations_id`, `lotation_groups_id`, nome da unidade e nome da lotação, preservando histórico e PDFs se o cadastro for alterado.
+- [ ] Ao criar o chamado GLPI, `glpi_tickets.locations_id` recebe o ID escolhido em **Unidade**. Ao utilizar chamado existente, o campo é atualizado após validação das permissões nativas.
+- [ ] A lotação identifica o setor administrativo, mas não altera automaticamente o grupo técnico atribuído ao chamado.
+- [ ] Não existe migração de reservas antigas; os dados gravados e documentos assinados permanecem inalterados.
+- [ ] Validar seleção no catálogo, reservas de sala/equipamento, criação de chamado, chamado existente e impressão de ambos os campos no PDF.
+- [ ] Somente em testes integrados com base GLPI **descartável** pode ser utilizado o override `RESERVAPLUS_LOTATION_ROOT_GROUP_ID`; em SES-DF a raiz padrão é 61.
+
 ### Devolução unificada — termo único assinado pelo técnico (novas reservas de equipamento)
 - [ ] Novas reservas exclusivamente de equipamento recebem o marcador congelado `unified_return_v1`; anteriores (`legacy`, `two_terms_v1` e `three_terms_v2`) não são alteradas.
 - [ ] O beneficiário assina o **Termo de Responsabilidade pelo Uso** antes da aprovação.
