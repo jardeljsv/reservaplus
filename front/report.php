@@ -6,6 +6,7 @@ use GlpiPlugin\Reservaplus\Access;
 use GlpiPlugin\Reservaplus\Store;
 use GlpiPlugin\Reservaplus\Dashboard;
 use GlpiPlugin\Reservaplus\Report;
+use GlpiPlugin\Reservaplus\ReportExport;
 use GlpiPlugin\Reservaplus\ReservationRequest;
 
 include_once (defined('GLPI_ROOT') ? GLPI_ROOT . '/inc/includes.php' : __DIR__ . '/../../../inc/includes.php');
@@ -70,6 +71,9 @@ if ($source === 'workflow' && Access::right('read') && Access::entityIds() !== [
         }
         $snapshot = Store::decode($booking['borrower_snapshot_json'] ?? null);
         $booking['_items'] = $items;
+        $booking['_lines'] = $lines;
+        $booking['_location'] = (string) ($snapshot['unit'] ?? '');
+        $booking['_lotation'] = (string) ($snapshot['lotation'] ?? '');
         $booking['_actual_seconds'] = $actualSeconds;
         $booking['_borrower'] = (string) ($snapshot['name'] ?? ('#' . $booking['users_id_borrower']));
         $booking['comment'] = $booking['purpose'] ?? '';
@@ -141,6 +145,88 @@ function plugin_reservaplus_report_url(string $view, int $offset, string $source
     return Dashboard::getUrl('report.php') . '?view=' . urlencode($view) . '&offset=' . $offset . '&source=' . urlencode($source);
 }
 
+// Export before any GLPI layout is rendered, using exactly the authorized rows.
+$format = $_GET['export'] ?? '';
+if (in_array($format, ['pdf', 'xlsx'], true)) {
+    $generated = 'Gerado em ' . date('d/m/Y H:i') . ' por ' . (string) ($_SESSION['glpifriendlyname'] ?? $_SESSION['glpiname'] ?? '');
+    $summary = [
+        'Reservas' => count($rows),
+        'Horas reservadas' => round($totalHours, 2),
+        ($source === 'workflow' ? 'Beneficiários únicos' : 'Pessoas') => $source === 'workflow' ? count($borrowers) : $totalPeople,
+        'Canceladas' => $cancelledCount,
+    ];
+    if ($source === 'workflow') {
+        $summary['Concluídas'] = $statusCounts['completed'] ?? 0;
+        $summary['Rejeitadas'] = $statusCounts['rejected'] ?? 0;
+        $summary['Horas efetivas (devolvidos)'] = round($actualSeconds / 3600, 2);
+        foreach (['submitted', 'approved', 'issued', 'returning'] as $status) {
+            $summary[$statusLabels[$status]] = $statusCounts[$status] ?? 0;
+        }
+    }
+    $ranking = [];
+    foreach ($itemAgg as $item) {
+        $ranking[] = [$item['label'], $item['count'], round($item['hours'], 2), $item['people']];
+    }
+    $pdfHeaders = ['ID', 'Equipamento', 'Beneficiário', 'Solicitante', 'Chamado', 'Início previsto', 'Fim previsto', 'Status', 'Finalidade'];
+    $excelHeaders = ['ID', 'Equipamento', 'Beneficiário', 'Solicitante', 'Chamado', 'Localização', 'Lotação', 'Criação',
+        'Início previsto', 'Fim previsto', 'Entrega efetiva', 'Devolução efetiva', 'Conferência', 'Horas previstas',
+        'Horas efetivas', 'Status', 'Finalidade', 'ID da linha', 'Pessoas'];
+    $pdfRows = [];
+    $excelRows = [];
+    foreach ($rows as $row) {
+        $workflow = $source === 'workflow';
+        $requester = $workflow ? (string) getUserName((int) $row['users_id_requester'])
+            : ($isAdmin ? ReservationRequest::getUserDisplayName($row) : '');
+        $borrower = $workflow ? $row['_borrower'] : '';
+        $ticketId = (int) ($row['tickets_id'] ?? 0);
+        $ticket = new Ticket();
+        if ($ticketId < 1 || !$ticket->can($ticketId, READ)) { $ticketId = 0; }
+        $status = (string) ($row['status'] ?? '');
+        $label = $workflow ? ($statusLabels[$status] ?? $status) : ReservationRequest::getStatusLabel($status);
+        $begin = (string) ($row['begin'] ?? '');
+        $end = (string) ($row['end'] ?? '');
+        $hours = max(0, strtotime($end) - strtotime($begin)) / 3600;
+        $comment = (string) ($row['comment'] ?? '');
+        $item = $workflow ? implode(', ', $row['_items']) : ReservationRequest::getItemDisplayName($row);
+        $pdfRows[] = [(int) $row['id'], $item, $borrower, $requester, $ticketId ?: '',
+            $begin ? date('d/m/Y H:i', strtotime($begin)) : '', $end ? date('d/m/Y H:i', strtotime($end)) : '', $label, $comment];
+        // One row per resource line, with booking ID repeated for multi-resource requests.
+        foreach (($workflow && $row['_lines'] !== []) ? $row['_lines'] : [[]] as $line) {
+            $issued = (string) ($line['issued_at'] ?? '');
+            $received = (string) ($line['received_at'] ?? '');
+            $actual = ($issued !== '' && $received !== '') ? round(max(0, strtotime($received) - strtotime($issued)) / 3600, 2) : '';
+            $excelRows[] = [(int) $row['id'], $workflow ? ($row['_items'][(int) ($line['resources_id'] ?? 0)] ?? $item) : $item,
+                $borrower, $requester, $ticketId ?: '', $row['_location'] ?? '', $row['_lotation'] ?? '',
+                $row['date_creation'] ?? '', $begin, $end, $issued, $received, $line['inspection_at'] ?? '',
+                round($hours, 2), $actual, $label, $comment, isset($line['id']) ? (int) $line['id'] : '', max(1, (int) ($row['people_count'] ?? 1))];
+        }
+    }
+    $period = $periodLabel . ($source === 'legacy' ? ' — Histórico legado' : '');
+    try {
+        if ($format === 'pdf') {
+            if (!class_exists(\TCPDF::class)) { throw new \RuntimeException('TCPDF indisponível.'); }
+            $bytes = ReportExport::pdf($period, $generated, $summary, $ranking, $pdfHeaders, $pdfRows);
+            $mime = 'application/pdf';
+        } else {
+            if (!class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) { throw new \RuntimeException('PhpSpreadsheet indisponível.'); }
+            $bytes = ReportExport::excel($period, $generated, $summary, $ranking, $excelHeaders, $excelRows);
+            $mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        }
+    } catch (\Throwable $e) {
+        \Toolbox::logInFile('php-errors', 'Reserva Plus report export: ' . get_class($e) . "\n");
+        http_response_code(500);
+        echo 'Não foi possível gerar a exportação. Verifique as dependências e os logs do GLPI.';
+        return;
+    }
+    $filename = 'ReservaPlus_' . $source . '_' . substr($periodStart, 0, 10) . '_' . date('Y-m-d', strtotime($periodEnd . ' -1 day')) . '.' . $format;
+    header('Content-Type: ' . $mime);
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: private, no-store');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
+
 Html::header(__('Relatórios do Reserva Plus', 'reservaplus'), $_SERVER['PHP_SELF'], 'tools', Dashboard::class);
 Dashboard::includeAssets();
 
@@ -200,7 +286,9 @@ echo '</div>';
 echo '</div>';
 echo "<div class='reservaplus-actions'>";
 echo "<a class='btn btn-outline-primary' href='" . Dashboard::getUrl('dashboard.php') . "'><i class='ti ti-arrow-left'></i> " . __('Central', 'reservaplus') . '</a>';
-echo "<button type='button' class='btn btn-primary' onclick='window.print()'><i class='ti ti-printer'></i> " . __('Exportar PDF', 'reservaplus') . '</button>';
+$exportUrl = plugin_reservaplus_report_url($view, $offsetParam, $source);
+echo "<a class='btn btn-primary' href='" . Html::cleanInputText($exportUrl . '&export=pdf') . "'><i class='ti ti-file-type-pdf'></i> " . __('Exportar PDF', 'reservaplus') . '</a>';
+echo "<a class='btn btn-success' href='" . Html::cleanInputText($exportUrl . '&export=xlsx') . "'><i class='ti ti-file-spreadsheet'></i> " . __('Exportar Excel', 'reservaplus') . '</a>';
 echo '</div>';
 echo '</div>';
 
