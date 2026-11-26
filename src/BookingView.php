@@ -195,10 +195,10 @@ final class BookingView
         echo '<div class="rp-field"><label for="' . self::e($id) . '">' . self::e($label) . '</label><textarea id="' . self::e($id) . '" name="' . self::e($name) . '" maxlength="10000"' . ($required ? ' required' : '') . '>' . self::e($value) . '</textarea></div>';
     }
 
-    public static function select(string $name, string $label, array $options, string $value = ''): void
+    public static function select(string $name, string $label, array $options, string $value = '', bool $required = false): void
     {
         $id = 'rp_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $name) . '_' . ++self::$fieldSequence;
-        echo '<div class="rp-field"><label for="' . self::e($id) . '">' . self::e($label) . '</label><select id="' . self::e($id) . '" name="' . self::e($name) . '">';
+        echo '<div class="rp-field"><label for="' . self::e($id) . '">' . self::e($label) . '</label><select id="' . self::e($id) . '" name="' . self::e($name) . '"' . ($required ? ' required' : '') . '>';
         foreach ($options as $key => $text) {
             echo '<option value="' . self::e($key) . '"' . ((string) $key === $value ? ' selected' : '') . '>' . self::e($text) . '</option>';
         }
