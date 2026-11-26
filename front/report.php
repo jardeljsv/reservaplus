@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-use GlpiPlugin\Reservaplus\Block;
+use GlpiPlugin\Reservaplus\Access;
+use GlpiPlugin\Reservaplus\Store;
 use GlpiPlugin\Reservaplus\Dashboard;
 use GlpiPlugin\Reservaplus\Report;
 use GlpiPlugin\Reservaplus\ReservationRequest;
@@ -44,7 +45,38 @@ if ($view === 'week') {
 }
 
 $rows = [];
-if ($DB->tableExists(ReservationRequest::getTable())) {
+// Current workflow is authoritative; legacy requests remain a separate history.
+$source = (string) ($_GET['source'] ?? 'workflow');
+$source = $source === 'legacy' ? 'legacy' : 'workflow';
+if ($source === 'workflow' && Access::right('read') && Access::entityIds() !== []
+    && $DB->tableExists(Store::table('bookings'))) {
+    foreach (Store::find('bookings', [
+        'entities_id' => Access::entityIds(),
+        'end' => ['>', $periodStart],
+        'begin' => ['<', $periodEnd],
+    ], ['ORDER' => ['begin DESC', 'id DESC']]) as $booking) {
+        if (!Access::booking($booking)) { continue; }
+        $lines = Store::find('bookinglines', ['bookings_id' => (int) $booking['id']]);
+        $items = [];
+        $actualSeconds = 0;
+        foreach ($lines as $line) {
+            $resourceId = (int) $line['resources_id'];
+            $resource = Store::find('resources', ['id' => $resourceId], ['LIMIT' => 1])[0] ?? [];
+            $items[$resourceId] = (string) ($resource['name'] ?? ('#' . $resourceId));
+            if (!empty($line['issued_at']) && !empty($line['received_at'])) {
+                $actualSeconds += max(0, min(strtotime($line['received_at']), strtotime($periodEnd))
+                    - max(strtotime($line['issued_at']), strtotime($periodStart)));
+            }
+        }
+        $snapshot = Store::decode($booking['borrower_snapshot_json'] ?? null);
+        $booking['_items'] = $items;
+        $booking['_actual_seconds'] = $actualSeconds;
+        $booking['_borrower'] = (string) ($snapshot['name'] ?? ('#' . $booking['users_id_borrower']));
+        $booking['comment'] = $booking['purpose'] ?? '';
+        $rows[] = $booking;
+    }
+}
+if ($source === 'legacy' && $DB->tableExists(ReservationRequest::getTable())) {
     $where = [
         ReservationRequest::getTable() . '.end'   => ['>', $periodStart],
         ReservationRequest::getTable() . '.begin' => ['<', $periodEnd],
@@ -64,6 +96,12 @@ if ($DB->tableExists(ReservationRequest::getTable())) {
     }
 }
 
+$statusLabels = ['submitted' => 'Aguardando autorização', 'approved' => 'Autorizada',
+    'issued' => 'Em empréstimo', 'returning' => 'Em devolução', 'completed' => 'Concluída',
+    'cancelled' => 'Cancelada', 'rejected' => 'Rejeitada'];
+$statusCounts = array_count_values(array_column($rows, 'status'));
+$borrowers = [];
+$actualSeconds = 0;
 $totalHours     = 0.0;
 $totalPeople    = 0;
 $cancelledCount = 0;
@@ -74,19 +112,23 @@ foreach ($rows as $r) {
     $hours = ($b !== false && $e !== false)
         ? max(0, min($e, (int) strtotime($periodEnd)) - max($b, (int) strtotime($periodStart))) / 3600 : 0.0;
     $people = max(1, (int) ($r['people_count'] ?? 1));
+    if ($source === 'workflow') { $borrowers[(int) $r['users_id_borrower']] = true; $actualSeconds += $r['_actual_seconds']; }
     if ((string) ($r['status'] ?? '') === ReservationRequest::STATUS_CANCELLED) {
         $cancelledCount++;
         continue;
     }
+    if (($r['status'] ?? '') === 'rejected') { continue; }
     $totalHours += $hours;
     $totalPeople += $people;
-    $itemId = (int) $r['reservationitems_id'];
-    if (!isset($itemAgg[$itemId])) {
-        $itemAgg[$itemId] = ['label' => ReservationRequest::getItemDisplayName($r), 'count' => 0, 'hours' => 0.0, 'people' => 0];
+    $items = $source === 'workflow' ? $r['_items'] : [(int) $r['reservationitems_id'] => ReservationRequest::getItemDisplayName($r)];
+    foreach ($items as $itemId => $label) {
+        if (!isset($itemAgg[$itemId])) {
+            $itemAgg[$itemId] = ['label' => $label, 'count' => 0, 'hours' => 0.0, 'people' => 0];
+        }
+        $itemAgg[$itemId]['count']++;
+        $itemAgg[$itemId]['hours'] += $hours;
+        $itemAgg[$itemId]['people'] += $people;
     }
-    $itemAgg[$itemId]['count']++;
-    $itemAgg[$itemId]['hours'] += $hours;
-    $itemAgg[$itemId]['people'] += $people;
 }
 uasort($itemAgg, static fn(array $a, array $b): int => [$b['count'], $b['hours']] <=> [$a['count'], $a['hours']]);
 $topItems = array_slice($itemAgg, 0, 5, true);
@@ -96,7 +138,8 @@ $nextOffset = $offsetParam + 1;
 
 function plugin_reservaplus_report_url(string $view, int $offset): string
 {
-    return Dashboard::getUrl('report.php') . '?view=' . urlencode($view) . '&offset=' . $offset;
+    global $source;
+    return Dashboard::getUrl('report.php') . '?view=' . urlencode($view) . '&offset=' . $offset . '&source=' . urlencode($source);
 }
 
 Html::header(__('Relatórios do Reserva Plus', 'reservaplus'), $_SERVER['PHP_SELF'], 'tools', Dashboard::class);
@@ -178,6 +221,12 @@ if ($offsetParam !== 0) {
 echo '</div>';
 echo '</div>';
 
+echo "<div class='reservaplus-period-bar reservaplus-no-print'>";
+foreach (['workflow' => 'Reservas e empréstimos', 'legacy' => 'Histórico legado'] as $key => $label) {
+    $url = Dashboard::getUrl('report.php') . '?view=' . urlencode($view) . '&offset=' . $offsetParam . '&source=' . $key;
+    echo "<a class='btn btn-sm " . ($source === $key ? 'btn-primary' : 'btn-outline-secondary') . "' href='" . Html::cleanInputText($url) . "'>" . Html::cleanInputText($label) . "</a>";
+}
+echo '</div>';
 // ── KPIs no padrão da Central ──
 echo "<div class='reservaplus-grid reservaplus-stats reservaplus-no-print'>";
 $kpis = [
@@ -186,6 +235,15 @@ $kpis = [
     [__('Pessoas', 'reservaplus'), number_format($totalPeople, 0, ',', '.'), __('Nas reservas ativas', 'reservaplus'), 'ti ti-users', 'violet'],
     [__('Canceladas', 'reservaplus'), (string) $cancelledCount, __('No período', 'reservaplus'), 'ti ti-ban', 'rose'],
 ];
+if ($source === 'workflow') {
+    $kpis[2] = ['Beneficiários únicos', (string) count($borrowers), 'No período (todos os status)', 'ti ti-users', 'violet'];
+    $kpis[] = ['Concluídas', (string) ($statusCounts['completed'] ?? 0), 'No período', 'ti ti-check', 'primary'];
+    $kpis[] = ['Rejeitadas', (string) ($statusCounts['rejected'] ?? 0), 'No período', 'ti ti-ban', 'rose'];
+    foreach (['submitted', 'approved', 'issued', 'returning'] as $status) {
+        $kpis[] = [$statusLabels[$status], (string) ($statusCounts[$status] ?? 0), 'No período', 'ti ti-clock', 'accent'];
+    }
+    $kpis[] = ['Horas efetivas de equipamentos devolvidos', number_format($actualSeconds / 3600, 2, ',', '.') . 'h', 'Entrega até recebimento, dentro do período', 'ti ti-clock', 'accent'];
+}
 foreach ($kpis as [$kTitle, $kValue, $kSub, $kIcon, $kVariant]) {
     echo "<div class='reservaplus-stat reservaplus-stat--" . $kVariant . "'>";
     echo "<span class='reservaplus-stat-icon'><i class='" . $kIcon . "'></i></span>";
@@ -205,7 +263,8 @@ echo '<p>' . Html::cleanInputText($generatedBy) . '</p>';
 echo "<div class='reservaplus-print-kpis'>";
 echo '<span>' . __('Reservas', 'reservaplus') . ': ' . count($rows) . '</span>';
 echo '<span>' . __('Horas', 'reservaplus') . ': ' . number_format($totalHours, 1, ',', '.') . 'h</span>';
-echo '<span>' . __('Pessoas', 'reservaplus') . ': ' . number_format($totalPeople, 0, ',', '.') . '</span>';
+echo '<span>' . ($source === 'workflow' ? 'Beneficiários únicos: ' . count($borrowers) : __('Pessoas', 'reservaplus') . ': ' . number_format($totalPeople, 0, ',', '.')) . '</span>';
+if ($source === 'workflow') { foreach ($statusLabels as $key => $label) { if ($key !== 'cancelled') { echo '<span>' . Html::cleanInputText($label) . ': ' . ($statusCounts[$key] ?? 0) . '</span>'; } } echo '<span>Horas efetivas: ' . number_format($actualSeconds / 3600, 2, ',', '.') . 'h</span>'; }
 echo '<span>' . __('Canceladas', 'reservaplus') . ': ' . $cancelledCount . '</span>';
 echo '</div>';
 echo '</div>';
@@ -219,7 +278,7 @@ echo '</div>';
 echo '</div>';
 
 // Ranking de itens mais reservados no período (visão gerencial)
-if ($topItems !== [] && count($itemAgg) > 1) {
+if ($topItems !== [] && count($itemAgg) > 0) {
     echo "<div class='reservaplus-top-items'>";
     echo "<div class='reservaplus-top-items-title'><i class='ti ti-trophy'></i> " . __('Itens mais reservados no período', 'reservaplus') . '</div>';
     echo "<table class='table table-sm reservaplus-top-items-table'>";
@@ -253,7 +312,9 @@ if ($rows === []) {
     echo '<thead><tr>';
     echo '<th>ID</th>';
     echo '<th>' . __('Item', 'reservaplus') . '</th>';
-    if ($isAdmin) {
+    if ($source === 'workflow') {
+        echo '<th>Beneficiário</th><th>Solicitante</th><th>Chamado</th>';
+    } elseif ($isAdmin) {
         echo '<th>' . __('Solicitante', 'reservaplus') . '</th>';
     }
     echo '<th>' . __('Início', 'reservaplus') . '</th>';
@@ -277,8 +338,18 @@ if ($rows === []) {
 
         echo '<tr>';
         echo '<td>#' . (int) ($row['id'] ?? 0) . '</td>';
-        echo '<td>' . Html::cleanInputText(ReservationRequest::getItemDisplayName($row)) . '</td>';
-        if ($isAdmin) {
+        echo '<td>' . Html::cleanInputText($source === 'workflow' ? implode(', ', $row['_items']) : ReservationRequest::getItemDisplayName($row)) . '</td>';
+        if ($source === 'workflow') {
+            echo '<td>' . Html::cleanInputText($row['_borrower']) . '</td>';
+            echo '<td>' . Html::cleanInputText((string) getUserName((int) $row['users_id_requester'])) . '</td>';
+            $ticketId = (int) ($row['tickets_id'] ?? 0);
+            $ticket = new Ticket();
+            echo '<td>';
+            if ($ticketId > 0 && $ticket->can($ticketId, READ)) {
+                echo '<a href="' . Html::cleanInputText(Ticket::getFormURLWithID($ticketId)) . '">#' . $ticketId . '</a>';
+            } else { echo '—'; }
+            echo '</td>';
+        } elseif ($isAdmin) {
             echo '<td>' . Html::cleanInputText(ReservationRequest::getUserDisplayName($row)) . '</td>';
         }
         echo '<td>' . Html::cleanInputText($beginFmt) . '</td>';
@@ -286,7 +357,7 @@ if ($rows === []) {
         echo "<td class='reservaplus-duration'>" . Html::cleanInputText($durStr) . '</td>';
         echo '<td><i class="ti ti-users" style="font-size:0.8rem;opacity:.6"></i> ' . max(1, (int) ($row['people_count'] ?? 1)) . '</td>';
         $rowStatus = (string) ($row['status'] ?? ReservationRequest::STATUS_CREATED);
-        echo '<td><span class="reservaplus-badge ' . Html::cleanInputText(ReservationRequest::getStatusClass($rowStatus)) . '">' . Html::cleanInputText(ReservationRequest::getStatusLabel($rowStatus)) . '</span></td>';
+        echo '<td><span class="reservaplus-badge ' . Html::cleanInputText(($source === 'workflow' ? '' : ReservationRequest::getStatusClass($rowStatus))) . '">' . Html::cleanInputText(($source === 'workflow' ? ($statusLabels[$rowStatus] ?? $rowStatus) : ReservationRequest::getStatusLabel($rowStatus))) . '</span></td>';
         echo '<td>' . ($comment !== '' ? $comment : '<span style="color:#98a2b3">—</span>') . '</td>';
         echo '</tr>';
     }
