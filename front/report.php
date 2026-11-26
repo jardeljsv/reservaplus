@@ -136,9 +136,8 @@ $topItems = array_slice($itemAgg, 0, 5, true);
 $prevOffset = $offsetParam - 1;
 $nextOffset = $offsetParam + 1;
 
-function plugin_reservaplus_report_url(string $view, int $offset): string
+function plugin_reservaplus_report_url(string $view, int $offset, string $source): string
 {
-    global $source;
     return Dashboard::getUrl('report.php') . '?view=' . urlencode($view) . '&offset=' . $offset . '&source=' . urlencode($source);
 }
 
@@ -208,15 +207,15 @@ echo '</div>';
 // ── Barra de período: semana/mês + navegação ──
 echo "<div class='reservaplus-period-bar reservaplus-no-print'>";
 echo "<div class='reservaplus-view-tabs'>";
-echo "<a class='btn btn-sm " . ($view === 'week' ? 'btn-secondary' : 'btn-outline-secondary') . "' href='" . Html::cleanInputText(plugin_reservaplus_report_url('week', 0)) . "'><i class='ti ti-calendar-week'></i> " . __('Semana', 'reservaplus') . '</a>';
-echo "<a class='btn btn-sm " . ($view === 'month' ? 'btn-secondary' : 'btn-outline-secondary') . "' href='" . Html::cleanInputText(plugin_reservaplus_report_url('month', 0)) . "'><i class='ti ti-calendar-month'></i> " . __('Mês', 'reservaplus') . '</a>';
+echo "<a class='btn btn-sm " . ($view === 'week' ? 'btn-secondary' : 'btn-outline-secondary') . "' href='" . Html::cleanInputText(plugin_reservaplus_report_url('week', 0, $source)) . "'><i class='ti ti-calendar-week'></i> " . __('Semana', 'reservaplus') . '</a>';
+echo "<a class='btn btn-sm " . ($view === 'month' ? 'btn-secondary' : 'btn-outline-secondary') . "' href='" . Html::cleanInputText(plugin_reservaplus_report_url('month', 0, $source)) . "'><i class='ti ti-calendar-month'></i> " . __('Mês', 'reservaplus') . '</a>';
 echo '</div>';
 echo "<div class='reservaplus-period-nav'>";
-echo "<a class='btn btn-sm btn-outline-secondary' href='" . Html::cleanInputText(plugin_reservaplus_report_url($view, $prevOffset)) . "' title='" . __('Período anterior', 'reservaplus') . "'><i class='ti ti-chevron-left'></i></a>";
+echo "<a class='btn btn-sm btn-outline-secondary' href='" . Html::cleanInputText(plugin_reservaplus_report_url($view, $prevOffset, $source)) . "' title='" . __('Período anterior', 'reservaplus') . "'><i class='ti ti-chevron-left'></i></a>";
 echo '<strong>' . Html::cleanInputText($periodLabel) . '</strong>';
-echo "<a class='btn btn-sm btn-outline-secondary' href='" . Html::cleanInputText(plugin_reservaplus_report_url($view, $nextOffset)) . "' title='" . __('Próximo período', 'reservaplus') . "'><i class='ti ti-chevron-right'></i></a>";
+echo "<a class='btn btn-sm btn-outline-secondary' href='" . Html::cleanInputText(plugin_reservaplus_report_url($view, $nextOffset, $source)) . "' title='" . __('Próximo período', 'reservaplus') . "'><i class='ti ti-chevron-right'></i></a>";
 if ($offsetParam !== 0) {
-    echo "<a class='btn btn-sm btn-outline-primary' href='" . Html::cleanInputText(plugin_reservaplus_report_url($view, 0)) . "'>" . __('Hoje', 'reservaplus') . '</a>';
+    echo "<a class='btn btn-sm btn-outline-primary' href='" . Html::cleanInputText(plugin_reservaplus_report_url($view, 0, $source)) . "'>" . __('Hoje', 'reservaplus') . '</a>';
 }
 echo '</div>';
 echo '</div>';
