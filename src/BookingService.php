@@ -91,7 +91,7 @@ final class BookingService
             if ($id < 1 || !\Session::haveAccessToEntity(
                 (int) ($row['entities_id'] ?? -1), (bool) ($row['is_recursive'] ?? false)
             )) { continue; }
-            $label = trim((string) ($row['completename'] ?: $row['name'] ?? ''));
+            $label = trim((string) (($row['completename'] ?? '') ?: ($row['name'] ?? '')));
             if ($label !== '') { $options[$id] = $label; }
         }
         natcasesort($options);
@@ -108,8 +108,10 @@ final class BookingService
             $children[(int) ($row['groups_id'] ?? 0)][] = $row;
         }
         $options = [];
-        $visited = [61 => true];
-        $pending = $children[61] ?? [];
+        $rootGroupId = defined('RESERVAPLUS_LOTATION_ROOT_GROUP_ID')
+            ? max(1, (int) constant('RESERVAPLUS_LOTATION_ROOT_GROUP_ID')) : 61;
+        $visited = [$rootGroupId => true];
+        $pending = $children[$rootGroupId] ?? [];
         while ($pending !== []) {
             $row = array_pop($pending);
             $id = (int) ($row['id'] ?? 0);
