@@ -95,6 +95,9 @@ final class BookingView
         if (Access::right('manage')) {
             $links[] = ['resource.php', __('Recursos', 'reservaplus'), 'ti-building-warehouse', ['resource.php', 'resource.form.php', 'resource.import.php', 'sector.php']];
         }
+        if ($staff && Report::canView()) {
+            $links[] = ['report.php', __('Relatórios', 'reservaplus'), 'ti-chart-bar', ['report.php']];
+        }
         foreach ($links as [$file, $label, $icon, $pages]) {
             if ($file === 'booking.form.php' && !Access::right('request')) { continue; }
             $active = in_array($current, $pages, true);
@@ -108,7 +111,7 @@ final class BookingView
             $secondary[] = ['reservation.php', __('Reservas anteriores', 'reservaplus')];
             $secondary[] = ['calendar.php', __('Agenda anterior', 'reservaplus')];
         }
-        if (Report::canView()) { $secondary[] = ['report.php', __('Relatórios das reservas anteriores', 'reservaplus')]; }
+        if (!$staff && Report::canView()) { $secondary[] = ['report.php', __('Relatórios', 'reservaplus')]; }
         if ($secondary !== []) {
             echo '<details class="rp-nav-more"><summary><i class="ti ti-dots" aria-hidden="true"></i> ' . self::e(__('Mais opções', 'reservaplus')) . '</summary><div class="rp-nav-menu">';
             foreach ($secondary as [$file, $label]) { echo '<a href="' . self::e(self::url($file)) . '">' . self::e($label) . '</a>'; }
