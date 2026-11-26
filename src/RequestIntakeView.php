@@ -315,6 +315,24 @@ final class RequestIntakeView
         echo '</div>';
     }
 
+    /** GLPI-native searchable dropdown (Select2), restricted to validated IDs.
+     * Use the public Dropdown API rather than a second JS search implementation. */
+    private static function nativeSearchableDropdown(
+        string $name, string $label, array $options, int $selected, string $placeholder
+    ): void {
+        $items = [0 => $placeholder] + $options;
+        echo '<div class="rp-field">';
+        echo '<label for="dropdown_' . BookingView::e($name) . '">';
+        echo BookingView::e($label) . ' <span aria-hidden="true">*</span></label>';
+        \Dropdown::showFromArray($name, $items, [
+            'value' => isset($options[$selected]) ? $selected : 0,
+            'width' => '100%',
+            'display_emptychoice' => false,
+            'required' => true,
+        ]);
+        echo '</div>';
+    }
+
     private static function details(array $draft, array $selected): void
     {
         echo '<section class="rp-panel"><h2>Como os recursos serão utilizados?</h2><p class="rp-muted">Preencha as informações necessárias para a equipe organizar o atendimento.</p>';
@@ -329,12 +347,12 @@ final class RequestIntakeView
             \User::dropdown(['name' => 'users_id_borrower', 'value' => $borrowerValue, 'entity' => Access::entityIds(), 'right' => 'all', 'width' => '100%']);
             echo '</div>';
         } else { echo '<p class="rp-intake-identity"><i class="ti ti-user" aria-hidden="true"></i> Você será o responsável pelo uso e pelos aceites desta solicitação.</p>'; }
-        BookingView::select('locations_id', 'Unidade / Localização GLPI *',
-            ['' => 'Selecione a unidade'] + BookingService::locationOptions(),
-            (string) ($draft['locations_id'] ?? ''), true);
-        BookingView::select('lotation_groups_id', 'Lotação *',
-            ['' => 'Selecione a lotação'] + BookingService::lotationOptions(),
-            (string) ($draft['lotation_groups_id'] ?? ''), true);
+        self::nativeSearchableDropdown('locations_id', 'Unidade / Localização GLPI',
+            BookingService::locationOptions(), (int) ($draft['locations_id'] ?? 0),
+            'Selecione ou pesquise a unidade');
+        self::nativeSearchableDropdown('lotation_groups_id', 'Lotação',
+            BookingService::lotationOptions(), (int) ($draft['lotation_groups_id'] ?? 0),
+            'Selecione ou pesquise a lotação');
         echo '<div class="rp-field"><label for="rp-intake-purpose">Finalidade do uso</label><textarea id="rp-intake-purpose" name="purpose" maxlength="5000" required>' . BookingView::e($draft['purpose']) . '</textarea></div>';
         echo '</section>';
     }
