@@ -98,6 +98,17 @@ final class CalendarBridge
         Store::update('bookinglines', (int) $line['id'], ['state' => 'released']);
     }
 
+    /** How to release the native calendar while preserving plugin booking evidence.
+     * If equipment is returned before the scheduled start, the native slot was
+     * never used: purge that future hold instead of leaving it blocking reuse.
+     * The signed physical issue/return timestamps remain on the plugin line. */
+    public static function tailReleaseAction(string $begin, string $end, string $returnedAt): string
+    {
+        if ($returnedAt <= $begin) { return 'delete'; }
+        if ($returnedAt < $end) { return 'shorten'; }
+        return 'none';
+    }
+
     public static function releaseTail(array $line): void
     {
         $id = (int) ($line['reservations_id'] ?? 0);
@@ -106,7 +117,16 @@ final class CalendarBridge
             $native = new \Reservation();
             if (!$native->getFromDB($id)) { throw new \DomainException('Reserva nativa ausente.'); }
             $now = Store::now();
-            if ($native->fields['begin'] < $now && $native->fields['end'] > $now
+            $action = self::tailReleaseAction(
+                (string) $native->fields['begin'], (string) $native->fields['end'], $now
+            );
+            if ($action === 'delete') {
+                // The original reservation window has not begun. Physical
+                // timestamps remain auditable in bookinglines and documents.
+                if (!$native->delete(['id' => $id, '_disablenotif' => true], true)) {
+                    throw new \DomainException('Não foi possível remover o bloqueio nativo futuro após a devolução.');
+                }
+            } elseif ($action === 'shorten'
                 && !$native->update(['id' => $id, 'end' => $now, '_disablenotif' => true])) {
                 throw new \DomainException('Não foi possível atualizar a disponibilidade após a conferência.');
             }
