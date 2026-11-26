@@ -52,6 +52,14 @@ $adminName=getenv('RP_TEST_ADMIN')?:'glpi'; $employeeName=getenv('RP_TEST_EMPLOY
 $admin=rp_login($adminName,Access::ADMIN);
 $group=new Group();$groupId=(int)$group->add(['name'=>$tag,'entities_id'=>0,'is_assign'=>1,'is_usergroup'=>1,'is_requester'=>1]);
 rp_assert($groupId>0,'Native group fixture');
+define('RESERVAPLUS_LOTATION_ROOT_GROUP_ID',$groupId);
+$lotation=new Group();
+$lotationId=(int)$lotation->add(['name'=>$tag.' Lotação', 'groups_id'=>$groupId,
+    'entities_id'=>0, 'is_usergroup'=>1, 'is_assign'=>0]);
+rp_assert($lotationId>0,'Native lotação fixture under configured test root');
+$location=new Location();
+$locationId=(int)$location->add(['name'=>$tag.' Unidade', 'entities_id'=>0]);
+rp_assert($locationId>0,'Native GLPI location fixture');
 $membership=new Group_User();rp_assert((bool)$membership->add(['groups_id'=>$groupId,'users_id'=>$admin]),'Native group membership');
 rp_login($adminName,Access::ADMIN);
 $sector=Sector::save(['name'=>$tag,'code'=>str_replace(' ','-',$tag),'entities_id'=>0,'is_active'=>1]);
@@ -69,13 +77,21 @@ rp_test('native GLPI resource creation and internal-only inventory identity',sta
 });
 
 $employee=rp_login($employeeName,READ|CREATE);
-$input=['resources_ids'=>[$resourceId],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Integration loan and complete physical return','people_count'=>1,'unit'=>'SETIS - Integração'];
+$input=['resources_ids'=>[$resourceId],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Integration loan and complete physical return','people_count'=>1,'locations_id'=>$locationId,'lotation_groups_id'=>$lotationId];
 $key='integration-submit-'.bin2hex(random_bytes(12));
-rp_throws(static fn()=>BookingService::submit(array_replace($input,['unit'=>' ']),
+rp_throws(static fn()=>BookingService::submit(array_replace($input,['locations_id'=>0]),
     'integration-'.bin2hex(random_bytes(16))),InvalidArgumentException::class,
-    'Missing user unit must be rejected by the backend');
+    'Missing location must be rejected by backend');
+rp_throws(static fn()=>BookingService::submit(array_replace($input,['lotation_groups_id'=>$groupId]),
+    'integration-'.bin2hex(random_bytes(16))),DomainException::class,
+    'Root group is not a selectable descendant');
 $bookingId=BookingService::submit($input,$key);
 $booking=BookingService::get($bookingId);
+rp_same($locationId,(int)Store::decode($booking['borrower_snapshot_json'])['locations_id']);
+rp_same($lotationId,(int)Store::decode($booking['borrower_snapshot_json'])['lotation_groups_id']);
+$createdTicket=new Ticket();rp_assert($createdTicket->getFromDB((int)$booking['tickets_id']));
+rp_same($locationId,(int)$createdTicket->fields['locations_id'],
+    'Reservation location must prefill native ticket location');
 rp_same('submitted',$booking['status']);rp_assert((int)$booking['tickets_id']>0,'Native ticket created');
 rp_same($bookingId,BookingService::submit($input,$key),'Submit retry must reuse booking');
 rp_throws(static fn()=>BookingService::submit(array_replace($input,['purpose'=>'Changed payload']),$key),DomainException::class);
@@ -172,7 +188,7 @@ $room=ResourceService::save([
     'policy_json'=>['approval_required'=>false,'signature_stage'=>'none','return_signature_required'=>false],
 ]);
 rp_login($employeeName,READ|CREATE);
-$roomInput=['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()+7200),'end'=>date('Y-m-d H:i:s',time()+10800),'purpose'=>'Room booking','unit'=>'Sala de Reuniões'];
+$roomInput=['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()+7200),'end'=>date('Y-m-d H:i:s',time()+10800),'purpose'=>'Room booking','locations_id'=>$locationId,'lotation_groups_id'=>$lotationId];
 rp_throws(static fn()=>BookingService::submit($roomInput+['people_count'=>9],'integration-'.bin2hex(random_bytes(16))),DomainException::class);
 $roomBooking=BookingService::submit($roomInput+['people_count'=>8],'integration-'.bin2hex(random_bytes(16)));
 $auto=BookingService::get($roomBooking);rp_same('approved',$auto['status']);rp_same('native',$auto['lines'][0]['calendar_mode']);
@@ -190,7 +206,7 @@ $signedResource=ResourceService::save([
     'groups_id_ticket'=>$groupId,'groups_id_manage'=>$groupId,'groups_id_approve'=>$groupId,'custodian_users_id'=>$admin,
     'policy_json'=>['approval_required'=>true,'signature_stage'=>'approval','return_signature_required'=>true],
 ]);
-$signedInput=['resources_ids'=>[$signedResource],'begin'=>date('Y-m-d H:i:s',time()+14400),'end'=>date('Y-m-d H:i:s',time()+18000),'purpose'=>'Signed request revision','unit'=>'Setor de TI'];
+$signedInput=['resources_ids'=>[$signedResource],'begin'=>date('Y-m-d H:i:s',time()+14400),'end'=>date('Y-m-d H:i:s',time()+18000),'purpose'=>'Signed request revision','locations_id'=>$locationId,'lotation_groups_id'=>$lotationId];
 $signedBooking=BookingService::submit($signedInput,'integration-'.bin2hex(random_bytes(16)));
 rp_throws(static fn()=>rp_action($signedBooking,'approve'),DomainException::class,
     'Equipment requires a signed request before approval');
@@ -226,10 +242,13 @@ $existingTicket=(int)$nativeTicket->add($ticketInput);rp_assert($existingTicket>
 $ticketsBefore=countElementsInTable('glpi_tickets');
 $ticketBooking=BookingService::submit($roomInput+['tickets_id'=>$existingTicket],'integration-'.bin2hex(random_bytes(16)));
 rp_same($existingTicket,(int)BookingService::get($ticketBooking)['tickets_id']);rp_same($ticketsBefore,countElementsInTable('glpi_tickets'));
+$linkedTicket=new Ticket();rp_assert($linkedTicket->getFromDB($existingTicket));
+rp_same($locationId,(int)$linkedTicket->fields['locations_id'],
+    'Existing ticket origin reservation must also have selected native location');
 rp_action($ticketBooking,'cancel');
 rp_test('technician ticket intake reuses its authorized existing ticket',static function()use($ticketBooking):void{rp_same('cancelled',BookingService::get($ticketBooking)['status']);});
 
-$roomUse=BookingService::submit(['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Room use and inspection','unit'=>'Infraestrutura'],'integration-'.bin2hex(random_bytes(16)));
+$roomUse=BookingService::submit(['resources_ids'=>[$room],'begin'=>date('Y-m-d H:i:s',time()-60),'end'=>date('Y-m-d H:i:s',time()+3600),'purpose'=>'Room use and inspection','locations_id'=>$locationId,'lotation_groups_id'=>$lotationId],'integration-'.bin2hex(random_bytes(16)));
 $roomReturned=rp_action($roomUse,'inspect',['result'=>'pass','findings'=>'Room and installed facilities checked after use.']);
 rp_same('ready',$roomReturned['lines'][0]['state']);
 rp_sign($roomUse,'return_inspection');$roomReturned=rp_action($roomUse,'complete');
