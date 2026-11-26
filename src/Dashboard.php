@@ -106,7 +106,7 @@ class Dashboard extends CommonGLPI
 
         if (Report::canView()) {
             $menu['options']['reservaplus_reports'] = [
-                'title' => __('Relatórios das reservas anteriores', 'reservaplus'),
+                'title' => __('Relatórios', 'reservaplus'),
                 'page'  => self::getUrl('report.php'),
                 'icon'  => 'ti ti-chart-bar',
             ];
