@@ -788,7 +788,8 @@ final class BookingView
         $values = [
             __('Usuário responsável pelo uso', 'reservaplus') => $snapshot['name'] ?? ('#' . (int) $booking['users_id_borrower']),
             __('Matrícula informada', 'reservaplus') => $snapshot['matricula'] ?? '',
-            __('Unidade informada', 'reservaplus') => $snapshot['unit'] ?? '',
+            __('Unidade / Localização GLPI', 'reservaplus') => $snapshot['unit'] ?? '',
+            __('Lotação', 'reservaplus') => $snapshot['lotation'] ?? '',
             __('Início previsto', 'reservaplus') => self::date($booking['begin'] ?? ''),
             __('Devolução / término previsto', 'reservaplus') => self::date($booking['end'] ?? ''),
         ];
